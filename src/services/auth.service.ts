@@ -1,0 +1,59 @@
+import { apiClient } from "@/lib/api";
+import { AuthResponse, LoginCredentials, CreateUserInput, User } from "@/types";
+import Cookies from "js-cookie";
+
+export class AuthService {
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>(
+      "/auth/login",
+      credentials
+    );
+    if (response.access_token) {
+      Cookies.set("token", response.access_token, { expires: 7 });
+      Cookies.set("user", JSON.stringify(response.user), { expires: 7 });
+    }
+    return response;
+  }
+
+  async register(data: CreateUserInput): Promise<User> {
+    return await apiClient.post<User>("/auth/register", data);
+  }
+
+  async getProfile(): Promise<User> {
+    return await apiClient.get<User>("/auth/profile");
+  }
+
+  logout(): void {
+    Cookies.remove("token");
+    Cookies.remove("user");
+    window.location.href = "/login";
+  }
+
+  getCurrentUser(): AuthResponse["user"] | null {
+    const userStr = Cookies.get("user");
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  isAuthenticated(): boolean {
+    return !!Cookies.get("token");
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.roles?.includes(role) || false;
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.permissions?.includes(permission) || false;
+  }
+}
+
+export const authService = new AuthService();
