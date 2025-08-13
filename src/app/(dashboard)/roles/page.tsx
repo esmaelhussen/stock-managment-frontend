@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
-import { roleService } from '@/services/role.service';
-import { permissionService } from '@/services/permission.service';
-import { Role, Permission, CreateRoleInput, UpdateRoleInput } from '@/types';
+import React, { useState, useEffect } from "react";
+import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
+import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
+import Input from "@/components/ui/Input";
+import { roleService } from "@/services/role.service";
+import { permissionService } from "@/services/permission.service";
+import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -18,8 +18,8 @@ export default function RolesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [formData, setFormData] = useState<CreateRoleInput>({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     permissionIds: [],
   });
 
@@ -33,7 +33,7 @@ export default function RolesPage() {
       const data = await roleService.getAll();
       setRoles(data);
     } catch (error) {
-      toast.error('Failed to fetch roles');
+      toast.error("Failed to fetch roles");
     } finally {
       setLoading(false);
     }
@@ -44,19 +44,19 @@ export default function RolesPage() {
       const data = await permissionService.getAll();
       setPermissions(data);
     } catch (error) {
-      console.error('Failed to fetch permissions');
+      console.error("Failed to fetch permissions");
     }
   };
 
   const handleCreate = async () => {
     try {
       await roleService.create(formData);
-      toast.success('Role created successfully');
+      toast.success("Role created successfully");
       setIsCreateModalOpen(false);
-      setFormData({ name: '', description: '', permissionIds: [] });
+      setFormData({ name: "", description: "", permissionIds: [] });
       fetchRoles();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create role');
+      toast.error(error.response?.data?.message || "Failed to create role");
     }
   };
 
@@ -64,35 +64,37 @@ export default function RolesPage() {
     if (!selectedRole) return;
     try {
       await roleService.update(selectedRole.id, formData as UpdateRoleInput);
-      toast.success('Role updated successfully');
+      toast.success("Role updated successfully");
       setIsEditModalOpen(false);
       fetchRoles();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update role');
+      toast.error(error.response?.data?.message || "Failed to update role");
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await roleService.delete(id);
-      toast.success('Role deleted successfully');
+      toast.success("Role deleted successfully");
       fetchRoles();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete role');
+      toast.error(error.response?.data?.message || "Failed to delete role");
     }
   };
 
   const handlePermissionToggle = (permissionId: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       permissionIds: prev.permissionIds?.includes(permissionId)
-        ? prev.permissionIds.filter(id => id !== permissionId)
+        ? prev.permissionIds.filter((id) => id !== permissionId)
         : [...(prev.permissionIds || []), permissionId],
     }));
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">Loading...</div>
+    );
   }
 
   return (
@@ -110,7 +112,9 @@ export default function RolesPage() {
           <div key={role.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{role.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {role.name}
+                </h3>
                 <p className="text-sm text-gray-500">{role.description}</p>
               </div>
               <div className="flex space-x-2">
@@ -119,8 +123,10 @@ export default function RolesPage() {
                     setSelectedRole(role);
                     setFormData({
                       name: role.name,
-                      description: role.description || '',
-                      permissionIds: role.rolePermissions?.map(rp => rp.permissionId) || [],
+                      description: role.description || "",
+                      permissionIds:
+                        role.rolePermissions?.map((rp) => rp.permissionId) ||
+                        [],
                     });
                     setIsEditModalOpen(true);
                   }}
@@ -137,7 +143,9 @@ export default function RolesPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-xs font-medium text-gray-700 mb-2">Permissions:</p>
+              <p className="text-xs font-medium text-gray-700 mb-2">
+                Permissions:
+              </p>
               <div className="flex flex-wrap gap-1">
                 {role.rolePermissions?.slice(0, 5).map((rp) => (
                   <span
@@ -163,9 +171,9 @@ export default function RolesPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setIsEditModalOpen(false);
-          setFormData({ name: '', description: '', permissionIds: [] });
+          setFormData({ name: "", description: "", permissionIds: [] });
         }}
-        title={isEditModalOpen ? 'Edit Role' : 'Create Role'}
+        title={isEditModalOpen ? "Edit Role" : "Create Role"}
         size="lg"
       >
         <div className="space-y-4">
@@ -177,10 +185,14 @@ export default function RolesPage() {
           <Input
             label="Description"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Permissions
+            </label>
             <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
               {permissions.map((permission) => (
                 <div key={permission.id} className="flex items-center py-1">
@@ -191,8 +203,14 @@ export default function RolesPage() {
                     onChange={() => handlePermissionToggle(permission.id)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor={`perm-${permission.id}`} className="ml-2 text-sm text-gray-700">
-                    {permission.name} - <span className="text-gray-500">{permission.description}</span>
+                  <label
+                    htmlFor={`perm-${permission.id}`}
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    {permission.name} -{" "}
+                    <span className="text-gray-500">
+                      {permission.description}
+                    </span>
                   </label>
                 </div>
               ))}
@@ -209,7 +227,7 @@ export default function RolesPage() {
               Cancel
             </Button>
             <Button onClick={isEditModalOpen ? handleUpdate : handleCreate}>
-              {isEditModalOpen ? 'Update' : 'Create'}
+              {isEditModalOpen ? "Update" : "Create"}
             </Button>
           </div>
         </div>

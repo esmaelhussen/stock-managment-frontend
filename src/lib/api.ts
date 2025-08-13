@@ -29,7 +29,9 @@ class ApiClient {
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
+        // Only redirect if token exists (user is authenticated)
+        const token = Cookies.get("token");
+        if (error.response?.status === 401 && token) {
           Cookies.remove("token");
           Cookies.remove("user");
           window.location.href = "/login";

@@ -1,23 +1,29 @@
-'use client';
+"use client";
 
-import React, { Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = "md",
+}) => {
   const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
+    sm: "max-w-md",
+    md: "max-w-lg",
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
   };
 
   return (
@@ -51,12 +57,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
               >
                 {title && (
                   <div className="flex items-center justify-between mb-4">
-                    <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900"
+                    >
                       {title}
                     </Dialog.Title>
                     <button
                       onClick={onClose}
-                      className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                      className="text-gray-400 hover:text-gray-700 focus:outline-none cursor-pointer hover:scale-120"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -10,33 +10,80 @@ import {
   KeyIcon,
   ArrowLeftOnRectangleIcon,
   CubeIcon,
-} from '@heroicons/react/24/outline';
-import { authService } from '@/services/auth.service';
-import { cn } from '@/utils/cn';
+} from "@heroicons/react/24/outline";
+import { authService } from "@/services/auth.service";
+import { cn } from "@/utils/cn";
 
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Users', href: '/users', icon: UserGroupIcon },
-    { name: 'Roles', href: '/roles', icon: ShieldCheckIcon },
-    { name: 'Permissions', href: '/permissions', icon: KeyIcon },
-    { name: 'Stock', href: '/stock', icon: CubeIcon },
+    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+    { name: "Users", href: "/users", icon: UserGroupIcon },
+    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
+    { name: "Permissions", href: "/permissions", icon: KeyIcon },
+    { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
   const handleLogout = () => {
     authService.logout();
   };
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Listen for custom event from header hamburger
+  React.useEffect(() => {
+    const handler = (e) => {
+      setMenuOpen(e.detail ? true : false);
+    };
+    window.addEventListener('openSidebarMenu', handler);
+    return () => window.removeEventListener('openSidebarMenu', handler);
+  }, []);
+
+  // Sync hamburger icon in header when sidebar closes
+  React.useEffect(() => {
+    if (!menuOpen) {
+      window.dispatchEvent(new CustomEvent("openSidebarMenu", { detail: false }));
+    }
+  }, [menuOpen]);
+
   return (
-    <div className="flex h-screen w-64 flex-col bg-gray-900">
-      <div className="flex h-16 items-center justify-center bg-gray-800">
-        <h1 className="text-xl font-bold text-white">Stock Management</h1>
-      </div>
-      
-      <nav className="flex-1 space-y-1 px-2 py-4">
+    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-auto h-16 relative">
+      {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
+
+      {/* Mobile menu */}
+      <nav
+        className={cn(
+          "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
+          menuOpen
+            ? "max-h-96 opacity-100 scale-100"
+            : "max-h-0 opacity-0 scale-95 overflow-hidden"
+        )}
+      >
+        {navigation.map((item, idx) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-colors duration-200 mb-2 mx-2",
+                isActive
+                  ? "bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow"
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+              )}
+              onClick={() => setMenuOpen(false)}
+            >
+              {/* Only show icon once at top, not in each menu item */}
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Desktop sidebar */}
+      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-y-auto bg-white">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -44,16 +91,18 @@ const Sidebar: React.FC = () => {
               key={item.name}
               href={item.href}
               className={cn(
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
                 isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? "bg-gray-800 text-white"
+                  : "text-black hover:bg-gray-700 hover:text-white"
               )}
             >
               <item.icon
                 className={cn(
-                  'mr-3 h-6 w-6 flex-shrink-0',
-                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'
+                  "mr-3 h-6 w-6 flex-shrink-0",
+                  isActive
+                    ? "text-white"
+                    : "text-gray-400 group-hover:text-gray-300"
                 )}
               />
               {item.name}
@@ -62,25 +111,26 @@ const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      <div className="border-t border-gray-700 p-4">
+      {/* User info and logout for desktop */}
+      <div className="hidden md:block border-t border-gray-700 p-4 mt-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="ml-3">
-              <p className="text-sm font-medium text-white">
-                {user?.firstName} {user?.lastName}
+              <p className="text-md font-bold text-black capitalize">
+                {user?.firstName}
               </p>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+              <p className="text-sm text-black">{user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-gray-600 hover:text-black transition-colors hover:cursor-pointer"
           >
-            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            <ArrowLeftOnRectangleIcon className="h-8 w-9 " title="Logout" />
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

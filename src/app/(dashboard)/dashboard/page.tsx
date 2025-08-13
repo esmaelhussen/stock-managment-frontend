@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { apiClient } from "@/lib/api";
 import {
   UserGroupIcon,
   ShieldCheckIcon,
@@ -9,26 +10,65 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function DashboardPage() {
-  const stats = [
+  const [stats, setStats] = useState([
     {
       name: "Total Users",
-      value: "0",
+      value: "-",
       icon: UserGroupIcon,
       color: "bg-blue-500",
     },
     {
       name: "Active Roles",
-      value: "3",
+      value: "-",
       icon: ShieldCheckIcon,
       color: "bg-green-500",
     },
-    { name: "Permissions", value: "16", icon: KeyIcon, color: "bg-purple-500" },
-    { name: "Stock Items", value: "0", icon: CubeIcon, color: "bg-yellow-500" },
-  ];
+    { name: "Permissions", value: "-", icon: KeyIcon, color: "bg-purple-500" },
+    { name: "Stock Items", value: "-", icon: CubeIcon, color: "bg-yellow-500" },
+  ]);
+
+  useEffect(() => {
+    type StatsResponse = {
+      totalUsers: number;
+      activeRoles: number;
+      permissions: number;
+      stockItems: number;
+    };
+    apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
+      setStats([
+        {
+          name: "Total Users",
+          value: String(data.totalUsers),
+          icon: UserGroupIcon,
+          color: "bg-blue-500",
+        },
+        {
+          name: "Active Roles",
+          value: String(data.activeRoles),
+          icon: ShieldCheckIcon,
+          color: "bg-green-500",
+        },
+        {
+          name: "Permissions",
+          value: String(data.permissions),
+          icon: KeyIcon,
+          color: "bg-purple-500",
+        },
+        {
+          name: "Stock Items",
+          value: String(data.stockItems),
+          icon: CubeIcon,
+          color: "bg-yellow-500",
+        },
+      ]);
+    });
+  }, []);
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+      <h1 className="text-2xl md:text-3xl font-extrabold text-gradient bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide drop-shadow-lg mb-8">
+        Dashboard
+      </h1>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
