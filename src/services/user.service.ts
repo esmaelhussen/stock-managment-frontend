@@ -2,6 +2,9 @@ import { apiClient } from '@/lib/api';
 import { User, CreateUserInput, UpdateUserInput } from '@/types';
 
 export class UserService {
+  async changePassword(id: string, oldPassword: string, newPassword: string): Promise<void> {
+    await apiClient.post(`/users/${id}/change-password`, { oldPassword, newPassword });
+  }
   async getAll(): Promise<User[]> {
     return await apiClient.get<User[]>('/users');
   }
