@@ -20,7 +20,10 @@ const createSchema = yup.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .required("Password is required"),
-  roleIds: yup.array().of(yup.string()),
+  roleIds: yup
+    .array()
+    .of(yup.string())
+    .min(1, "At least one role must be selected"),
 });
 
 const updateSchema = yup.object({
@@ -186,6 +189,11 @@ export default function UserForm({
               </label>
             </div>
           ))}
+          {errors.roleIds && (
+            <div className="text-red-500 text-sm mt-2">
+              {"At least one role must be selected" as string}
+            </div>
+          )}
         </div>
       </div>
 

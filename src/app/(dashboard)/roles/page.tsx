@@ -11,12 +11,14 @@ import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
 
 export default function RolesPage() {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(9);
+  const [pageSize, setPageSize] = useState(12);
   const total = allRoles.length;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -86,6 +88,8 @@ export default function RolesPage() {
     try {
       await roleService.delete(id);
       toast.success("Role deleted successfully");
+      setIsDeleteModalOpen(false);
+      setRoleToDelete(null);
       fetchRoles();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to delete role");
@@ -125,7 +129,7 @@ export default function RolesPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[3, 6, 9].map((size) => (
+              {[6, 9, 12].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -186,11 +190,48 @@ export default function RolesPage() {
                   <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
                 </button>
                 <button
-                  onClick={() => handleDelete(role.id)}
+                  onClick={() => {
+                    setRoleToDelete(role);
+                    setIsDeleteModalOpen(true);
+                  }}
                   className="text-red-600 hover:text-red-900 cursor-pointer"
                 >
                   <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
                 </button>
+                <Modal
+                  isOpen={isDeleteModalOpen}
+                  onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setRoleToDelete(null);
+                  }}
+                  title="Delete Role"
+                >
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Are you sure you want to delete this role? This action
+                      cannot be undone.
+                    </p>
+                  </div>
+                  <div className="mt-4 flex justify-end space-x-2">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setIsDeleteModalOpen(false);
+                        setRoleToDelete(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() =>
+                        roleToDelete && handleDelete(roleToDelete.id)
+                      }
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </Modal>
               </div>
             </div>
             <div className="space-y-1">

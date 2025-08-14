@@ -22,7 +22,8 @@ export default function PermissionsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
+  const [selectedPermission, setSelectedPermission] =
+    useState<Permission | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
   const total = allPermissions.length;
@@ -95,18 +96,34 @@ export default function PermissionsPage() {
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
-              onChange={e => {
+              onChange={(e) => {
                 setPage(1);
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map(size => (
-                <option key={size} value={size} className="bg-white text-black font-bold">{size} per page</option>
+              {[6, 10, 14].map((size) => (
+                <option
+                  key={size}
+                  value={size}
+                  className="bg-white text-black font-bold"
+                >
+                  {size} per page
+                </option>
               ))}
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </span>
           </div>
@@ -116,7 +133,7 @@ export default function PermissionsPage() {
           </Button>
         </div>
       </div>
-  <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -203,7 +220,11 @@ export default function PermissionsPage() {
         {Array.from({ length: Math.ceil(total / pageSize) }, (_, i) => (
           <button
             key={i + 1}
-            className={`px-2 py-1 rounded font-semibold ${page === i + 1 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+            className={`px-2 py-1 rounded font-semibold ${
+              page === i + 1
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700"
+            }`}
             onClick={() => setPage(i + 1)}
           >
             {i + 1}
