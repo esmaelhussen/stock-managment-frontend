@@ -19,7 +19,7 @@ export default function ProfilePage() {
           lastName: user.lastName || "",
           phoneNumber: user.phoneNumber || "",
           address: user.address || "",
-          email: user.email || ""
+          email: user.email || "",
         }));
       } catch {}
     }
@@ -36,7 +36,8 @@ export default function ProfilePage() {
     newPassword: "",
     confirmNewPassword: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,7 +45,7 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setProfileLoading(true);
     try {
       const currentUser = authService.getCurrentUser();
       if (!currentUser?.id) throw new Error("User not found");
@@ -59,7 +60,7 @@ export default function ProfilePage() {
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update profile");
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   };
 
@@ -69,7 +70,7 @@ export default function ProfilePage() {
       toast.error("New passwords do not match");
       return;
     }
-    setLoading(true);
+    setPasswordLoading(true);
     try {
       const currentUser = authService.getCurrentUser();
       if (!currentUser?.id) throw new Error("User not found");
@@ -90,30 +91,109 @@ export default function ProfilePage() {
         error?.response?.data?.message || "Failed to change password"
       );
     } finally {
-      setLoading(false);
+      setPasswordLoading(false);
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto mt-10 bg-white rounded-xl shadow-lg p-8">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 text-center">Profile Management</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 text-center">
+        Profile Management
+      </h1>
       <div className="flex flex-col md:flex-row gap-8 justify-between">
-        <form onSubmit={handleUpdateProfile} className="space-y-4 flex-1 bg-gray-50 rounded-lg p-6 shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Current Credentials</h2>
-          <Input label="First Name" name="firstName" value={form.firstName} onChange={handleChange} required />
-          <Input label="Middle Name" name="middleName" value={form.middleName} onChange={handleChange} />
-          <Input label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} required />
-          <Input label="Phone Number" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
-          <Input label="Address" name="address" value={form.address} onChange={handleChange} />
-          <Input label="Email" name="email" type="email" value={form.email || ""} onChange={handleChange} disabled />
-          <Button type="submit" loading={loading} className="w-full font-bold">Update Profile</Button>
+        <form
+          onSubmit={handleUpdateProfile}
+          className="space-y-4 flex-1 bg-gray-50 rounded-lg p-6 shadow"
+        >
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">
+            Current Credentials
+          </h2>
+          <Input
+            label="First Name"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Middle Name"
+            name="middleName"
+            value={form.middleName}
+            onChange={handleChange}
+          />
+          <Input
+            label="Last Name"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Phone Number"
+            name="phoneNumber"
+            value={form.phoneNumber}
+            onChange={handleChange}
+          />
+          <Input
+            label="Address"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email || ""}
+            onChange={handleChange}
+            disabled
+          />
+          <Button
+            type="submit"
+            loading={profileLoading}
+            className="w-full font-bold cursor-pointer"
+          >
+            Update Profile
+          </Button>
         </form>
-        <form onSubmit={handleChangePassword} className="space-y-4 flex-1 bg-gray-50 rounded-lg p-6 shadow">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Change Password</h2>
-          <Input label="Current Password" name="password" type="password" value={form.password} onChange={handleChange} required />
-          <Input label="New Password" name="newPassword" type="password" value={form.newPassword} onChange={handleChange} required />
-          <Input label="Confirm New Password" name="confirmNewPassword" type="password" value={form.confirmNewPassword} onChange={handleChange} required />
-          <Button type="submit" loading={loading} className="w-full font-bold bg-blue-600 text-white">Change Password</Button>
+        <form
+          onSubmit={handleChangePassword}
+          className="space-y-4 flex-1 bg-gray-50 rounded-lg p-6 shadow"
+        >
+          <h2 className="text-lg font-semibold mb-4 text-gray-800 cursor-pointer">
+            Change Password
+          </h2>
+          <Input
+            label="Current Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="New Password"
+            name="newPassword"
+            type="password"
+            value={form.newPassword}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="Confirm New Password"
+            name="confirmNewPassword"
+            type="password"
+            value={form.confirmNewPassword}
+            onChange={handleChange}
+            required
+          />
+          <Button
+            type="submit"
+            loading={passwordLoading}
+            className="w-full font-bold bg-blue-600 text-white cursor-pointer"
+          >
+            Change Password
+          </Button>
         </form>
       </div>
     </div>

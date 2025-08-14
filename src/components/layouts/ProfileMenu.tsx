@@ -43,13 +43,13 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
     <>
       <div className="relative" ref={menuRef}>
         <button
-          className="flex items-center gap-3 focus:outline-none cursor-pointer"
+          className="flex items-center gap-2 focus:outline-none cursor-pointer"
           onClick={() => setOpen((v) => !v)}
           aria-label="Open profile menu"
         >
           {/* Beautiful profile icon */}
           <svg
-            className="w-10 h-10 text-indigo-500"
+            className="w-8 h-8 text-indigo-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -68,7 +68,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ user }) => {
               strokeWidth="2"
             />
           </svg>
-          <span className="hidden md:inline text-lg font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm capitalize">
+          <span className="hidden md:inline text-md font-bold bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm capitalize">
             {currentUser?.name || "Profile"}
           </span>
         </button>
