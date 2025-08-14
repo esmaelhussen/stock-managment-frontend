@@ -68,10 +68,10 @@ const Sidebar: React.FC = () => {
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-colors duration-200 mb-2 mx-2",
+                "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
                 isActive
-                  ? "bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow"
-                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700"
+                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
               onClick={() => setMenuOpen(false)}
             >
@@ -91,18 +91,18 @@ const Sidebar: React.FC = () => {
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-black hover:bg-gray-700 hover:text-white"
+                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
             >
               <item.icon
                 className={cn(
                   "mr-3 h-6 w-6 flex-shrink-0",
                   isActive
-                    ? "text-white"
-                    : "text-gray-400 group-hover:text-gray-300"
+                    ? "text-white drop-shadow"
+                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
                 )}
               />
               {item.name}

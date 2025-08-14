@@ -24,7 +24,7 @@ export default function PermissionsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(14);
   const total = allPermissions.length;
 
   useEffect(() => {
@@ -168,22 +168,22 @@ export default function PermissionsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
                   <button
-                    className="text-indigo-600 hover:text-indigo-900"
+                    className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                     onClick={() => {
                       setSelectedPermission(permission);
                       setIsEditModalOpen(true);
                     }}
                   >
-                    <PencilIcon className="h-5 w-5" />
+                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
                   </button>
                   <button
-                    className="text-red-600 hover:text-red-900"
+                    className="text-red-600 hover:text-red-900 cursor-pointer"
                     onClick={() => {
                       setSelectedPermission(permission);
                       setIsDeleteModalOpen(true);
                     }}
                   >
-                    <TrashIcon className="h-5 w-5" />
+                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
                   </button>
                 </td>
               </tr>
