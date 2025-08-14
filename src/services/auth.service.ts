@@ -3,6 +3,12 @@ import { AuthResponse, LoginCredentials, CreateUserInput, User } from "@/types";
 import Cookies from "js-cookie";
 
 export class AuthService {
+  async forgotPassword(email: string): Promise<void> {
+    await apiClient.post('/auth/forgot-password', { email });
+  }
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post('/auth/reset-password', { token, newPassword });
+  }
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>(
       "/auth/login",

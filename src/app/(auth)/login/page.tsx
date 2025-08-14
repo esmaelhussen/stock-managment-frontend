@@ -116,6 +116,14 @@ export default function LoginPage() {
                 </svg>
               )}
             </button>
+            <div className="mt-2 text-right">
+              <a
+                href="/forgot-password"
+                className="text-sm text-indigo-600 hover:underline hover:text-indigo-800 font-medium transition-colors duration-150"
+              >
+                Forgot password?
+              </a>
+            </div>
           </div>
 
           <Button
