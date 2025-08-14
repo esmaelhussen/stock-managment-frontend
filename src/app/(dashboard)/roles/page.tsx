@@ -16,7 +16,7 @@ export default function RolesPage() {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(9);
   const total = allRoles.length;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -111,25 +111,43 @@ export default function RolesPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">Roles</h1>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            Roles
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
-              onChange={e => {
+              onChange={(e) => {
                 setPage(1);
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map(size => (
-                <option key={size} value={size} className="bg-white text-black font-bold">{size} per page</option>
+              {[3, 6, 9].map((size) => (
+                <option
+                  key={size}
+                  value={size}
+                  className="bg-white text-black font-bold"
+                >
+                  {size} per page
+                </option>
               ))}
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </span>
           </div>
@@ -210,7 +228,11 @@ export default function RolesPage() {
         {Array.from({ length: Math.ceil(total / pageSize) }, (_, i) => (
           <button
             key={i + 1}
-            className={`px-2 py-1 rounded font-semibold ${page === i + 1 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"}`}
+            className={`px-2 py-1 rounded font-semibold ${
+              page === i + 1
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700"
+            }`}
             onClick={() => setPage(i + 1)}
           >
             {i + 1}
