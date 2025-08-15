@@ -1,21 +1,14 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import { cn } from "@/utils/cn";
 import { authService } from "@/services/auth.service";
-export default function ResetPasswordPage() {
-  return (
-    <Suspense>
-      <ResetPasswordContent />
-    </Suspense>
-  );
-}
 
-function ResetPasswordContent() {
+export default function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
