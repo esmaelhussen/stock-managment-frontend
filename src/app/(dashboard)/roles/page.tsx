@@ -11,6 +11,7 @@ import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
 
 export default function RolesPage() {
+  const [formErrors, setFormErrors] = useState<{ name?: string; description?: string; permissionIds?: string } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
@@ -61,11 +62,19 @@ export default function RolesPage() {
   };
 
   const handleCreate = async () => {
+    // Validation
+    const errors: { name?: string; description?: string; permissionIds?: string } = {};
+    if (!formData.name.trim()) errors.name = "Role name is required";
+    if (!formData.description.trim()) errors.description = "Description is required";
+    if (!formData.permissionIds || formData.permissionIds.length === 0) errors.permissionIds = "At least one permission must be selected";
+    setFormErrors(Object.keys(errors).length ? errors : null);
+    if (Object.keys(errors).length) return;
     try {
       await roleService.create(formData);
       toast.success("Role created successfully");
       setIsCreateModalOpen(false);
       setFormData({ name: "", description: "", permissionIds: [] });
+      setFormErrors(null);
       fetchRoles();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create role");
@@ -97,12 +106,20 @@ export default function RolesPage() {
   };
 
   const handlePermissionToggle = (permissionId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      permissionIds: prev.permissionIds?.includes(permissionId)
+    setFormData((prev) => {
+      const updated = prev.permissionIds?.includes(permissionId)
         ? prev.permissionIds.filter((id) => id !== permissionId)
-        : [...(prev.permissionIds || []), permissionId],
-    }));
+        : [...(prev.permissionIds || []), permissionId];
+      // Show error if none selected
+      setFormErrors((errors) => {
+        if (updated.length === 0) {
+          return { ...errors, permissionIds: "At least one permission must be selected" };
+        } else {
+          return { ...errors, permissionIds: undefined };
+        }
+      });
+      return { ...prev, permissionIds: updated };
+    });
   };
 
   if (loading) {
@@ -302,14 +319,34 @@ export default function RolesPage() {
           <Input
             label="Role Name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({ ...formData, name: value });
+              setFormErrors((errors) => {
+                if (!value.trim()) {
+                  return { ...errors, name: "Role name is required" };
+                } else {
+                  return { ...errors, name: undefined };
+                }
+              });
+            }}
+            error={formErrors?.name}
           />
           <Input
             label="Description"
             value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({ ...formData, description: value });
+              setFormErrors((errors) => {
+                if (!value.trim()) {
+                  return { ...errors, description: "Description is required" };
+                } else {
+                  return { ...errors, description: undefined };
+                }
+              });
+            }}
+            error={formErrors?.description}
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -338,6 +375,9 @@ export default function RolesPage() {
               ))}
             </div>
           </div>
+          {formErrors?.permissionIds && (
+            <div className="text-red-500 text-sm mt-2">{formErrors.permissionIds}</div>
+          )}
           <div className="flex justify-end space-x-2">
             <Button
               variant="secondary"
