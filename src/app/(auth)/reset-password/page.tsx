@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -8,16 +8,18 @@ import Modal from "@/components/ui/Modal";
 import { cn } from "@/utils/cn";
 import { authService } from "@/services/auth.service";
 
-export default function ResetPasswordContent() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const [token, setToken] = useState<string | null>(null);
   React.useEffect(() => {
-    if (typeof window !== "undefined" && token) {
+    const urlToken = searchParams.get("token");
+    if (typeof window !== "undefined" && urlToken) {
+      setToken(urlToken);
       const url = window.location.pathname;
       window.history.replaceState({}, "", url);
     }
-  }, [token]);
+  }, [searchParams]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,10 @@ export default function ResetPasswordContent() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (!token || typeof token !== "string" || token.trim() === "") {
+      setError("Invalid or missing reset token. Please use the link from your email.");
+      return;
+    }
     if (!newPassword || !confirmPassword) {
       setError("Please fill in all fields.");
       return;
@@ -135,5 +141,13 @@ export default function ResetPasswordContent() {
         .animate-fade-in { animation: fade-in 0.7s cubic-bezier(.4,0,.2,1) both; }
       `}</style>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
