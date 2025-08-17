@@ -14,6 +14,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [router]);
 
-  // Always render the layout, hydration will match
+  if (!authService.isAuthenticated()) {
+    return null;
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>;
 }

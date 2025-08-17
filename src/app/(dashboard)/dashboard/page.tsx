@@ -27,6 +27,9 @@ export default function DashboardPage() {
       color: "bg-green-500",
     },
     { name: "Permissions", value: "-", icon: KeyIcon, color: "bg-purple-500" },
+    { name: "Warehouses", value: "-", icon: CubeIcon, color: "bg-pink-500" },
+    { name: "Categories", value: "-", icon: CubeIcon, color: "bg-orange-500" },
+    { name: "Units", value: "-", icon: CubeIcon, color: "bg-teal-500" },
     { name: "Stock Items", value: "-", icon: CubeIcon, color: "bg-yellow-500" },
   ]);
 
@@ -35,6 +38,9 @@ export default function DashboardPage() {
       totalUsers: number;
       activeRoles: number;
       permissions: number;
+      warehouses: number;
+      categories: number;
+      units: number;
       stockItems: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
@@ -58,6 +64,24 @@ export default function DashboardPage() {
           color: "bg-purple-500",
         },
         {
+          name: "Warehouses",
+          value: String(data.warehouses),
+          icon: CubeIcon,
+          color: "bg-pink-500",
+        },
+        {
+          name: "Categories",
+          value: String(data.categories),
+          icon: CubeIcon,
+          color: "bg-orange-500",
+        },
+        {
+          name: "Units",
+          value: String(data.units),
+          icon: CubeIcon,
+          color: "bg-teal-500",
+        },
+        {
           name: "Stock Items",
           value: String(data.stockItems),
           icon: CubeIcon,
@@ -78,6 +102,9 @@ export default function DashboardPage() {
           "#3b82f6", // blue
           "#22c55e", // green
           "#a21caf", // purple
+          "#ec4899", // pink
+          "#f59e42", // orange
+          "#14b8a6", // teal
           "#eab308", // yellow
         ],
         borderColor: "#fff",
