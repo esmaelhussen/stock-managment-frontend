@@ -17,7 +17,6 @@ interface Category {
   id: number;
   name: string;
   identifier: string;
-  active: boolean;
 }
 
 export default function CategoryPage() {
@@ -35,10 +34,12 @@ export default function CategoryPage() {
   useEffect(() => {
     fetchCategories()
       .then((data: Category[]) => {
+        console.log("Fetched categories:", data); // Debug log
         setAllCategories(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Fetch categories error:", error); // Debug log
         toast.error("Failed to fetch categories");
         setLoading(false);
       });
@@ -50,35 +51,31 @@ export default function CategoryPage() {
     setCategories(allCategories.slice(start, end));
   }, [allCategories, page, pageSize]);
 
-  const handleCreate = async (data: { name: string; identifier: string; active: boolean }) => {
+  const handleCreate = async (data: { name: string; identifier: string }) => {
     try {
-      await createCategory({
-        name: data.name,
-        identifier: data.identifier,
-        active: data.active,
-      });
+      console.log("handleCreate called with data:", data); // Debug log
+      await createCategory(data);
       toast.success("Category created successfully");
       setIsCreateModalOpen(false);
       const updatedData = await fetchCategories();
       setAllCategories(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Create category error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to create category");
     }
   };
 
-  const handleUpdate = async (data: { name: string; identifier: string; active: boolean }) => {
+  const handleUpdate = async (data: { name: string; identifier: string }) => {
     if (!selectedCategory) return;
     try {
-      await updateCategory(selectedCategory.id, {
-        name: data.name,
-        identifier: data.identifier,
-        active: data.active,
-      });
+      console.log("handleUpdate called with data:", data); // Debug log
+      await updateCategory(selectedCategory.id, data);
       toast.success("Category updated successfully");
       setIsEditModalOpen(false);
       const updatedData = await fetchCategories();
       setAllCategories(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Update category error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to update category");
     }
   };
@@ -86,12 +83,14 @@ export default function CategoryPage() {
   const handleDelete = async () => {
     if (!selectedCategory) return;
     try {
+      console.log("handleDelete called for category:", selectedCategory.id); // Debug log
       await deleteCategory(selectedCategory.id);
       toast.success("Category deleted successfully");
       setIsDeleteModalOpen(false);
       const updatedData = await fetchCategories();
       setAllCategories(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Delete category error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to delete category");
     }
   };
@@ -159,13 +158,10 @@ export default function CategoryPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                 Identifier
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -176,21 +172,10 @@ export default function CategoryPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {category.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-24">
                   {category.identifier}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`px-2 py-1 rounded ${
-                      category.active
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {category.active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                   <button
                     className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                     onClick={() => {
@@ -215,7 +200,7 @@ export default function CategoryPage() {
             {categories.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={3}
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                 >
                   No categories found.

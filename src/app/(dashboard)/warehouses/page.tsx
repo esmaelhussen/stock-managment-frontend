@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useState } from "react";
 import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -15,7 +16,7 @@ import {
 interface Warehouse {
   id: number;
   name: string;
-  location: string;
+  address: string;
   active: boolean;
 }
 
@@ -34,10 +35,12 @@ export default function WarehousePage() {
   useEffect(() => {
     fetchWarehouses()
       .then((data: Warehouse[]) => {
+        console.log("Fetched warehouses:", data); // Debug log
         setAllWarehouses(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Fetch warehouses error:", error); // Debug log
         toast.error("Failed to fetch warehouses");
         setLoading(false);
       });
@@ -49,11 +52,12 @@ export default function WarehousePage() {
     setWarehouses(allWarehouses.slice(start, end));
   }, [allWarehouses, page, pageSize]);
 
-  const handleCreate = async (data: { name: string; location: string; active: boolean }) => {
+  const handleCreate = async (data: { name: string; address: string; active: boolean }) => {
     try {
+      console.log("handleCreate called with data:", data); // Debug log
       await createWarehouse({
         name: data.name,
-        location: data.location,
+        address: data.address,
         active: data.active,
       });
       toast.success("Warehouse created successfully");
@@ -61,16 +65,18 @@ export default function WarehousePage() {
       const updatedData = await fetchWarehouses();
       setAllWarehouses(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Create warehouse error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to create warehouse");
     }
   };
 
-  const handleUpdate = async (data: { name: string; location: string; active: boolean }) => {
+  const handleUpdate = async (data: { name: string; address: string; active: boolean }) => {
     if (!selectedWarehouse) return;
     try {
+      console.log("handleUpdate called with data:", data); // Debug log
       await updateWarehouse(selectedWarehouse.id, {
         name: data.name,
-        location: data.location,
+        address: data.address,
         active: data.active,
       });
       toast.success("Warehouse updated successfully");
@@ -78,6 +84,7 @@ export default function WarehousePage() {
       const updatedData = await fetchWarehouses();
       setAllWarehouses(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Update warehouse error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to update warehouse");
     }
   };
@@ -85,12 +92,14 @@ export default function WarehousePage() {
   const handleDelete = async () => {
     if (!selectedWarehouse) return;
     try {
+      console.log("handleDelete called for warehouse:", selectedWarehouse.id); // Debug log
       await deleteWarehouse(selectedWarehouse.id);
       toast.success("Warehouse deleted successfully");
       setIsDeleteModalOpen(false);
       const updatedData = await fetchWarehouses();
       setAllWarehouses(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Delete warehouse error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to delete warehouse");
     }
   };
@@ -159,12 +168,12 @@ export default function WarehousePage() {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
+                Address
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -176,9 +185,9 @@ export default function WarehousePage() {
                   {warehouse.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {warehouse.location}
+                  {warehouse.address}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-6 py-4 whitespace-nowrap text-sm w-24">
                   <span
                     className={`px-2 py-1 rounded ${
                       warehouse.active
@@ -189,7 +198,7 @@ export default function WarehousePage() {
                     {warehouse.active ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                   <button
                     className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                     onClick={() => {

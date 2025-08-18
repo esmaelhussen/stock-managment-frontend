@@ -16,8 +16,6 @@ import {
 interface Unit {
   id: number;
   name: string;
-  abbreviation: string;
-  active: boolean;
 }
 
 export default function UnitPage() {
@@ -35,10 +33,12 @@ export default function UnitPage() {
   useEffect(() => {
     fetchUnits()
       .then((data: Unit[]) => {
+        console.log("Fetched units:", data); // Debug log
         setAllUnits(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Fetch units error:", error); // Debug log
         toast.error("Failed to fetch units");
         setLoading(false);
       });
@@ -50,35 +50,31 @@ export default function UnitPage() {
     setUnits(allUnits.slice(start, end));
   }, [allUnits, page, pageSize]);
 
-  const handleCreate = async (data: { name: string; abbreviation: string; active: boolean }) => {
+  const handleCreate = async (data: { name: string }) => {
     try {
-      await createUnit({
-        name: data.name,
-        abbreviation: data.abbreviation,
-        active: data.active,
-      });
+      console.log("handleCreate called with data:", data); // Debug log
+      await createUnit({ name: data.name });
       toast.success("Unit created successfully");
       setIsCreateModalOpen(false);
       const updatedData = await fetchUnits();
       setAllUnits(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Create unit error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to create unit");
     }
   };
 
-  const handleUpdate = async (data: { name: string; abbreviation: string; active: boolean }) => {
+  const handleUpdate = async (data: { name: string }) => {
     if (!selectedUnit) return;
     try {
-      await updateUnit(selectedUnit.id, {
-        name: data.name,
-        abbreviation: data.abbreviation,
-        active: data.active,
-      });
+      console.log("handleUpdate called with data:", data); // Debug log
+      await updateUnit(selectedUnit.id, { name: data.name });
       toast.success("Unit updated successfully");
       setIsEditModalOpen(false);
       const updatedData = await fetchUnits();
       setAllUnits(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Update unit error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to update unit");
     }
   };
@@ -86,12 +82,14 @@ export default function UnitPage() {
   const handleDelete = async () => {
     if (!selectedUnit) return;
     try {
+      console.log("handleDelete called for unit:", selectedUnit.id); // Debug log
       await deleteUnit(selectedUnit.id);
       toast.success("Unit deleted successfully");
       setIsDeleteModalOpen(false);
       const updatedData = await fetchUnits();
       setAllUnits(Array.isArray(updatedData) ? updatedData : []);
     } catch (error: any) {
+      console.error("Delete unit error:", error); // Debug log
       toast.error(error?.response?.data?.message || "Failed to delete unit");
     }
   };
@@ -159,13 +157,7 @@ export default function UnitPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Abbreviation
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -176,21 +168,7 @@ export default function UnitPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {unit.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {unit.abbreviation}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`px-2 py-1 rounded ${
-                      unit.active
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {unit.active ? "Active" : "Inactive"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
                   <button
                     className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                     onClick={() => {
@@ -215,7 +193,7 @@ export default function UnitPage() {
             {units.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={2}
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
                 >
                   No units found.
