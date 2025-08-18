@@ -49,17 +49,38 @@ export default function LoginPage() {
   };
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-2 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-2 py-6">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 md:p-10 animate-fade-in transition-all duration-300 flex flex-col gap-6">
         <div className="flex flex-col items-center gap-2 mb-2">
           <span className="inline-block mb-2">
-            <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="24" cy="24" r="24" fill="#6366f1"/>
-              <text x="50%" y="55%" textAnchor="middle" fill="#fff" fontSize="18" fontFamily="Segoe UI, Arial, sans-serif" fontWeight="bold" dy=".3em">SM</text>
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 48 48"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="24" cy="24" r="24" fill="#6366f1" />
+              <text
+                x="50%"
+                y="55%"
+                textAnchor="middle"
+                fill="#fff"
+                fontSize="18"
+                fontFamily="Segoe UI, Arial, sans-serif"
+                fontWeight="bold"
+                dy=".3em"
+              >
+                SM
+              </text>
             </svg>
           </span>
-          <h1 className="text-2xl md:text-3xl font-bold text-indigo-700 tracking-tight">Welcome to <span className="text-blue-500">StockMe</span></h1>
-          <p className="text-gray-500 text-base md:text-lg">Sign in to your account</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-indigo-700 tracking-tight">
+            Welcome to <span className="text-blue-500">StockMe</span>
+          </h1>
+          <p className="text-gray-500 text-base md:text-lg">
+            Sign in to your account
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -166,8 +187,13 @@ export default function LoginPage() {
 
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-500">
-            <span className="font-semibold text-indigo-600">Email:</span> admin@example.com<br />
-            <span className="font-semibold text-indigo-600">Password:</span> admin123
+            <span className="font-semibold text-indigo-600">Email:</span>{" "}
+            admin@example.com
+            <br />
+            <span className="font-semibold text-indigo-600">
+              Password:
+            </span>{" "}
+            admin123
           </p>
         </div>
       </div>

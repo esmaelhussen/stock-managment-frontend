@@ -10,6 +10,7 @@ import {
   KeyIcon,
   ArrowLeftOnRectangleIcon,
   CubeIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -19,11 +20,12 @@ const Sidebar: React.FC = () => {
   const user = authService.getCurrentUser();
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-    { name: "Users", href: "/users", icon: UserGroupIcon },
-    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
-    { name: "Permissions", href: "/permissions", icon: KeyIcon },
-    { name: "Stock", href: "/stock", icon: CubeIcon },
+  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+  { name: "Users", href: "/users", icon: UserGroupIcon },
+  { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
+  { name: "Permissions", href: "/permissions", icon: KeyIcon },
+  { name: "Categories", href: "/categories", icon: TagIcon },
+  { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
   const handleLogout = () => {
