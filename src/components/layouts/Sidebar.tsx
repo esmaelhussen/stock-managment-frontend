@@ -10,6 +10,8 @@ import {
   KeyIcon,
   ArrowLeftOnRectangleIcon,
   CubeIcon,
+  Squares2X2Icon,
+  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -19,15 +21,15 @@ const Sidebar: React.FC = () => {
   const user = authService.getCurrentUser();
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-    { name: "Users", href: "/users", icon: UserGroupIcon },
-    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
-    { name: "Permissions", href: "/permissions", icon: KeyIcon },
-  { name: "Warehouses", href: "/dashboard/warehouses", icon: CubeIcon },
-  { name: "Categories", href: "/dashboard/categories", icon: CubeIcon },
-  { name: "Units", href: "/dashboard/units", icon: CubeIcon },
-    { name: "Stock", href: "/stock", icon: CubeIcon },
-  ];
+  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+  { name: "Users", href: "/users", icon: UserGroupIcon },
+  { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
+  { name: "Permissions", href: "/permissions", icon: KeyIcon },
+  { name: "Warehouses", href: "/warehouses", icon: CubeIcon },
+  { name: "Categories", href: "/categories", icon: Squares2X2Icon },
+  { name: "Units", href: "/units", icon: ScaleIcon },
+  { name: "Stock", href: "/stock", icon: CubeIcon },
+];
 
   const handleLogout = () => {
     authService.logout();
