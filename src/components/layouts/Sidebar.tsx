@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,6 +10,8 @@ import {
   KeyIcon,
   ArrowLeftOnRectangleIcon,
   CubeIcon,
+  Squares2X2Icon,
+  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -23,45 +25,48 @@ const Sidebar: React.FC = () => {
     { name: "Users", href: "/users", icon: UserGroupIcon },
     { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
     { name: "Permissions", href: "/permissions", icon: KeyIcon },
+    { name: "Warehouses", href: "/warehouses", icon: CubeIcon },
+    { name: "Categories", href: "/categories", icon: Squares2X2Icon },
+    { name: "Units", href: "/units", icon: ScaleIcon },
     { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
     authService.logout();
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // Listen for custom event from header hamburger
-  React.useEffect(() => {
-    const handler = (e) => {
-      setMenuOpen(e.detail ? true : false);
-    };
-    window.addEventListener('openSidebarMenu', handler);
-    return () => window.removeEventListener('openSidebarMenu', handler);
+  useEffect(() => {
+    const handler = (e: CustomEvent) => setMenuOpen(e.detail ? true : false);
+    window.addEventListener("openSidebarMenu", handler as EventListener);
+    return () =>
+      window.removeEventListener("openSidebarMenu", handler as EventListener);
   }, []);
 
-  // Sync hamburger icon in header when sidebar closes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!menuOpen) {
-      window.dispatchEvent(new CustomEvent("openSidebarMenu", { detail: false }));
+      window.dispatchEvent(
+        new CustomEvent("openSidebarMenu", { detail: false })
+      );
     }
   }, [menuOpen]);
 
   return (
-    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-auto h-16 relative">
-      {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
-
+    <aside
+      className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-full md:w-64
+                 flex-shrink-0 bg-white flex flex-col shadow-lg z-30"
+    >
       {/* Mobile menu */}
       <nav
         className={cn(
-          "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
+          "absolute top-0 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
           menuOpen
             ? "max-h-96 opacity-100 scale-100"
             : "max-h-0 opacity-0 scale-95 overflow-hidden"
         )}
       >
-        {navigation.map((item, idx) => {
+        {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
@@ -75,7 +80,6 @@ const Sidebar: React.FC = () => {
               )}
               onClick={() => setMenuOpen(false)}
             >
-              {/* Only show icon once at top, not in each menu item */}
               {item.name}
             </Link>
           );
@@ -111,8 +115,8 @@ const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      {/* User info and logout for desktop */}
-      <div className="hidden md:block border-t border-gray-700 p-4 mt-auto">
+      {/* User info & logout */}
+      <div className="hidden md:block border-t border-gray-200 p-4 mt-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="ml-3">
@@ -126,7 +130,7 @@ const Sidebar: React.FC = () => {
             onClick={handleLogout}
             className="text-gray-600 hover:text-black transition-colors hover:cursor-pointer"
           >
-            <ArrowLeftOnRectangleIcon className="h-8 w-9 " title="Logout" />
+            <ArrowLeftOnRectangleIcon className="h-8 w-9" title="Logout" />
           </button>
         </div>
       </div>

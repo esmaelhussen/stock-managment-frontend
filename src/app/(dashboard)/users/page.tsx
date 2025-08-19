@@ -196,7 +196,10 @@ export default function UsersPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex space-x-2">
+                  <div
+                    className="flex gap-0 items-center"
+                    style={{ width: "70px" }}
+                  >
                     <button
                       onClick={() => {
                         setSelectedUser(user);
