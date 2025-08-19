@@ -10,6 +10,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { LoginCredentials } from "@/types";
+import { log } from "console";
 
 const schema = yup.object({
   email: yup.string().email("Invalid email").required("Email is required"),
@@ -36,6 +37,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginCredentials) => {
     setLoading(true);
     try {
+      console.log("Attempting login with data:", data);
       await authService.login(data);
       toast.success("Login successful!");
       setLoginError("");

@@ -128,3 +128,22 @@ export interface UpdatePermissionInput {
   action?: string;
   isActive?: boolean;
 }
+
+export interface Warehouse {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface CreateWarehouseInput {
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface UpdateWarehouseInput {
+  name?: string;
+  address?: string;
+  description?: string;
+}

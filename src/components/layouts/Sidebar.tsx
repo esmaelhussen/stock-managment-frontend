@@ -9,8 +9,9 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   ArrowLeftOnRectangleIcon,
-  CubeIcon,
+  ArchiveBoxIcon,
   TagIcon,
+  CubeIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -20,12 +21,12 @@ const Sidebar: React.FC = () => {
   const user = authService.getCurrentUser();
 
   const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { name: "Users", href: "/users", icon: UserGroupIcon },
-  { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
-  { name: "Permissions", href: "/permissions", icon: KeyIcon },
-  { name: "Categories", href: "/categories", icon: TagIcon },
-  { name: "Stock", href: "/stock", icon: CubeIcon },
+    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+    { name: "Users", href: "/users", icon: UserGroupIcon },
+    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
+    { name: "Permissions", href: "/permissions", icon: KeyIcon },
+    { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
+    { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
   const handleLogout = () => {
@@ -39,14 +40,16 @@ const Sidebar: React.FC = () => {
     const handler = (e) => {
       setMenuOpen(e.detail ? true : false);
     };
-    window.addEventListener('openSidebarMenu', handler);
-    return () => window.removeEventListener('openSidebarMenu', handler);
+    window.addEventListener("openSidebarMenu", handler);
+    return () => window.removeEventListener("openSidebarMenu", handler);
   }, []);
 
   // Sync hamburger icon in header when sidebar closes
   React.useEffect(() => {
     if (!menuOpen) {
-      window.dispatchEvent(new CustomEvent("openSidebarMenu", { detail: false }));
+      window.dispatchEvent(
+        new CustomEvent("openSidebarMenu", { detail: false })
+      );
     }
   }, [menuOpen]);
 
@@ -85,7 +88,7 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-y-auto bg-white">
+      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
         {navigation.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (

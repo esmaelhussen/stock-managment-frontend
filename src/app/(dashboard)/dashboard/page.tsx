@@ -10,6 +10,7 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   CubeIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DashboardPage() {
@@ -28,6 +29,12 @@ export default function DashboardPage() {
     },
     { name: "Permissions", value: "-", icon: KeyIcon, color: "bg-purple-500" },
     { name: "Stock Items", value: "-", icon: CubeIcon, color: "bg-yellow-500" },
+    {
+      name: "Warehouses",
+      value: "-",
+      icon: CubeIcon,
+      color: "bg-indigo-500",
+    },
   ]);
 
   useEffect(() => {
@@ -36,6 +43,7 @@ export default function DashboardPage() {
       activeRoles: number;
       permissions: number;
       stockItems: number;
+      warehouses: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
       setStats([
@@ -56,6 +64,12 @@ export default function DashboardPage() {
           value: String(data.permissions),
           icon: KeyIcon,
           color: "bg-purple-500",
+        },
+        {
+          name: "Warehouses",
+          value: String(data.warehouses),
+          icon: ArchiveBoxIcon,
+          color: "bg-indigo-500",
         },
         {
           name: "Stock Items",
@@ -79,6 +93,7 @@ export default function DashboardPage() {
           "#22c55e", // green
           "#a21caf", // purple
           "#eab308", // yellow
+          "#6366f1", // indigo for warehouses
         ],
         borderColor: "#fff",
         borderWidth: 2,

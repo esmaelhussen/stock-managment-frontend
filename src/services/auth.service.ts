@@ -4,16 +4,17 @@ import Cookies from "js-cookie";
 
 export class AuthService {
   async forgotPassword(email: string): Promise<void> {
-    await apiClient.post('/auth/forgot-password', { email });
+    await apiClient.post("/auth/forgot-password", { email });
   }
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    await apiClient.post('/auth/reset-password', { token, newPassword });
+    await apiClient.post("/auth/reset-password", { token, newPassword });
   }
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>(
       "/auth/login",
       credentials
     );
+    console.log("Login response:", response);
     if (response.access_token) {
       Cookies.set("token", response.access_token, { expires: 7 });
       Cookies.set("user", JSON.stringify(response.user), { expires: 7 });
