@@ -1,16 +1,19 @@
 export interface Category {
   id: string;
   name: string;
+  identifier?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreateCategoryInput {
   name: string;
+  identifier?: string;
 }
 
 export interface UpdateCategoryInput {
   name?: string;
+  identifier?: string;
 }
 export interface User {
   id: string;
