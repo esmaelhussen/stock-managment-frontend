@@ -150,3 +150,16 @@ export interface UpdateWarehouseInput {
   address?: string;
   description?: string;
 }
+
+export interface Unit {
+  id: string;
+  name: string;
+}
+
+export interface CreateUnitInput {
+  name: string;
+}
+
+export interface UpdateUnitInput {
+  name?: string;
+}

@@ -12,6 +12,7 @@ import {
   ArchiveBoxIcon,
   TagIcon,
   CubeIcon,
+  ScaleIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -27,6 +28,11 @@ const Sidebar: React.FC = () => {
     { name: "Permissions", href: "/permissions", icon: KeyIcon },
     { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
     { name: "Categories", href: "/categories", icon: TagIcon },
+    {
+      name: "Units",
+      href: "/units",
+      icon: ScaleIcon, // Updated to use ScaleIcon for units
+    },
     { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
