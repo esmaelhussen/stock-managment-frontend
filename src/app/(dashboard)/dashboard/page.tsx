@@ -12,6 +12,7 @@ import {
   CubeIcon,
   ArchiveBoxIcon,
   TagIcon,
+  ScaleIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DashboardPage() {
@@ -42,6 +43,12 @@ export default function DashboardPage() {
       icon: ArchiveBoxIcon,
       color: "bg-pink-500",
     },
+    {
+      name: "Units",
+      value: "-",
+      icon: ScaleIcon,
+      color: "bg-teal-500",
+    },
   ]);
 
   useEffect(() => {
@@ -52,6 +59,7 @@ export default function DashboardPage() {
       stockItems: number;
       warehouses: number;
       categories: number;
+      units: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
       setStats([
@@ -86,6 +94,12 @@ export default function DashboardPage() {
           color: "bg-pink-500",
         },
         {
+          name: "Units",
+          value: String(data.units),
+          icon: ScaleIcon,
+          color: "bg-teal-500",
+        },
+        {
           name: "Stock Items",
           value: String(data.stockItems),
           icon: CubeIcon,
@@ -106,9 +120,11 @@ export default function DashboardPage() {
           "#3b82f6", // blue
           "#22c55e", // green
           "#a21caf", // purple
-          "#eab308", // yellow
-          "#6366f1", // indigo for warehouses
+          "#6366f1",
           "#ec4899", // pink for categories
+          "#14b8a6", // teal for units
+          "#eab308", // yellow
+          // indigo for warehouses
         ],
         borderColor: "#fff",
         borderWidth: 2,
