@@ -163,3 +163,22 @@ export interface CreateUnitInput {
 export interface UpdateUnitInput {
   name?: string;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  sku: string;
+  category: Category;
+  unit: Unit;
+}
+
+export interface CreateProductInput {
+  name: string;
+  description?: string;
+  sku: string;
+  categoryId: string;
+  unitId: string;
+}
+
+export interface UpdateProductInput extends Partial<CreateProductInput> {}

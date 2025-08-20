@@ -13,6 +13,7 @@ import {
   TagIcon,
   CubeIcon,
   ScaleIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -33,6 +34,7 @@ const Sidebar: React.FC = () => {
       href: "/units",
       icon: ScaleIcon, // Updated to use ScaleIcon for units
     },
+    { name: "Products", href: "/products", icon: ShoppingBagIcon },
     { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 

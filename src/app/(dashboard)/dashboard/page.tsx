@@ -13,6 +13,7 @@ import {
   ArchiveBoxIcon,
   TagIcon,
   ScaleIcon,
+  ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
 
 export default function DashboardPage() {
@@ -49,6 +50,12 @@ export default function DashboardPage() {
       icon: ScaleIcon,
       color: "bg-teal-500",
     },
+    {
+      name: "Products",
+      value: "-",
+      icon: ShoppingBagIcon,
+      color: "bg-orange-500",
+    },
   ]);
 
   useEffect(() => {
@@ -60,6 +67,7 @@ export default function DashboardPage() {
       warehouses: number;
       categories: number;
       units: number;
+      products: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
       setStats([
@@ -105,6 +113,12 @@ export default function DashboardPage() {
           icon: CubeIcon,
           color: "bg-yellow-500",
         },
+        {
+          name: "Products",
+          value: String(data.products),
+          icon: ShoppingBagIcon,
+          color: "bg-orange-500",
+        },
       ]);
     });
   }, []);
@@ -124,6 +138,7 @@ export default function DashboardPage() {
           "#ec4899", // pink for categories
           "#14b8a6", // teal for units
           "#eab308", // yellow
+          "#f97316", // orange for products
           // indigo for warehouses
         ],
         borderColor: "#fff",
