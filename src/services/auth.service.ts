@@ -18,6 +18,9 @@ export class AuthService {
     if (response.access_token) {
       Cookies.set("token", response.access_token, { expires: 7 });
       Cookies.set("user", JSON.stringify(response.user), { expires: 7 });
+      Cookies.set("permission", JSON.stringify(response.user.permissions), {
+        expires: 7,
+      });
     }
     return response;
   }

@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import UserForm from "./UserForm";
 import { userService } from "@/services/user.service";
 import { User, CreateUserInput, UpdateUserInput } from "@/types";
+import Cookies from "js-cookie";
 
 export default function UsersPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -20,6 +21,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
   const total = allUsers.length;
+  const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchUsers();
@@ -127,10 +129,12 @@ export default function UsersPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add User
-          </Button>
+            {permissions.includes("users.create") && (
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Add User
+                </Button>
+            )}
         </div>
       </div>
 

@@ -17,10 +17,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
+import Cookies from "js-cookie";
 
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
+  const permission = JSON.parse(Cookies.get("permission"));
+  console.log('permission', permission);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
@@ -76,6 +79,8 @@ const Sidebar: React.FC = () => {
         )}
       >
         {navigation.map((item, idx) => {
+          if( item.name === "Users" && !permission.includes("users.read")) return null;
+
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
@@ -99,6 +104,7 @@ const Sidebar: React.FC = () => {
       {/* Desktop sidebar */}
       <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
         {navigation.map((item) => {
+          if( item.name === "Users" && !permission.includes("users.read")) return null;
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
