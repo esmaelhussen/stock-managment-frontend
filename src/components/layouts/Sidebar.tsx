@@ -14,6 +14,7 @@ import {
   CubeIcon,
   ScaleIcon,
   ShoppingBagIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -22,22 +23,25 @@ import Cookies from "js-cookie";
 const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
-  const permission = JSON.parse(Cookies.get("permission"));
-  console.log('permission', permission);
+  const permission = JSON.parse(Cookies.get("permission") || "[]");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
     { name: "Users", href: "/users", icon: UserGroupIcon },
     { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
     { name: "Permissions", href: "/permissions", icon: KeyIcon },
-    { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
-    { name: "Categories", href: "/categories", icon: TagIcon },
     {
-      name: "Units",
-      href: "/units",
-      icon: ScaleIcon, // Updated to use ScaleIcon for units
+      name: "Inventory",
+      icon: CubeIcon,
+      children: [
+        { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
+        { name: "Categories", href: "/categories", icon: TagIcon },
+        { name: "Units", href: "/units", icon: ScaleIcon },
+        { name: "Products", href: "/products", icon: ShoppingBagIcon },
+      ],
     },
-    { name: "Products", href: "/products", icon: ShoppingBagIcon },
     { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
@@ -45,41 +49,93 @@ const Sidebar: React.FC = () => {
     authService.logout();
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   // Listen for custom event from header hamburger
   React.useEffect(() => {
-    const handler = (e) => {
+    const handler = (e: CustomEvent) => {
       setMenuOpen(e.detail ? true : false);
     };
-    window.addEventListener("openSidebarMenu", handler);
-    return () => window.removeEventListener("openSidebarMenu", handler);
+    window.addEventListener("openSidebarMenu", handler as EventListener);
+    return () => window.removeEventListener("openSidebarMenu", handler as EventListener);
   }, []);
 
   // Sync hamburger icon in header when sidebar closes
   React.useEffect(() => {
     if (!menuOpen) {
-      window.dispatchEvent(
-        new CustomEvent("openSidebarMenu", { detail: false })
-      );
+      window.dispatchEvent(new CustomEvent("openSidebarMenu", { detail: false }));
     }
   }, [menuOpen]);
 
   return (
-    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-auto h-16 relative">
-      {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
-
+    <aside className="fixed top-0 left-0 h-full w-full md:w-64 flex-shrink-0 bg-white flex flex-row md:flex-col z-30 shadow-md">
       {/* Mobile menu */}
       <nav
         className={cn(
-          "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
+          "absolute top-16 left-0 w-full bg-white z-40 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-200",
           menuOpen
             ? "max-h-96 opacity-100 scale-100"
             : "max-h-0 opacity-0 scale-95 overflow-hidden"
         )}
       >
-        {navigation.map((item, idx) => {
-          if( item.name === "Users" && !permission.includes("users.read")) return null;
+        {navigation.map((item) => {
+          if (item.name === "Users" && !permission.includes("users.read")) return null;
+
+          if (item.children) {
+            return (
+              <div key={item.name}>
+                <button
+                  onClick={() => setInventoryOpen(!inventoryOpen)}
+                  className={cn(
+                    "group flex items-center w-full px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
+                    "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:shadow-md"
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "mr-3 h-6 w-6 flex-shrink-0",
+                      "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                    )}
+                  />
+                  {item.name}
+                  <ChevronDownIcon
+                    className={cn(
+                      "ml-auto h-5 w-5 transition-transform",
+                      inventoryOpen ? "rotate-180" : ""
+                    )}
+                  />
+                </button>
+                {inventoryOpen && (
+                  <div className="pl-8">
+                    {item.children.map((child) => {
+                      const isActive = pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={child.name}
+                          href={child.href}
+                          className={cn(
+                            "group flex items-center px-6 py-3 text-base font-medium rounded-xl transition-all duration-200 mb-2",
+                            isActive
+                              ? "text-indigo-700 scale-105"
+                              : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                          )}
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          <child.icon
+                            className={cn(
+                              "mr-3 h-6 w-6 flex-shrink-0",
+                              isActive
+                                ? "text-indigo-700 scale-110"
+                                : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                            )}
+                          />
+                          {child.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           const isActive = pathname.startsWith(item.href);
           return (
@@ -89,12 +145,19 @@ const Sidebar: React.FC = () => {
               className={cn(
                 "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                  ? "text-indigo-700 scale-105"
                   : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
               onClick={() => setMenuOpen(false)}
             >
-              {/* Only show icon once at top, not in each menu item */}
+              <item.icon
+                className={cn(
+                  "mr-3 h-6 w-6 flex-shrink-0",
+                  isActive
+                    ? "text-indigo-700 scale-110"
+                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                )}
+              />
               {item.name}
             </Link>
           );
@@ -102,9 +165,67 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Desktop sidebar */}
-      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
+      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-y-auto bg-white">
         {navigation.map((item) => {
-          if( item.name === "Users" && !permission.includes("users.read")) return null;
+          if (item.name === "Users" && !permission.includes("users.read")) return null;
+
+          if (item.children) {
+            return (
+              <div key={item.name}>
+                <button
+                  onClick={() => setInventoryOpen(!inventoryOpen)}
+                  className={cn(
+                    "group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                    "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:shadow-md"
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "mr-3 h-6 w-6 flex-shrink-0",
+                      "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                    )}
+                  />
+                  {item.name}
+                  <ChevronDownIcon
+                    className={cn(
+                      "ml-auto h-5 w-5 transition-transform",
+                      inventoryOpen ? "rotate-180" : ""
+                    )}
+                  />
+                </button>
+                {inventoryOpen && (
+                  <div className="pl-6">
+                    {item.children.map((child) => {
+                      const isActive = pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={child.name}
+                          href={child.href}
+                          className={cn(
+                            "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                            isActive
+                              ? "text-indigo-700 scale-105"
+                              : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                          )}
+                        >
+                          <child.icon
+                            className={cn(
+                              "mr-3 h-6 w-6 flex-shrink-0",
+                              isActive
+                                ? "text-indigo-700 scale-110"
+                                : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                            )}
+                          />
+                          {child.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
@@ -113,7 +234,7 @@ const Sidebar: React.FC = () => {
               className={cn(
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                  ? "text-indigo-700 scale-105"
                   : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
             >
@@ -121,7 +242,7 @@ const Sidebar: React.FC = () => {
                 className={cn(
                   "mr-3 h-6 w-6 flex-shrink-0",
                   isActive
-                    ? "text-white drop-shadow"
+                    ? "text-indigo-700 scale-110"
                     : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
                 )}
               />
@@ -132,7 +253,7 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* User info and logout for desktop */}
-      <div className="hidden md:block border-t border-gray-700 p-4 mt-auto">
+      <div className="hidden md:block border-t border-gray-200 p-4 mt-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="ml-3">
@@ -146,7 +267,7 @@ const Sidebar: React.FC = () => {
             onClick={handleLogout}
             className="text-gray-600 hover:text-black transition-colors hover:cursor-pointer"
           >
-            <ArrowLeftOnRectangleIcon className="h-8 w-9 " title="Logout" />
+            <ArrowLeftOnRectangleIcon className="h-8 w-9" title="Logout" />
           </button>
         </div>
       </div>

@@ -14,7 +14,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const [hamburgerOpen, setHamburgerOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const handler = (e) => {
+    const handler = (e: any) => {
       setHamburgerOpen(e.detail ? true : false);
     };
     window.addEventListener("openSidebarMenu", handler);
@@ -22,10 +22,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 pt-16">
+    <div className="h-screen bg-gray-100">
       {/* Header fixed at top */}
-      <header className="fixed top-0 left-0 right-0 z-40 w-full flex items-center justify-between px-4 sm:px-6 py-4 bg-white shadow-sm border-b">
-        {/* Hamburger for mobile at top left, hidden on desktop */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 sm:px-6 py-4 bg-white shadow-sm border-b h-16">
+        {/* Hamburger for mobile */}
         <div className="flex items-center">
           <button
             className="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 mr-2"
@@ -52,7 +52,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               }`}
             ></span>
           </button>
-          {/* Hide stockme on mobile, show on desktop */}
+          {/* Logo */}
           <Link
             href="/dashboard"
             className="focus:outline-none hidden sm:block"
@@ -64,14 +64,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </div>
         <ProfileMenu />
       </header>
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <div className="w-full  px-4 sm:px-6 md:px-8 py-4 md:py-8 bg-gray-100">
-            {children}
-          </div>
-        </main>
-      </div>
+
+      {/* Sidebar fixed left */}
+      <Sidebar />
+
+      {/* Main content → offset for header & sidebar */}
+      <main className="pt-16 md:ml-64 h-screen overflow-y-auto">
+        <div className="w-full px-4 sm:px-6 md:px-8 py-4 md:py-8 bg-gray-100 min-h-full">
+          {children}
+        </div>
+      </main>
+
       <Toaster position="top-right" />
     </div>
   );
