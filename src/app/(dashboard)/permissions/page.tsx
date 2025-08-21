@@ -14,6 +14,7 @@ import Modal from "@/components/ui/Modal";
 import PermissionForm from "./PermissionForm";
 import { permissionService } from "@/services/permission.service";
 import { Permission } from "@/types";
+import Cookies from "js-cookie";
 
 export default function PermissionsPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
@@ -27,6 +28,8 @@ export default function PermissionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
   const total = allPermissions.length;
+  const rolePermission = JSON.parse(Cookies.get("permission") || "[]");
+
 
   useEffect(() => {
     fetchPermissions();
@@ -127,10 +130,13 @@ export default function PermissionsPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Permission
-          </Button>
+          {rolePermission.includes("permissions.create") && (
+              <Button onClick={() => setIsCreateModalOpen(true)}>
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Add Permission
+              </Button>
+          )}
+
         </div>
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -152,13 +158,17 @@ export default function PermissionsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(rolePermission.includes("permissions.update") || rolePermission.includes("permissions.delete")) && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+              )}
+
+
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {permissions.map((permission) => (
+          {permissions.map((permission) => (
               <tr key={permission.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {permission.name}
@@ -184,36 +194,43 @@ export default function PermissionsPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
-                  <button
-                    className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsEditModalOpen(true);
-                    }}
-                  >
-                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
+                  {rolePermission.includes("permissions.update") && (
+                      <button
+                          className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+                          onClick={() => {
+                            setSelectedPermission(permission);
+                            setIsEditModalOpen(true);
+                          }}
+                      >
+                        <PencilIcon
+                            className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150"/>
+                      </button>
+                  )}
+                  {rolePermission.includes("permissions.delete") && (
+                      <button
+                          className="text-red-600 hover:text-red-900 cursor-pointer"
+                          onClick={() => {
+                            setSelectedPermission(permission);
+                            setIsDeleteModalOpen(true);
+                          }}
+                      >
+                        <TrashIcon
+                            className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150"/>
+                      </button>
+                  )}
+
                 </td>
               </tr>
-            ))}
+          ))}
           </tbody>
         </table>
       </div>
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
+            className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
         >
           Prev
         </button>

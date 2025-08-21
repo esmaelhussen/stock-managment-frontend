@@ -9,6 +9,7 @@ import Input from "@/components/ui/Input";
 import { roleService } from "@/services/role.service";
 import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
+import Cookies from "js-cookie";
 
 export default function RolesPage() {
   const [formErrors, setFormErrors] = useState<{ name?: string; description?: string; permissionIds?: string } | null>(null);
@@ -29,6 +30,7 @@ export default function RolesPage() {
     description: "",
     permissionIds: [],
   });
+  const permission = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchRoles();
@@ -172,10 +174,12 @@ export default function RolesPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Role
-          </Button>
+          {permission.includes("roles.create") && (
+              <Button onClick={() => setIsCreateModalOpen(true)}>
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Add Role
+              </Button>
+          )}
         </div>
       </div>
 
@@ -190,42 +194,47 @@ export default function RolesPage() {
                 <p className="text-sm text-gray-500">{role.description}</p>
               </div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    setSelectedRole(role);
-                    setFormData({
-                      name: role.name,
-                      description: role.description || "",
-                      permissionIds:
-                        role.rolePermissions?.map((rp) => rp.permissionId) ||
-                        [],
-                    });
-                    setIsEditModalOpen(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                >
-                  <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
-                <button
-                  onClick={() => {
-                    setRoleToDelete(role);
-                    setIsDeleteModalOpen(true);
-                  }}
-                  className="text-red-600 hover:text-red-900 cursor-pointer"
-                >
-                  <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
+                {permission.includes("roles.update") && (
+                    <button
+                        onClick={() => {
+                          setSelectedRole(role);
+                          setFormData({
+                            name: role.name,
+                            description: role.description || "",
+                            permissionIds:
+                                role.rolePermissions?.map((rp) => rp.permissionId) ||
+                                [],
+                          });
+                          setIsEditModalOpen(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                    >
+                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150"/>
+                    </button>
+                )}
+
+                {permission.includes("roles.delete") && (
+                    <button
+                        onClick={() => {
+                          setRoleToDelete(role);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="text-red-600 hover:text-red-900 cursor-pointer"
+                    >
+                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150"/>
+                    </button>
+                )}
                 <Modal
-                  isOpen={isDeleteModalOpen}
-                  onClose={() => {
-                    setIsDeleteModalOpen(false);
-                    setRoleToDelete(null);
-                  }}
-                  title="Delete Role"
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => {
+                      setIsDeleteModalOpen(false);
+                      setRoleToDelete(null);
+                    }}
+                    title="Delete Role"
                 >
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Are you sure you want to delete this role? This action
+                    Are you sure you want to delete this role? This action
                       cannot be undone.
                     </p>
                   </div>

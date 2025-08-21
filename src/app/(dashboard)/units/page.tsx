@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { unitService } from "@/services/unit.service";
 import { Unit, CreateUnitInput, UpdateUnitInput } from "@/types";
+import Cookies from "js-cookie";
 
 export default function UnitsPage() {
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
@@ -21,6 +22,7 @@ export default function UnitsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const total = allUnits.length;
+  const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchUnits();
@@ -99,10 +101,13 @@ export default function UnitsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Unit
-          </Button>
+          {permissions.includes("units.create") && (
+              <Button onClick={() => setIsCreateModalOpen(true)}>
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Add Unit
+              </Button>
+          )}
+
         </div>
       </div>
 
@@ -113,13 +118,16 @@ export default function UnitsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(permissions.includes("units.update") || permissions.includes("units.delete")) && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+              )}
+
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {units.map((unit) => (
+          {units.map((unit) => (
               <tr key={unit.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
@@ -128,37 +136,43 @@ export default function UnitsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedUnit(unit);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedUnit(unit);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
+                    {permissions.includes("units.update") && (
+                        <button
+                            onClick={() => {
+                              setSelectedUnit(unit);
+                              setIsEditModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                        >
+                          <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
+                        </button>
+                    )}
+
+                    {permissions.includes("units.delete") && (
+                        <button
+                            onClick={() => {
+                              setSelectedUnit(unit);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                        >
+                          <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
+                        </button>
+                    )}
+
                   </div>
                 </td>
               </tr>
-            ))}
+          ))}
           </tbody>
         </table>
       </div>
 
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
+            className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
         >
           Prev
         </button>

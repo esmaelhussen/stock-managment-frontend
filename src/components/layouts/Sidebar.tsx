@@ -81,6 +81,7 @@ const Sidebar: React.FC = () => {
         {navigation.map((item, idx) => {
           if( item.name === "Users" && !permission.includes("users.read")) return null;
 
+
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
@@ -105,6 +106,15 @@ const Sidebar: React.FC = () => {
       <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
         {navigation.map((item) => {
           if( item.name === "Users" && !permission.includes("users.read")) return null;
+          if(item.name === "Roles" && !permission.includes("roles.read")) return null;
+            if(item.name === "Permissions" && !permission.includes("permissions.read")) return null;
+            if(item.name === "Warehouses" && !permission.includes("warehouses.read")) return null;
+            if(item.name === "Categories" && !permission.includes("categories.read")) return null;
+            if(item.name === "Units" && !permission.includes("units.read")) return null;
+            if(item.name === "Products" && !permission.includes("products.read")) return null;
+            if(item.name === "Stock" && !permission.includes("stock.read")) return null;
+
+          
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
