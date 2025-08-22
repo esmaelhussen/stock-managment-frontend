@@ -9,9 +9,14 @@ import Input from "@/components/ui/Input";
 import { roleService } from "@/services/role.service";
 import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
+import Cookies from "js-cookie";
 
 export default function RolesPage() {
-  const [formErrors, setFormErrors] = useState<{ name?: string; description?: string; permissionIds?: string } | null>(null);
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    description?: string;
+    permissionIds?: string;
+  } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
@@ -29,6 +34,8 @@ export default function RolesPage() {
     description: "",
     permissionIds: [],
   });
+  const [permissionSearch, setPermissionSearch] = useState(""); // State for search query
+  const permission = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchRoles();
@@ -63,10 +70,16 @@ export default function RolesPage() {
 
   const handleCreate = async () => {
     // Validation
-    const errors: { name?: string; description?: string; permissionIds?: string } = {};
+    const errors: {
+      name?: string;
+      description?: string;
+      permissionIds?: string;
+    } = {};
     if (!formData.name.trim()) errors.name = "Role name is required";
-    if (!formData.description.trim()) errors.description = "Description is required";
-    if (!formData.permissionIds || formData.permissionIds.length === 0) errors.permissionIds = "At least one permission must be selected";
+    if (!formData.description.trim())
+      errors.description = "Description is required";
+    if (!formData.permissionIds || formData.permissionIds.length === 0)
+      errors.permissionIds = "At least one permission must be selected";
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
     try {
@@ -113,7 +126,10 @@ export default function RolesPage() {
       // Show error if none selected
       setFormErrors((errors) => {
         if (updated.length === 0) {
-          return { ...errors, permissionIds: "At least one permission must be selected" };
+          return {
+            ...errors,
+            permissionIds: "At least one permission must be selected",
+          };
         } else {
           return { ...errors, permissionIds: undefined };
         }
@@ -121,6 +137,10 @@ export default function RolesPage() {
       return { ...prev, permissionIds: updated };
     });
   };
+
+  const filteredPermissions = permissions.filter((permission) =>
+    permission.name.toLowerCase().includes(permissionSearch.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -172,10 +192,12 @@ export default function RolesPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Role
-          </Button>
+          {permission.includes("roles.create") && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Role
+            </Button>
+          )}
         </div>
       </div>
 
@@ -190,31 +212,36 @@ export default function RolesPage() {
                 <p className="text-sm text-gray-500">{role.description}</p>
               </div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    setSelectedRole(role);
-                    setFormData({
-                      name: role.name,
-                      description: role.description || "",
-                      permissionIds:
-                        role.rolePermissions?.map((rp) => rp.permissionId) ||
-                        [],
-                    });
-                    setIsEditModalOpen(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                >
-                  <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
-                <button
-                  onClick={() => {
-                    setRoleToDelete(role);
-                    setIsDeleteModalOpen(true);
-                  }}
-                  className="text-red-600 hover:text-red-900 cursor-pointer"
-                >
-                  <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
+                {permission.includes("roles.update") && (
+                  <button
+                    onClick={() => {
+                      setSelectedRole(role);
+                      setFormData({
+                        name: role.name,
+                        description: role.description || "",
+                        permissionIds:
+                          role.rolePermissions?.map((rp) => rp.permissionId) ||
+                          [],
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                  >
+                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                  </button>
+                )}
+
+                {permission.includes("roles.delete") && (
+                  <button
+                    onClick={() => {
+                      setRoleToDelete(role);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="text-red-600 hover:text-red-900 cursor-pointer"
+                  >
+                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                  </button>
+                )}
                 <Modal
                   isOpen={isDeleteModalOpen}
                   onClose={() => {
@@ -353,30 +380,55 @@ export default function RolesPage() {
               Permissions
             </label>
             <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {permissions.map((permission) => (
-                <div key={permission.id} className="flex items-center py-1">
-                  <input
-                    type="checkbox"
-                    id={`perm-${permission.id}`}
-                    checked={formData.permissionIds?.includes(permission.id)}
-                    onChange={() => handlePermissionToggle(permission.id)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`perm-${permission.id}`}
-                    className="ml-2 text-sm text-gray-700"
+              <div className="relative mb-4">
+                <Input
+                  type="text"
+                  placeholder="Search permissions..."
+                  value={permissionSearch}
+                  onChange={(e) => setPermissionSearch(e.target.value)}
+                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
                   >
-                    {permission.name} -{" "}
-                    <span className="text-gray-500">
-                      {permission.description}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPermissions.map((permission) => (
+                  <label
+                    key={permission.id}
+                    className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg shadow-md transition duration-150 ease-in-out"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.permissionIds.includes(permission.id)}
+                      onChange={() => handlePermissionToggle(permission.id)}
+                      className="form-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {permission.name}
                     </span>
                   </label>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           {formErrors?.permissionIds && (
-            <div className="text-red-500 text-sm mt-2">{formErrors.permissionIds}</div>
+            <div className="text-red-500 text-sm mt-2">
+              {formErrors.permissionIds}
+            </div>
           )}
           <div className="flex justify-end space-x-2">
             <Button

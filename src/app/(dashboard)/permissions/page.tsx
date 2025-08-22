@@ -14,6 +14,8 @@ import Modal from "@/components/ui/Modal";
 import PermissionForm from "./PermissionForm";
 import { permissionService } from "@/services/permission.service";
 import { Permission } from "@/types";
+import Cookies from "js-cookie";
+import Input from "@/components/ui/Input";
 
 export default function PermissionsPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
@@ -26,7 +28,9 @@ export default function PermissionsPage() {
     useState<Permission | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
+  const [resourceFilter, setResourceFilter] = useState(""); // State for resource filter
   const total = allPermissions.length;
+  const rolePermission = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchPermissions();
@@ -77,6 +81,15 @@ export default function PermissionsPage() {
     }
   };
 
+  useEffect(() => {
+    const filtered = allPermissions.filter((permission) =>
+      permission.resource.toLowerCase().includes(resourceFilter.toLowerCase())
+    );
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    setPermissions(filtered.slice(start, end));
+  }, [allPermissions, resourceFilter, page, pageSize]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -92,6 +105,15 @@ export default function PermissionsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Filter by resource..."
+              value={resourceFilter}
+              onChange={(e) => setResourceFilter(e.target.value)}
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            />
+          </div>
           <div className="relative">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
@@ -127,10 +149,13 @@ export default function PermissionsPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Permission
-          </Button>
+
+          {rolePermission.includes("permissions.create") && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Permission
+            </Button>
+          )}
         </div>
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -152,9 +177,12 @@ export default function PermissionsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(rolePermission.includes("permissions.update") ||
+                rolePermission.includes("permissions.delete")) && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -184,24 +212,28 @@ export default function PermissionsPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
-                  <button
-                    className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsEditModalOpen(true);
-                    }}
-                  >
-                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
+                  {rolePermission.includes("permissions.update") && (
+                    <button
+                      className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPermission(permission);
+                        setIsEditModalOpen(true);
+                      }}
+                    >
+                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                    </button>
+                  )}
+                  {rolePermission.includes("permissions.delete") && (
+                    <button
+                      className="text-red-600 hover:text-red-900 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPermission(permission);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

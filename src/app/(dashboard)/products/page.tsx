@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import ProductForm from "./ProductForm";
 import { productService } from "@/services/product.service";
 import { Product, CreateProductInput, UpdateProductInput } from "@/types";
+import Cookies from "js-cookie";
 
 export default function ProductsPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -20,6 +21,7 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const total = allProducts.length;
+  const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchProducts();
@@ -125,10 +127,13 @@ export default function ProductsPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Product
-          </Button>
+          {permissions.includes("products.create") && (
+              <Button onClick={() => setIsCreateModalOpen(true)}>
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Add Product
+              </Button>
+          )}
+
         </div>
       </div>
 
@@ -148,13 +153,16 @@ export default function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(permissions.includes("products.update") || permissions.includes("products.delete"))&& (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+              )}
+
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
+          {products.map((product) => (
               <tr key={product.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
@@ -172,37 +180,43 @@ export default function ProductsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="text-red-600 hover:text-red-900 "
-                    >
-                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
+                    {permissions.includes("products.update") && (
+                        <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setIsEditModalOpen(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                        >
+                          <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
+                        </button>
+                    )}
+
+                    {permissions.includes("products.delete") && (
+                        <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-900 "
+                        >
+                          <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
+                        </button>
+                    )}
+
                   </div>
                 </td>
               </tr>
-            ))}
+          ))}
           </tbody>
         </table>
       </div>
 
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
+            className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
         >
           Prev
         </button>
