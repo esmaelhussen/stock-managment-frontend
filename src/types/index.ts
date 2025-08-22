@@ -169,6 +169,7 @@ export interface Product {
   name: string;
   description?: string;
   sku: string;
+  price: number;
   category: Category;
   unit: Unit;
 }
@@ -177,6 +178,7 @@ export interface CreateProductInput {
   name: string;
   description?: string;
   sku: string;
+  price: number;
   categoryId: string;
   unitId: string;
 }

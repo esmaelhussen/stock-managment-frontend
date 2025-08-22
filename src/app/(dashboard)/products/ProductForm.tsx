@@ -21,6 +21,11 @@ const createSchema = yup.object({
   name: yup.string().required("Name is required"),
   description: yup.string(),
   sku: yup.string().required("SKU is required"),
+  price: yup
+    .number()
+    .typeError("Price must be a number")
+    .required("Price is required")
+    .positive("Price must be positive"),
   categoryId: yup.string().required("Category is required"),
   unitId: yup.string().required("Unit is required"),
 });
@@ -29,6 +34,7 @@ const updateSchema = yup.object({
   name: yup.string(),
   description: yup.string(),
   sku: yup.string(),
+  price: yup.number(),
   categoryId: yup.string(),
   unitId: yup.string(),
 });
@@ -58,6 +64,7 @@ export default function ProductForm({
               name: product.name,
               description: product.description || "",
               sku: product.sku,
+              price: product.price,
               categoryId: product.category?.id || "",
               unitId: product.unit?.id || "",
             }
@@ -109,12 +116,18 @@ export default function ProductForm({
           error={errors.sku?.message as string}
         />
       </div>
-
-      <Input
-        label="Description"
-        {...register("description")}
-        error={errors.description?.message as string}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Price"
+          {...register("price")}
+          error={errors.price?.message as string}
+        />
+        <Input
+          label="Description"
+          {...register("description")}
+          error={errors.description?.message as string}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
