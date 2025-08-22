@@ -10,8 +10,9 @@ import { roleService } from "@/services/role.service";
 import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
 import Cookies from "js-cookie";
+import withPermission from "@/hoc/withPermission";
 
-export default function RolesPage() {
+function RolesPage() {
   const [formErrors, setFormErrors] = useState<{
     name?: string;
     description?: string;
@@ -449,3 +450,5 @@ export default function RolesPage() {
     </div>
   );
 }
+
+export default withPermission(RolesPage, "roles.read");

@@ -15,8 +15,9 @@ import {
   ScaleIcon,
   ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
+import withPermission from "@/hoc/withPermission";
 
-export default function DashboardPage() {
+function DashboardPage() {
   const [stats, setStats] = useState([
     {
       name: "Total Users",
@@ -243,3 +244,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+export default withPermission(DashboardPage, "dashboards.read");

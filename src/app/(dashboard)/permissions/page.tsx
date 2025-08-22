@@ -16,8 +16,9 @@ import { permissionService } from "@/services/permission.service";
 import { Permission } from "@/types";
 import Cookies from "js-cookie";
 import Input from "@/components/ui/Input";
+import withPermission from "@/hoc/withPermission";
 
-export default function PermissionsPage() {
+function PermissionsPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,3 +338,5 @@ export default function PermissionsPage() {
     </div>
   );
 }
+
+export default withPermission(PermissionsPage, "permissions.read");

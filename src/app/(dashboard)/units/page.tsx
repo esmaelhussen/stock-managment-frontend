@@ -9,8 +9,9 @@ import Input from "@/components/ui/Input";
 import { unitService } from "@/services/unit.service";
 import { Unit, CreateUnitInput, UpdateUnitInput } from "@/types";
 import Cookies from "js-cookie";
+import withPermission from "@/hoc/withPermission";
 
-export default function UnitsPage() {
+function UnitsPage() {
   const [allUnits, setAllUnits] = useState<Unit[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
@@ -276,3 +277,5 @@ export default function UnitsPage() {
     </div>
   );
 }
+
+export default withPermission(UnitsPage, "units.read");

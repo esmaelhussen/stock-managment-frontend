@@ -9,8 +9,9 @@ import Button from "@/components/ui/Button";
 import { categoryService } from "@/services/category.service";
 import { Category, CreateCategoryInput, UpdateCategoryInput } from "@/types";
 import Cookies from "js-cookie";
+import withPermission from "@/hoc/withPermission";
 
-export default function CategoriesPage() {
+function CategoriesPage() {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
@@ -109,10 +110,10 @@ export default function CategoriesPage() {
         </div>
         <div className="flex items-center gap-2">
           {permissions.includes("categories.create") && (
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Add Category
-              </Button>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Category
+            </Button>
           )}
         </div>
       </div>
@@ -127,16 +128,16 @@ export default function CategoriesPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Identifier
               </th>
-              {(permissions.includes("categories.update") || permissions.includes("categories.delete")) && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+              {(permissions.includes("categories.update") ||
+                permissions.includes("categories.delete")) && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               )}
-
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-          {categories.map((category) => (
+            {categories.map((category) => (
               <tr key={category.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
@@ -149,42 +150,41 @@ export default function CategoriesPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex space-x-2">
                     {permissions.includes("categories.update") && (
-                        <button
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setIsEditModalOpen(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900"
-                        >
-                          <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
-                        </button>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                      </button>
                     )}
 
                     {permissions.includes("categories.delete") && (
-                        <button
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                        >
-                          <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120"/>
-                        </button>
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                      </button>
                     )}
-
                   </div>
                 </td>
               </tr>
-          ))}
+            ))}
           </tbody>
         </table>
       </div>
 
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-            className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
         >
           Prev
         </button>
@@ -308,3 +308,5 @@ export default function CategoriesPage() {
     </div>
   );
 }
+
+export default withPermission(CategoriesPage, "categories.read");

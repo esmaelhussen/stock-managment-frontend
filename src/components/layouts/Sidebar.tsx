@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
   const permission = JSON.parse(Cookies.get("permission"));
-  console.log('permission', permission);
+  console.log("permission", permission);
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
@@ -79,8 +79,8 @@ const Sidebar: React.FC = () => {
         )}
       >
         {navigation.map((item, idx) => {
-          if( item.name === "Users" && !permission.includes("users.read")) return null;
-
+          if (item.name === "Users" && !permission.includes("users.read"))
+            return null;
 
           const isActive = pathname.startsWith(item.href);
           return (
@@ -105,16 +105,37 @@ const Sidebar: React.FC = () => {
       {/* Desktop sidebar */}
       <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
         {navigation.map((item) => {
-          if( item.name === "Users" && !permission.includes("users.read")) return null;
-          if(item.name === "Roles" && !permission.includes("roles.read")) return null;
-            if(item.name === "Permissions" && !permission.includes("permissions.read")) return null;
-            if(item.name === "Warehouses" && !permission.includes("warehouses.read")) return null;
-            if(item.name === "Categories" && !permission.includes("categories.read")) return null;
-            if(item.name === "Units" && !permission.includes("units.read")) return null;
-            if(item.name === "Products" && !permission.includes("products.read")) return null;
-            if(item.name === "Stock" && !permission.includes("stock.read")) return null;
+          if (item.name === "Users" && !permission.includes("users.read"))
+            return null;
+          if (item.name === "Roles" && !permission.includes("roles.read"))
+            return null;
+          if (
+            item.name === "Permissions" &&
+            !permission.includes("permissions.read")
+          )
+            return null;
+          if (
+            item.name === "Warehouses" &&
+            !permission.includes("warehouses.read")
+          )
+            return null;
+          if (
+            item.name === "Categories" &&
+            !permission.includes("categories.read")
+          )
+            return null;
+          if (item.name === "Units" && !permission.includes("units.read"))
+            return null;
+          if (item.name === "Products" && !permission.includes("products.read"))
+            return null;
+          if (item.name === "Stock" && !permission.includes("stock.read"))
+            return null;
+          if (
+            item.name === "Dashboard" &&
+            !permission.includes("dashboards.read")
+          )
+            return null;
 
-          
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
