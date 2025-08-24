@@ -38,6 +38,11 @@ const Sidebar: React.FC = () => {
       icon: ScaleIcon, // Updated to use ScaleIcon for units
     },
     { name: "Products", href: "/products", icon: ShoppingBagIcon },
+    {
+      name: "Stock Transactions",
+      href: "/stock-transactions",
+      icon: ArchiveBoxIcon,
+    },
     { name: "Stock", href: "/stock", icon: CubeIcon },
   ];
 
@@ -136,7 +141,7 @@ const Sidebar: React.FC = () => {
           )
             return null;
 
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.name}

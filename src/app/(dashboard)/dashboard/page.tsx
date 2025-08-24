@@ -32,7 +32,6 @@ function DashboardPage() {
       color: "bg-green-500",
     },
     { name: "Permissions", value: "-", icon: KeyIcon, color: "bg-purple-500" },
-    { name: "Stock Items", value: "-", icon: CubeIcon, color: "bg-yellow-500" },
     {
       name: "Warehouses",
       value: "-",
@@ -64,7 +63,6 @@ function DashboardPage() {
       totalUsers: number;
       activeRoles: number;
       permissions: number;
-      stockItems: number;
       warehouses: number;
       categories: number;
       units: number;
@@ -109,12 +107,6 @@ function DashboardPage() {
           color: "bg-teal-500",
         },
         {
-          name: "Stock Items",
-          value: String(data.stockItems),
-          icon: CubeIcon,
-          color: "bg-yellow-500",
-        },
-        {
           name: "Products",
           value: String(data.products),
           icon: ShoppingBagIcon,
@@ -137,8 +129,7 @@ function DashboardPage() {
           "#a21caf", // purple
           "#6366f1",
           "#ec4899", // pink for categories
-          "#14b8a6", // teal for units
-          "#eab308", // yellow
+          "#14b8a6", // teal for units// yellow
           "#f97316", // orange for products
           // indigo for warehouses
         ],

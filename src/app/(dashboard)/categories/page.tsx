@@ -109,8 +109,46 @@ function CategoriesPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <select
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              value={pageSize}
+              onChange={(e) => {
+                setPage(1);
+                setPageSize(Number(e.target.value));
+              }}
+            >
+              {[6, 10, 14].map((size) => (
+                <option
+                  key={size}
+                  value={size}
+                  className="bg-white text-black font-bold"
+                >
+                  {size} per page
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
+          </div>
           {permissions.includes("categories.create") && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               <PlusIcon className="h-5 w-5 mr-2" />
               Add Category
             </Button>

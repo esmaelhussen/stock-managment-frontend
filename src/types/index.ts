@@ -184,3 +184,31 @@ export interface CreateProductInput {
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {}
+
+export interface StockTransaction {
+  id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  type: "add" | "remove" | "transfer";
+  sourceWarehouse: Warehouse;
+  targetWarehouse?: Warehouse;
+  timestamp: string;
+}
+
+export interface CreateStockTransactionInput {
+  productId: string;
+  quantity: number;
+  type: "add" | "remove" | "transfer";
+  sourceWarehouseId: string;
+  targetWarehouseId?: string;
+}
+
+export interface Stock {
+  id: string;
+  product: Product;
+  warehouse: Warehouse;
+  quantity: number;
+  price: number;
+  timestamp: string;
+}
