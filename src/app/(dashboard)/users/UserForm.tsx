@@ -6,8 +6,9 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { User, CreateUserInput, UpdateUserInput, Role } from "@/types";
+import { User, CreateUserInput, UpdateUserInput, Role, Warehouse } from "@/types";
 import { roleService } from "@/services/role.service";
+import { warehouseService } from "@/services/warehouse.service";
 
 const createSchema = yup.object({
   firstName: yup.string().required("First name is required"),
@@ -24,6 +25,11 @@ const createSchema = yup.object({
     .array()
     .of(yup.string())
     .min(1, "At least one role must be selected"),
+  warehouseId: yup.string().when('roleIds', {
+    is: (roleIds: string[]) => roleIds && roleIds.length > 0,
+    then: (schema) => schema.nullable(),
+    otherwise: (schema) => schema.nullable(),
+  }),
 });
 
 const updateSchema = yup.object({
@@ -50,6 +56,9 @@ export default function UserForm({
   isEdit = false,
 }: UserFormProps) {
   const [roles, setRoles] = useState<Role[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [hasWarehouseRole, setHasWarehouseRole] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const formConfig = isEdit
@@ -64,6 +73,7 @@ export default function UserForm({
               address: user.address || "",
               isActive: user.isActive,
               roleIds: user.userRoles?.map((ur) => ur.roleId) || [],
+              warehouseId: user.warehouseId || "",
             }
           : {},
       }
@@ -75,12 +85,35 @@ export default function UserForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm(formConfig as any);
 
+
+
+
+  const watchedRoleIds = watch("roleIds");
+
   useEffect(() => {
     fetchRoles();
+    fetchWarehouses();
   }, []);
+
+  useEffect(() => {
+    if (watchedRoleIds && roles.length > 0) {
+      const selectedRoleObjects = roles.filter((role) => 
+        watchedRoleIds.includes(role.id)
+      );
+      const hasWarehouse = selectedRoleObjects.some((role) => 
+        role.name.toLowerCase().includes('warehouse')
+      );
+      setHasWarehouseRole(hasWarehouse);
+      setSelectedRoles(watchedRoleIds);
+    } else {
+      setHasWarehouseRole(false);
+      setSelectedRoles([]);
+    }
+  }, [watchedRoleIds, roles]);
 
   const fetchRoles = async () => {
     try {
@@ -91,14 +124,26 @@ export default function UserForm({
     }
   };
 
+  const fetchWarehouses = async () => {
+    try {
+      const data = await warehouseService.getAll();
+      setWarehouses(data);
+    } catch (error) {
+      console.error("Failed to fetch warehouses:", error);
+    }
+  };
+
   const onFormSubmit = async (data: any) => {
     setLoading(true);
     try {
       await onSubmit(data);
+      console.log("Form submitted successfully:", data);
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
@@ -196,6 +241,32 @@ export default function UserForm({
           )}
         </div>
       </div>
+
+      {hasWarehouseRole && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Warehouse <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            {...register("warehouseId", {
+              required: hasWarehouseRole ? "Warehouse is required for warehouse role" : false
+            })}
+          >
+            <option value="">Select a Warehouse</option>
+            {warehouses.map((warehouse) => (
+              <option key={warehouse.id} value={warehouse.id}>
+                {warehouse.name}
+              </option>
+            ))}
+          </select>
+          {errors.warehouseId && (
+            <div className="text-red-500 text-sm mt-2">
+              {errors.warehouseId.message as string}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button

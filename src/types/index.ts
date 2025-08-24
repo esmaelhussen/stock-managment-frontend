@@ -25,6 +25,8 @@ export interface User {
   address?: string;
   isActive: boolean;
   userRoles: UserRole[];
+  warehouseId?: string;
+  warehouse?: Warehouse;
   createdAt: string;
   updatedAt: string;
 }
@@ -80,6 +82,8 @@ export interface AuthResponse {
     lastName: string;
     roles: string[];
     permissions: string[];
+    warehouseId?: string;
+    warehouse?: Warehouse;
   };
 }
 
@@ -92,6 +96,7 @@ export interface CreateUserInput {
   address?: string;
   password: string;
   roleIds?: string[];
+  warehouseId?: string;
 }
 
 export interface UpdateUserInput {

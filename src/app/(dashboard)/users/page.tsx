@@ -49,12 +49,14 @@ function UsersPage() {
     try {
       await userService.create(data);
       toast.success("User created successfully");
+
       setIsCreateModalOpen(false);
       fetchUsers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create user");
     }
   };
+
 
   const handleUpdate = async (data: UpdateUserInput) => {
     if (!selectedUser) return;

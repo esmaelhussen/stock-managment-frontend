@@ -21,6 +21,9 @@ export class AuthService {
       Cookies.set("permission", JSON.stringify(response.user.permissions), {
         expires: 7,
       });
+      if (response.user.warehouseId) {
+        Cookies.set("warehouseId", response.user.warehouseId, { expires: 7 });
+      }
     }
     return response;
   }
@@ -36,6 +39,8 @@ export class AuthService {
   logout(): void {
     Cookies.remove("token");
     Cookies.remove("user");
+    Cookies.remove("permission");
+    Cookies.remove("warehouseId");
     window.location.href = "/login";
   }
 
@@ -63,6 +68,10 @@ export class AuthService {
   hasPermission(permission: string): boolean {
     const user = this.getCurrentUser();
     return user?.permissions?.includes(permission) || false;
+  }
+
+  getWarehouseId(): string | null {
+    return Cookies.get("warehouseId") || null;
   }
 }
 

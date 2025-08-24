@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import { stockTransactionService } from "@/services/stockTransaction.service";
 import { productService } from "@/services/product.service";
 import { warehouseService } from "@/services/warehouse.service";
+import { authService } from "@/services/auth.service";
 import {
   StockTransaction,
   CreateStockTransactionInput,
@@ -33,11 +34,14 @@ export default function StockTransactionsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
     null
   );
+  const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
   useEffect(() => {
     fetchTransactions();
+    const warehouseId = authService.getWarehouseId();
+    setUserWarehouseId(warehouseId);
   }, []);
 
   useEffect(() => {
@@ -68,6 +72,13 @@ export default function StockTransactionsPage() {
     fetchProducts();
     fetchWarehouses();
   }, []);
+
+  useEffect(() => {
+    if (userWarehouseId && isCreateModalOpen) {
+      setValue("warehouseId", userWarehouseId);
+      setValue("sourceWarehouseId", userWarehouseId);
+    }
+  }, [isCreateModalOpen, userWarehouseId, setValue]);
 
   const fetchTransactions = async () => {
     try {
@@ -120,6 +131,7 @@ export default function StockTransactionsPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     reset,
   } = useForm();
@@ -347,6 +359,7 @@ export default function StockTransactionsPage() {
                     required: "Warehouse is required",
                   })}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                  disabled={!!userWarehouseId}
                 >
                   <option value="">Select a Warehouse</option>
                   {warehouses.map((warehouse) => (
@@ -378,6 +391,7 @@ export default function StockTransactionsPage() {
                       required: "Source Warehouse is required",
                     })}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                    disabled={!!userWarehouseId}
                   >
                     <option value="">Select a Source Warehouse</option>
                     {warehouses.map((warehouse) => (
