@@ -43,6 +43,7 @@ export class AuthService {
     Cookies.remove("user");
     Cookies.remove("permission");
     Cookies.remove("warehouseId");
+    Cookies.remove("roles");
     window.location.href = "/login";
   }
 

@@ -21,6 +21,7 @@ function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(13);
+  const [searchTerm, setSearchTerm] = useState("");
   const total = allUsers.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
@@ -29,10 +30,14 @@ function UsersPage() {
   }, []);
 
   useEffect(() => {
+    const filteredUsers = allUsers.filter((user) => {
+      const fullName = `${user.firstName} ${user.middleName || ""} ${user.lastName}`.toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    });
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
-    setUsers(allUsers.slice(start, end));
-  }, [allUsers, page, pageSize]);
+    setUsers(filteredUsers.slice(start, end));
+  }, [allUsers, searchTerm, page, pageSize]);
 
   const fetchUsers = async () => {
     try {
@@ -96,6 +101,15 @@ function UsersPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Search by name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            />
+          </div>
           <div className="relative">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
