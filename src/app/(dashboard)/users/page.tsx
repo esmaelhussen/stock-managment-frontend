@@ -20,7 +20,7 @@ function UsersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(13);
   const total = allUsers.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
@@ -56,7 +56,6 @@ function UsersPage() {
       toast.error(error.response?.data?.message || "Failed to create user");
     }
   };
-
 
   const handleUpdate = async (data: UpdateUserInput) => {
     if (!selectedUser) return;
@@ -106,7 +105,7 @@ function UsersPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 10, 13].map((size) => (
                 <option
                   key={size}
                   value={size}

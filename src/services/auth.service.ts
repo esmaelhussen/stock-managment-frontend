@@ -18,11 +18,13 @@ export class AuthService {
     if (response.access_token) {
       Cookies.set("token", response.access_token, { expires: 7 });
       Cookies.set("user", JSON.stringify(response.user), { expires: 7 });
+      Cookies.set("roles", JSON.stringify(response.user.roles), { expires: 7 });
       Cookies.set("permission", JSON.stringify(response.user.permissions), {
         expires: 7,
       });
-      if (response.user.warehouseId) {
-        Cookies.set("warehouseId", response.user.warehouseId, { expires: 7 });
+
+      if (response.user.warehouse) {
+        Cookies.set("warehouseId", response.user.warehouse.id, { expires: 7 });
       }
     }
     return response;

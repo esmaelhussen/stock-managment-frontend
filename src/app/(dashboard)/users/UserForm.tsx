@@ -136,6 +136,9 @@ export default function UserForm({
   const onFormSubmit = async (data: any) => {
     setLoading(true);
     try {
+      if (!hasWarehouseRole) {
+        delete data.warehouseId;
+      }
       await onSubmit(data);
       console.log("Form submitted successfully:", data);
     } finally {

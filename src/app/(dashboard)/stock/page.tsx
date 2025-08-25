@@ -13,6 +13,8 @@ const StockPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const roles = JSON.parse(Cookies.get("roles") || "[]");
+  const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
 
   useEffect(() => {
     fetchStock();
@@ -21,7 +23,20 @@ const StockPage = () => {
   const fetchStock = async () => {
     try {
       const data = await stockTransactionService.getAllStock();
-      setAllStock(data);
+
+      // Check if the user has "warehouse" role
+      const isWarehouseRole = roles.includes("warehouse");
+
+      // If user has warehouse role, filter stock by warehouse name
+      const filteredData = isWarehouseRole
+        ? data.filter(
+            (stock) =>
+              stock.warehouse?.id?.toLowerCase() ===
+              warehouse?.id?.toLowerCase()
+          )
+        : data;
+
+      setAllStock(filteredData);
     } catch (error) {
       toast.error("Failed to fetch stock");
     } finally {

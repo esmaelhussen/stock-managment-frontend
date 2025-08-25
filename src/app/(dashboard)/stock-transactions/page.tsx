@@ -37,6 +37,19 @@ export default function StockTransactionsPage() {
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const userId = JSON.parse(Cookies.get("user") || "{}").id;
+  const roles = JSON.parse(Cookies.get("roles") || "[]");
+  const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
+  console.log("roles", roles.includes("warehouse"));
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm();
 
   useEffect(() => {
     fetchTransactions();
@@ -83,7 +96,19 @@ export default function StockTransactionsPage() {
   const fetchTransactions = async () => {
     try {
       const data = await stockTransactionService.getAllTransactions();
-      setAllTransactions(data);
+
+      const isWarehouseRole = roles.includes("warehouse");
+
+      const filteredData = isWarehouseRole
+        ? data.filter((transaction) => {
+            const sourceId = transaction.sourceWarehouse?.id?.toLowerCase();
+            const targetId = transaction.targetWarehouse?.id?.toLowerCase();
+            const userWarehouseId = warehouse?.id?.toLowerCase();
+            return sourceId === userWarehouseId || targetId === userWarehouseId;
+          })
+        : data;
+
+      setAllTransactions(filteredData);
     } catch (error) {
       toast.error("Failed to fetch transactions");
     } finally {
@@ -127,15 +152,6 @@ export default function StockTransactionsPage() {
     }
   };
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-    reset,
-  } = useForm();
-
   const transactionType = watch("type");
 
   const onSubmit = (data: any) => {
@@ -148,6 +164,7 @@ export default function StockTransactionsPage() {
           : data.sourceWarehouseId,
       targetWarehouseId:
         data.type === "transfer" ? data.targetWarehouseId : undefined,
+      transactedById: userId,
     };
 
     // Clean up unused fields
@@ -243,6 +260,9 @@ export default function StockTransactionsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Timestamp
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Transacted By
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -269,6 +289,14 @@ export default function StockTransactionsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(transaction.timestamp).toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <span className="font-bold">
+                    {transaction.transactedBy?.firstName}{" "}
+                    {transaction.transactedBy?.middleName}
+                    {": "}
+                  </span>
+                  {transaction.transactedBy?.phoneNumber}
                 </td>
               </tr>
             ))}

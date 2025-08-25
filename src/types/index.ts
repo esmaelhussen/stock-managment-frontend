@@ -199,6 +199,7 @@ export interface StockTransaction {
   sourceWarehouse: Warehouse;
   targetWarehouse?: Warehouse;
   timestamp: string;
+  transactedBy?: User; // Added field to represent the user who performed the transaction
 }
 
 export interface CreateStockTransactionInput {
@@ -207,6 +208,7 @@ export interface CreateStockTransactionInput {
   type: "add" | "remove" | "transfer";
   sourceWarehouseId: string;
   targetWarehouseId?: string;
+  transactedById?: string; // Added field to represent the user who performs the transaction
 }
 
 export interface Stock {
