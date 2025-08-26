@@ -11,7 +11,7 @@ const StockPage = () => {
   const [allStock, setAllStock] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(12);
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
   const roles = JSON.parse(Cookies.get("roles") || "[]");
   const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
@@ -78,7 +78,7 @@ const StockPage = () => {
               value={pageSize}
               onChange={(e) => handlePageSizeChange(Number(e.target.value))}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 10, 12].map((size) => (
                 <option
                   key={size}
                   value={size}

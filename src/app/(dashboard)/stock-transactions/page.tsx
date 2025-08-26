@@ -28,7 +28,7 @@ export default function StockTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(12);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
@@ -198,7 +198,7 @@ export default function StockTransactionsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 10, 12].map((size) => (
                 <option
                   key={size}
                   value={size}
