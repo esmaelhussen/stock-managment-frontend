@@ -14,6 +14,7 @@ import {
   TagIcon,
   ScaleIcon,
   ShoppingBagIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import withPermission from "@/hoc/withPermission";
 
@@ -56,6 +57,12 @@ function DashboardPage() {
       icon: ShoppingBagIcon,
       color: "bg-orange-500",
     },
+    {
+      name: "Shops",
+      value: "-",
+      icon: ShoppingCartIcon,
+      color: "bg-red-500",
+    },
   ]);
 
   useEffect(() => {
@@ -67,6 +74,7 @@ function DashboardPage() {
       categories: number;
       units: number;
       products: number;
+      shops: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
       setStats([
@@ -112,6 +120,12 @@ function DashboardPage() {
           icon: ShoppingBagIcon,
           color: "bg-orange-500",
         },
+        {
+          name: "Shops",
+          value: String(data.shops),
+          icon: ShoppingCartIcon,
+          color: "bg-red-500",
+        },
       ]);
     });
   }, []);
@@ -130,7 +144,9 @@ function DashboardPage() {
           "#6366f1",
           "#ec4899", // pink for categories
           "#14b8a6", // teal for units// yellow
-          "#f97316", // orange for products
+          "#f97316",
+          "#ef4444",
+          // orange for products
           // indigo for warehouses
         ],
         borderColor: "#fff",

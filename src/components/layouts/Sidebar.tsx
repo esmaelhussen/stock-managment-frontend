@@ -14,6 +14,7 @@ import {
   CubeIcon,
   ScaleIcon,
   ShoppingBagIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -31,6 +32,7 @@ const Sidebar: React.FC = () => {
     { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
     { name: "Permissions", href: "/permissions", icon: KeyIcon },
     { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
+    { name: "Shops", href: "/shops", icon: ShoppingCartIcon },
     { name: "Categories", href: "/categories", icon: TagIcon },
     {
       name: "Units",
@@ -139,6 +141,8 @@ const Sidebar: React.FC = () => {
             item.name === "Dashboard" &&
             !permission.includes("dashboards.read")
           )
+            return null;
+          if (item.name === "Shops" && !permission.includes("shops.read"))
             return null;
 
           const isActive = pathname === item.href;

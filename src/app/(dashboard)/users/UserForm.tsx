@@ -6,9 +6,16 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { User, CreateUserInput, UpdateUserInput, Role, Warehouse } from "@/types";
+import {
+  User,
+  CreateUserInput,
+  UpdateUserInput,
+  Role,
+  Warehouse,
+} from "@/types";
 import { roleService } from "@/services/role.service";
 import { warehouseService } from "@/services/warehouse.service";
+import { shopService } from "@/services/shop.service";
 
 const createSchema = yup.object({
   firstName: yup.string().required("First name is required"),
@@ -25,9 +32,9 @@ const createSchema = yup.object({
     .array()
     .of(yup.string())
     .min(1, "At least one role must be selected"),
-  warehouseId: yup.string().when('roleIds', {
-    is: (roleIds: string[]) => roleIds && roleIds.length > 0,
-    then: (schema) => schema.nullable(),
+  warehouseId: yup.string().when("roleIds", {
+    is: (roleIds: string[]) => roleIds.some((role) => role === "shop"),
+    then: (schema) => schema.required("Warehouse is required for shop role"),
     otherwise: (schema) => schema.nullable(),
   }),
 });
@@ -57,8 +64,10 @@ export default function UserForm({
 }: UserFormProps) {
   const [roles, setRoles] = useState<Role[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [shops, setShops] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [hasWarehouseRole, setHasWarehouseRole] = useState(false);
+  const [hasShopRole, setHasShopRole] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const formConfig = isEdit
@@ -89,9 +98,6 @@ export default function UserForm({
     formState: { errors },
   } = useForm(formConfig as any);
 
-
-
-
   const watchedRoleIds = watch("roleIds");
 
   useEffect(() => {
@@ -101,19 +107,30 @@ export default function UserForm({
 
   useEffect(() => {
     if (watchedRoleIds && roles.length > 0) {
-      const selectedRoleObjects = roles.filter((role) => 
+      const selectedRoleObjects = roles.filter((role) =>
         watchedRoleIds.includes(role.id)
       );
-      const hasWarehouse = selectedRoleObjects.some((role) => 
-        role.name.toLowerCase().includes('warehouse')
+      const hasWarehouse = selectedRoleObjects.some((role) =>
+        role.name.toLowerCase().includes("warehouse")
+      );
+      const hasShop = selectedRoleObjects.some((role) =>
+        role.name.toLowerCase().includes("shop")
       );
       setHasWarehouseRole(hasWarehouse);
+      setHasShopRole(hasShop);
       setSelectedRoles(watchedRoleIds);
     } else {
       setHasWarehouseRole(false);
+      setHasShopRole(false);
       setSelectedRoles([]);
     }
   }, [watchedRoleIds, roles]);
+
+  useEffect(() => {
+    if (hasShopRole && formConfig.defaultValues?.warehouseId) {
+      fetchShops(formConfig.defaultValues.warehouseId);
+    }
+  }, [hasShopRole, formConfig.defaultValues?.warehouseId]);
 
   const fetchRoles = async () => {
     try {
@@ -133,10 +150,19 @@ export default function UserForm({
     }
   };
 
+  const fetchShops = async (warehouseId: string) => {
+    try {
+      const data = await shopService.getShopsByWarehouse(warehouseId);
+      setShops(data);
+    } catch (error) {
+      console.error("Failed to fetch shops:", error);
+    }
+  };
+
   const onFormSubmit = async (data: any) => {
     setLoading(true);
     try {
-      if (!hasWarehouseRole) {
+      if (!hasWarehouseRole && !hasShopRole) {
         delete data.warehouseId;
       }
       await onSubmit(data);
@@ -146,7 +172,12 @@ export default function UserForm({
     }
   };
 
-
+  const handleWarehouseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const warehouseId = e.target.value;
+    if (warehouseId) {
+      fetchShops(warehouseId);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
@@ -245,7 +276,7 @@ export default function UserForm({
         </div>
       </div>
 
-      {hasWarehouseRole && (
+      {(hasWarehouseRole || hasShopRole) && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Warehouse <span className="text-red-500">*</span>
@@ -253,8 +284,12 @@ export default function UserForm({
           <select
             className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
             {...register("warehouseId", {
-              required: hasWarehouseRole ? "Warehouse is required for warehouse role" : false
+              required:
+                hasWarehouseRole || hasShopRole
+                  ? "Warehouse is required for selected role"
+                  : false,
             })}
+            onChange={handleWarehouseChange}
           >
             <option value="">Select a Warehouse</option>
             {warehouses.map((warehouse) => (
@@ -268,6 +303,25 @@ export default function UserForm({
               {errors.warehouseId.message as string}
             </div>
           )}
+        </div>
+      )}
+
+      {hasShopRole && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Shop
+          </label>
+          <select
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            {...register("shopId")}
+          >
+            <option value="">Select a Shop</option>
+            {shops.map((shop) => (
+              <option key={shop.id} value={shop.id}>
+                {shop.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 

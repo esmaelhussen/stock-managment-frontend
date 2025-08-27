@@ -219,3 +219,25 @@ export interface Stock {
   price: number;
   timestamp: string;
 }
+
+export interface Shop {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+  warehouse: Warehouse;
+}
+
+export interface CreateShopInput {
+  name: string;
+  address: string;
+  description?: string;
+  warehouseId: string;
+}
+
+export interface UpdateShopInput {
+  name?: string;
+  address?: string;
+  description?: string;
+  warehouseId?: string;
+}
