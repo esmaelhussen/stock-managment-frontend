@@ -84,6 +84,8 @@ export interface AuthResponse {
     permissions: string[];
     warehouseId?: string;
     warehouse?: Warehouse;
+    shopId?: string;
+    shop?: Shop;
   };
 }
 
