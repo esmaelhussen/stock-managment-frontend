@@ -26,6 +26,9 @@ export class AuthService {
       if (response.user.warehouse) {
         Cookies.set("warehouseId", response.user.warehouse.id, { expires: 7 });
       }
+      if(response.user.shop){
+        Cookies.set("shopId", response.user.shop.id, { expires: 7 });
+      }
     }
     return response;
   }
@@ -44,6 +47,7 @@ export class AuthService {
     Cookies.remove("permission");
     Cookies.remove("warehouseId");
     Cookies.remove("roles");
+    Cookies.remove("shopId");
     window.location.href = "/login";
   }
 
@@ -76,6 +80,9 @@ export class AuthService {
   getWarehouseId(): string | null {
     return Cookies.get("warehouseId") || null;
   }
+    getShopId(): string | null {
+        return Cookies.get("shopId") || null;
+    }
 }
 
 export const authService = new AuthService();

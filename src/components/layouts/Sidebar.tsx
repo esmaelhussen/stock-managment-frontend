@@ -73,7 +73,7 @@ const Sidebar: React.FC = () => {
   }, [menuOpen]);
 
   return (
-    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-auto h-16 relative">
+    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-screen h-16 relative md:fixed md:top-0 md:left-0 md:z-30">
       {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
 
       {/* Mobile menu */}
