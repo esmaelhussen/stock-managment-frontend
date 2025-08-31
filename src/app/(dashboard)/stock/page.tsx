@@ -15,26 +15,44 @@ const StockPage = () => {
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
   const roles = JSON.parse(Cookies.get("roles") || "[]");
   const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
+  const shop = JSON.parse(Cookies.get("user") || "null").shop;
 
   useEffect(() => {
     fetchStock();
   }, []);
+
+  const isWarehouseRole = roles.includes("warehouse");
+  const isShopRole = roles.includes("shop");
 
   const fetchStock = async () => {
     try {
       const data = await stockTransactionService.getAllStock();
 
       // Check if the user has "warehouse" role
-      const isWarehouseRole = roles.includes("warehouse");
+
+      let filteredData;
+
+      if (isWarehouseRole) {
+        filteredData = data.filter(
+          (stock) =>
+            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase(),
+        );
+      } else if (isShopRole) {
+        filteredData = data.filter(
+          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase(),
+        );
+      } else {
+        filteredData = data;
+      }
 
       // If user has warehouse role, filter stock by warehouse name
-      const filteredData = isWarehouseRole
-        ? data.filter(
-            (stock) =>
-              stock.warehouse?.id?.toLowerCase() ===
-              warehouse?.id?.toLowerCase()
-          )
-        : data;
+      // const filteredData = isWarehouseRole
+      //   ? data.filter(
+      //       (stock) =>
+      //         stock.warehouse?.id?.toLowerCase() ===
+      //         warehouse?.id?.toLowerCase()
+      //     )
+      //   : data;
 
       setAllStock(filteredData);
     } catch (error) {
@@ -121,7 +139,7 @@ const StockPage = () => {
                 Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Warehouse
+                Stock Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Timestamp
@@ -141,7 +159,19 @@ const StockPage = () => {
                   {stock.price}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {stock.warehouse.name}
+                  {isShopRole
+                    ? stock.shop?.name
+                      ? `SHOP: ${stock.shop.name}`
+                      : "N/A"
+                    : isWarehouseRole
+                      ? stock.warehouse?.name
+                        ? `WareHouse: ${stock.warehouse.name}`
+                        : "N/A"
+                      : stock.warehouse?.name
+                        ? `WareHouse: ${stock.warehouse.name}`
+                        : stock.shop?.name
+                          ? `SHOP: ${stock.shop.name}`
+                          : "N/A"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(stock.timestamp).toLocaleString()}

@@ -198,8 +198,10 @@ export interface StockTransaction {
   quantity: number;
   price: number;
   type: "add" | "remove" | "transfer";
-  sourceWarehouse: Warehouse;
+  sourceWarehouse?: Warehouse;
   targetWarehouse?: Warehouse;
+  sourceShop?: Shop;
+  targetShop?: Shop;
   timestamp: string;
   transactedBy?: User; // Added field to represent the user who performed the transaction
 }
@@ -210,6 +212,8 @@ export interface CreateStockTransactionInput {
   type: "add" | "remove" | "transfer";
   sourceWarehouseId: string;
   targetWarehouseId?: string;
+  sourceShopId?: string;
+  targetShopId?: string;
   transactedById?: string; // Added field to represent the user who performs the transaction
 }
 
@@ -217,6 +221,7 @@ export interface Stock {
   id: string;
   product: Product;
   warehouse: Warehouse;
+  shop?: Shop; // Added relationship to link stock to a shop
   quantity: number;
   price: number;
   timestamp: string;

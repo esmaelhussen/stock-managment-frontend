@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
@@ -9,20 +9,23 @@ import { stockTransactionService } from "@/services/stockTransaction.service";
 import { productService } from "@/services/product.service";
 import { warehouseService } from "@/services/warehouse.service";
 import { authService } from "@/services/auth.service";
+
 import {
   StockTransaction,
   CreateStockTransactionInput,
   Product,
   Warehouse,
+  Shop,
 } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
 import { useForm } from "react-hook-form";
 import Input from "@/components/ui/Input";
+import { shopService } from "@/services/shop.service";
 
 export default function StockTransactionsPage() {
   const [allTransactions, setAllTransactions] = useState<StockTransaction[]>(
-    []
+    [],
   );
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,15 +34,20 @@ export default function StockTransactionsPage() {
   const [pageSize, setPageSize] = useState(12);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null
+    null,
   );
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
+  const [userShopId, setUserShopId] = useState<string | null>(null);
+  const [sourceWarehouseShops, setSourceWarehouseShops] = useState<Shop[]>([]);
+
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
   const userId = JSON.parse(Cookies.get("user") || "{}").id;
   const roles = JSON.parse(Cookies.get("roles") || "[]");
   const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
+  const shop = JSON.parse(Cookies.get("user") || "null").shop;
   console.log("roles", roles.includes("warehouse"));
 
   const {
@@ -51,10 +59,56 @@ export default function StockTransactionsPage() {
     reset,
   } = useForm();
 
+  const isWarehouseRole = roles.includes("warehouse");
+  const isShopRole = roles.includes("shop");
+
+  // Watch the sourceId reactively
+  const sourceId = watch("sourceId");
+
+  useEffect(() => {
+    const fetchShopsForSource = async () => {
+      try {
+        let warehouseId = shop.warehouseId;
+
+        // Case 1: warehouse role or manual source warehouse selection
+        if (sourceId?.startsWith("warehouse:")) {
+          warehouseId = sourceId.split(":")[1];
+        }
+        // Case 2: shop role (source is user's shop)
+        else if (isShopRole && shop?.warehouse?.id) {
+          warehouseId = shop.warehouseId;
+        }
+
+        if (warehouseId) {
+          const shopsForWarehouse =
+            await shopService.getShopsByWarehouse(warehouseId);
+
+          // For shop-role: exclude the source shop from target list
+          if (isShopRole && userShopId) {
+            setSourceWarehouseShops(
+              shopsForWarehouse.filter((s) => s.id !== userShopId),
+            );
+          } else {
+            setSourceWarehouseShops(shopsForWarehouse);
+          }
+        } else {
+          setSourceWarehouseShops([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch shops for warehouse", error);
+        setSourceWarehouseShops([]);
+      }
+    };
+
+    fetchShopsForSource();
+  }, [sourceId, isShopRole, shop?.warehouse?.id, userShopId]);
+
   useEffect(() => {
     fetchTransactions();
     const warehouseId = authService.getWarehouseId();
+    const shopId = authService.getShopId();
     setUserWarehouseId(warehouseId);
+    setUserShopId(shopId);
   }, []);
 
   useEffect(() => {
@@ -82,31 +136,91 @@ export default function StockTransactionsPage() {
       }
     };
 
+    const fetchShops = async () => {
+      try {
+        const fetchedShops = await shopService.getAll();
+        setShops(fetchedShops);
+      } catch (error) {
+        console.log("failed to fetch shops", error);
+      }
+    };
+
     fetchProducts();
     fetchWarehouses();
+    fetchShops();
   }, []);
 
+  // Autofill source based on role and fetch shops if needed
   useEffect(() => {
-    if (userWarehouseId && isCreateModalOpen) {
-      setValue("warehouseId", userWarehouseId);
-      setValue("sourceWarehouseId", userWarehouseId);
+    if (!isCreateModalOpen) return;
+
+    // Warehouse user
+    if (isWarehouseRole && userWarehouseId) {
+      setValue("sourceId", `warehouse:${userWarehouseId}`);
+      // Fetch shops for this warehouse
+      shopService
+        .getShopsByWarehouse(userWarehouseId)
+        .then((shops) => setSourceWarehouseShops(shops))
+        .catch(() => setSourceWarehouseShops([]));
     }
-  }, [isCreateModalOpen, userWarehouseId, setValue]);
+    // Shop user
+    else if (isShopRole && userShopId) {
+      setValue("sourceId", `shop:${userShopId}`);
+      // Fetch shops in user's warehouse (if needed)
+      if (shop?.warehouse?.id) {
+        shopService
+          .getShopsByWarehouse(shop.warehouse.id)
+          .then((shops) => setSourceWarehouseShops(shops))
+          .catch(() => setSourceWarehouseShops([]));
+      }
+    }
+    // Neither warehouse nor shop
+    else {
+      setValue("sourceId", "");
+      setSourceWarehouseShops([]);
+    }
+  }, [
+    isCreateModalOpen,
+    isWarehouseRole,
+    isShopRole,
+    userWarehouseId,
+    userShopId,
+    setValue,
+  ]);
 
   const fetchTransactions = async () => {
     try {
       const data = await stockTransactionService.getAllTransactions();
 
-      const isWarehouseRole = roles.includes("warehouse");
+      // const isWarehouseRole = roles.includes("warehouse");
+      let filteredData;
 
-      const filteredData = isWarehouseRole
-        ? data.filter((transaction) => {
-            const sourceId = transaction.sourceWarehouse?.id?.toLowerCase();
-            const targetId = transaction.targetWarehouse?.id?.toLowerCase();
-            const userWarehouseId = warehouse?.id?.toLowerCase();
-            return sourceId === userWarehouseId || targetId === userWarehouseId;
-          })
-        : data;
+      if (isWarehouseRole) {
+        const userWarehouseId = warehouse?.id?.toLowerCase();
+        filteredData = data.filter((transaction) => {
+          const sourceId = transaction.sourceWarehouse?.id?.toLowerCase();
+          const targetId = transaction.targetWarehouse?.id?.toLowerCase();
+          return sourceId === userWarehouseId || targetId === userWarehouseId;
+        });
+      } else if (isShopRole) {
+        const userShopId = shop?.id?.toLowerCase();
+        filteredData = data.filter((transaction) => {
+          const sourceId = transaction.sourceShop?.id?.toLowerCase();
+          const targetId = transaction.targetShop?.id?.toLowerCase();
+          return sourceId === userShopId || targetId === userShopId;
+        });
+      } else {
+        filteredData = data;
+      }
+
+      // const filteredData = isWarehouseRole
+      //   ? data.filter((transaction) => {
+      //       const sourceId = transaction.sourceWarehouse?.id?.toLowerCase();
+      //       const targetId = transaction.targetWarehouse?.id?.toLowerCase();
+      //       const userWarehouseId = warehouse?.id?.toLowerCase();
+      //       return sourceId === userWarehouseId || targetId === userWarehouseId;
+      //     })
+      //   : data;
 
       setAllTransactions(filteredData);
     } catch (error) {
@@ -125,15 +239,18 @@ export default function StockTransactionsPage() {
       errors.quantity = "Quantity must be greater than 0";
 
     if (data.type === "add" || data.type === "remove") {
-      if (!data.sourceWarehouseId)
-        errors.sourceWarehouseId = "Source Warehouse is required";
+      if (!data.sourceWarehouseId && !data.sourceShopId) {
+        errors.source = "Source Warehouse or Source Shop is required";
+      }
     }
 
     if (data.type === "transfer") {
-      if (!data.sourceWarehouseId)
-        errors.sourceWarehouseId = "Source Warehouse is required";
-      if (!data.targetWarehouseId)
-        errors.targetWarehouseId = "Target Warehouse is required";
+      if (!data.sourceWarehouseId && !data.sourceShopId) {
+        errors.source = "Source Warehouse or Source Shop is required";
+      }
+      if (!data.targetWarehouseId && !data.targetShopId) {
+        errors.target = "Target Warehouse or Target Shop is required";
+      }
     }
 
     setFormErrors(Object.keys(errors).length ? errors : null);
@@ -147,7 +264,7 @@ export default function StockTransactionsPage() {
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create transaction"
+        error.response?.data?.message || "Failed to create transaction",
       );
     }
   };
@@ -156,21 +273,43 @@ export default function StockTransactionsPage() {
 
   const onSubmit = (data: any) => {
     const transformedData: CreateStockTransactionInput = {
-      ...data,
       quantity: Number(data.quantity), // Ensure quantity is sent as a number
-      sourceWarehouseId:
-        data.type === "add" || data.type === "remove"
-          ? data.warehouseId
-          : data.sourceWarehouseId,
-      targetWarehouseId:
-        data.type === "transfer" ? data.targetWarehouseId : undefined,
+      productId: data.productId,
+      type: data.type,
       transactedById: userId,
     };
 
-    // Clean up unused fields
-    delete (transformedData as any).warehouseId;
+    // ------------------
+    // Source parsing
+    // ------------------
+    if (data.sourceId) {
+      const [sourceType, sourceValue] = data.sourceId.split(":");
+      if (sourceType === "warehouse") {
+        transformedData.sourceWarehouseId = sourceValue;
+      } else if (sourceType === "shop") {
+        transformedData.sourceShopId = sourceValue;
+      }
+    }
 
-    console.log("Transformed Data:", transformedData); // Optional debug log
+    // ------------------
+    // Target parsing (transfer only)
+    // ------------------
+    if (data.type === "transfer" && data.targetId) {
+      const [targetType, targetValue] = data.targetId.split(":");
+      if (targetType === "warehouse") {
+        transformedData.targetWarehouseId = targetValue;
+      } else if (targetType === "shop") {
+        transformedData.targetShopId = targetValue;
+      }
+    }
+
+    // ------------------
+    // Clean up helper fields
+    // ------------------
+    delete (transformedData as any).sourceId;
+    delete (transformedData as any).targetId;
+
+    console.log("Transformed Data:", transformedData);
     handleCreate(transformedData);
   };
 
@@ -252,10 +391,10 @@ export default function StockTransactionsPage() {
                 Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Source Warehouse
+                Source Stock Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Target Warehouse
+                Target Stock Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Timestamp
@@ -281,11 +420,40 @@ export default function StockTransactionsPage() {
                   {transaction.type}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.sourceWarehouse.name || "N/A"}
+                  {isShopRole
+                    ? `${
+                        transaction.sourceShop?.name
+                          ? `SHOP: ${transaction.sourceShop.name}`
+                          : transaction.sourceWarehouse?.name
+                            ? `WAREHOUSE: ${transaction.sourceWarehouse.name}`
+                            : "N/A"
+                      }`
+                    : isWarehouseRole
+                      ? transaction.sourceWarehouse?.name
+                        ? `WAREHOUSE: ${transaction.sourceWarehouse.name}`
+                        : transaction.sourceShop?.name
+                          ? `SHOP: ${transaction.sourceShop.name}`
+                          : "N/A"
+                      : transaction.sourceWarehouse?.name
+                        ? `WareHouse: ${transaction.sourceWarehouse.name}`
+                        : transaction.sourceShop?.name
+                          ? `SHOP: ${transaction.sourceShop.name}`
+                          : "N/A"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.targetWarehouse?.name ||
-                    "not require for this transaction"}
+                  {isShopRole
+                    ? transaction.targetShop?.name
+                      ? `SHOP ${transaction.targetShop.name}`
+                      : "not required for this transaction"
+                    : isWarehouseRole
+                      ? transaction.targetWarehouse?.name
+                        ? `Warehouse ${transaction.targetWarehouse.name}`
+                        : "not required for this transaction"
+                      : transaction.targetWarehouse?.name
+                        ? `Warehouse ${transaction.targetWarehouse.name}`
+                        : transaction.targetShop?.name
+                          ? `SHOP ${transaction.targetShop.name}`
+                          : "not required for this transaction"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(transaction.timestamp).toLocaleString()}
@@ -376,29 +544,45 @@ export default function StockTransactionsPage() {
             {(transactionType === "add" || transactionType === "remove") && (
               <div className="space-y-4">
                 <label
-                  htmlFor="warehouseId"
+                  htmlFor="sourceId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Warehouse
+                  Source
                 </label>
                 <select
-                  id="warehouseId"
-                  {...register("warehouseId", {
-                    required: "Warehouse is required",
+                  id="sourceId"
+                  {...register("sourceId", {
+                    required: "Source is required",
                   })}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-                  disabled={!!userWarehouseId}
+                  disabled={!!userWarehouseId || !!userShopId} // auto-filled if role
                 >
-                  <option value="">Select a Warehouse</option>
-                  {warehouses.map((warehouse) => (
-                    <option key={warehouse.id} value={warehouse.id}>
-                      {warehouse.name}
-                    </option>
-                  ))}
+                  <option value="">Select a Source</option>
+
+                  {/* Warehouses */}
+                  {(!userWarehouseId && !userShopId) || !isShopRole
+                    ? warehouses.map((warehouse) => (
+                        <option
+                          key={warehouse.id}
+                          value={`warehouse:${warehouse.id}`}
+                        >
+                          Warehouse: {warehouse.name}
+                        </option>
+                      ))
+                    : null}
+
+                  {/* Shops */}
+                  {(!userWarehouseId && !userShopId) || !isWarehouseRole
+                    ? shops.map((shop) => (
+                        <option key={shop.id} value={`shop:${shop.id}`}>
+                          Shop: {shop.name}
+                        </option>
+                      ))
+                    : null}
                 </select>
-                {errors.warehouseId && (
+                {errors.sourceId && (
                   <p className="text-red-500 text-sm">
-                    {errors.warehouseId.message?.toString()}
+                    {errors.sourceId.message?.toString()}
                   </p>
                 )}
               </div>
@@ -406,59 +590,121 @@ export default function StockTransactionsPage() {
 
             {transactionType === "transfer" && (
               <>
+                {/* Source Select */}
                 <div className="space-y-4">
                   <label
-                    htmlFor="sourceWarehouseId"
+                    htmlFor="sourceId"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Source Warehouse
+                    Source
                   </label>
                   <select
-                    id="sourceWarehouseId"
-                    {...register("sourceWarehouseId", {
-                      required: "Source Warehouse is required",
+                    id="sourceId"
+                    {...register("sourceId", {
+                      required: "Source is required",
                     })}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-                    disabled={!!userWarehouseId}
+                    disabled={isWarehouseRole || isShopRole}
                   >
-                    <option value="">Select a Source Warehouse</option>
-                    {warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))}
+                    <option value="">Select a Source</option>
+
+                    {/* Show warehouses if role is neither or not a shop */}
+                    {(!isWarehouseRole && !isShopRole) || !isShopRole
+                      ? warehouses.map((w) => (
+                          <option key={w.id} value={`warehouse:${w.id}`}>
+                            Warehouse: {w.name}
+                          </option>
+                        ))
+                      : null}
+
+                    {/* Show shops if role is neither or not a warehouse */}
+                    {(!isWarehouseRole && !isShopRole) || !isWarehouseRole
+                      ? shops.map((s) => (
+                          <option key={s.id} value={`shop:${s.id}`}>
+                            Shop: {s.name}
+                          </option>
+                        ))
+                      : null}
                   </select>
-                  {errors.sourceWarehouseId && (
+                  {errors.sourceId && (
                     <p className="text-red-500 text-sm">
-                      {errors.sourceWarehouseId.message?.toString()}
+                      {errors.sourceId.message?.toString()}
                     </p>
                   )}
                 </div>
 
+                {/* Target Select */}
                 <div className="space-y-4">
                   <label
-                    htmlFor="targetWarehouseId"
+                    htmlFor="targetId"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Target Warehouse
+                    Target (Warehouse / Shop)
                   </label>
                   <select
-                    id="targetWarehouseId"
-                    {...register("targetWarehouseId", {
-                      required: "Target Warehouse is required",
+                    id="targetId"
+                    {...register("targetId", {
+                      required: "Target is required",
                     })}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                   >
-                    <option value="">Select a Target Warehouse</option>
-                    {warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))}
+                    <option value="">Select Target</option>
+
+                    {/* Role: neither warehouse nor shop */}
+                    {!isWarehouseRole && !isShopRole && (
+                      <>
+                        {warehouses
+                          .filter(
+                            (w) =>
+                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                          )
+                          .map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              Warehouse: {w.name}
+                            </option>
+                          ))}
+                        {shops.map((s) => (
+                          <option key={s.id} value={`shop:${s.id}`}>
+                            Shop: {s.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Warehouse role */}
+                    {isWarehouseRole && userWarehouseId && (
+                      <>
+                        {warehouses
+                          .filter((w) => w.id !== userWarehouseId)
+                          .map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              Warehouse: {w.name}
+                            </option>
+                          ))}
+                        {sourceWarehouseShops.map((s) => (
+                          <option key={s.id} value={`shop:${s.id}`}>
+                            Shop: {s.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Shop role */}
+                    {/* Shop role - Target options: shops belonging to user's warehouse */}
+                    {/* Shop role - target options */}
+                    {isShopRole && userShopId && (
+                      <>
+                        {sourceWarehouseShops.map((s) => (
+                          <option key={s.id} value={`shop:${s.id}`}>
+                            Shop: {s.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
-                  {errors.targetWarehouseId && (
+                  {errors.targetId && (
                     <p className="text-red-500 text-sm">
-                      {errors.targetWarehouseId.message?.toString()}
+                      {errors.targetId.message?.toString()}
                     </p>
                   )}
                 </div>

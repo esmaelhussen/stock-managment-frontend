@@ -67,7 +67,7 @@ const Sidebar: React.FC = () => {
   React.useEffect(() => {
     if (!menuOpen) {
       window.dispatchEvent(
-        new CustomEvent("openSidebarMenu", { detail: false })
+        new CustomEvent("openSidebarMenu", { detail: false }),
       );
     }
   }, [menuOpen]);
@@ -82,7 +82,7 @@ const Sidebar: React.FC = () => {
           "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
           menuOpen
             ? "max-h-96 opacity-100 scale-100"
-            : "max-h-0 opacity-0 scale-95 overflow-hidden"
+            : "max-h-0 opacity-0 scale-95 overflow-hidden",
         )}
       >
         {navigation.map((item, idx) => {
@@ -98,7 +98,7 @@ const Sidebar: React.FC = () => {
                 "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
                 isActive
                   ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
               )}
               onClick={() => setMenuOpen(false)}
             >
@@ -154,7 +154,7 @@ const Sidebar: React.FC = () => {
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
                   ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
               )}
             >
               <item.icon
@@ -162,7 +162,7 @@ const Sidebar: React.FC = () => {
                   "mr-3 h-6 w-6 flex-shrink-0",
                   isActive
                     ? "text-white drop-shadow"
-                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110",
                 )}
               />
               {item.name}
