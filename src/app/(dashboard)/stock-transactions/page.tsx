@@ -25,7 +25,7 @@ import { shopService } from "@/services/shop.service";
 
 export default function StockTransactionsPage() {
   const [allTransactions, setAllTransactions] = useState<StockTransaction[]>(
-    [],
+    []
   );
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function StockTransactionsPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null,
+    null
   );
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const [userShopId, setUserShopId] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export default function StockTransactionsPage() {
           // For shop-role: exclude the source shop from target list
           if (isShopRole && userShopId) {
             setSourceWarehouseShops(
-              shopsForWarehouse.filter((s) => s.id !== userShopId),
+              shopsForWarehouse.filter((s) => s.id !== userShopId)
             );
           } else {
             setSourceWarehouseShops(shopsForWarehouse);
@@ -264,7 +264,7 @@ export default function StockTransactionsPage() {
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create transaction",
+        error.response?.data?.message || "Failed to create transaction"
       );
     }
   };
@@ -656,7 +656,7 @@ export default function StockTransactionsPage() {
                         {warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>

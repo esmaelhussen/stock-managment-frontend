@@ -248,3 +248,33 @@ export interface UpdateShopInput {
   description?: string;
   warehouseId?: string;
 }
+
+export interface SalesTransactionItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  totalPrice: number;
+}
+
+export interface SalesTransaction {
+  id: string;
+  shop: Shop;
+  paymentMethod: 'telebirr' | 'cbe' | 'awash' | 'e-birr' | 'credit';
+  creditorName?: string;
+  totalPrice: number;
+  createdAt: string;
+  items: SalesTransactionItem[];
+}
+
+export interface CreateSalesTransactionItemInput {
+  productId: string;
+  quantity: number;
+}
+
+export interface CreateSalesTransactionInput {
+  shopId: string;
+  paymentMethod: 'telebirr' | 'cbe' | 'awash' | 'e-birr' | 'credit';
+  creditorName?: string;
+  items: CreateSalesTransactionItemInput[];
+}
