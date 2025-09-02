@@ -26,12 +26,18 @@ function SalesTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(6);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
     null
   );
   const [formItems, setFormItems] = useState([{ productId: "", quantity: 1 }]);
   const [form, setForm] = useState({ paymentMethod: "", creditorName: "" });
+  const [filters, setFilters] = useState({
+    date: "",
+    paymentMethod: "",
+    product: "",
+    status: "",
+  });
 
   // Parse cookies for roles and shopId as in stock-transactions
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
@@ -220,7 +226,39 @@ function SalesTransactionsPage() {
   };
 
   const total = transactions.length;
-  const paginated = transactions.slice((page - 1) * pageSize, page * pageSize);
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesDate = filters.date
+      ? new Date(tx.createdAt).toISOString().split("T")[0] === filters.date
+      : true;
+    const matchesPaymentMethod = filters.paymentMethod
+      ? tx.paymentMethod === filters.paymentMethod
+      : true;
+    const matchesProduct = filters.product
+      ? tx.items.some((item) =>
+          item.product.name
+            .toLowerCase()
+            .includes(filters.product.toLowerCase())
+        )
+      : true;
+    const matchesStatus = filters.status ? tx.status === filters.status : true;
+    return (
+      matchesDate && matchesPaymentMethod && matchesProduct && matchesStatus
+    );
+  });
+  const paginated = filteredTransactions.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const updateTransactionStatus = async (transactionId, newStatus) => {
+    try {
+      await saleService.updateTransactionStatus(transactionId, newStatus); // Ensure backend supports this
+      toast.success("Transaction status updated");
+      fetchTransactions();
+    } catch (error) {
+      toast.error("Failed to update transaction status");
+    }
+  };
 
   if (loading)
     return (
@@ -279,57 +317,177 @@ function SalesTransactionsPage() {
           </Button>
         </div>
       </div>
-      {/* Transactions Table */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paginated.map((tx) => (
-          <div key={tx.id} className="bg-white shadow rounded-lg p-3">
-            <h2 className="text-sm font-semibold text-gray-800 mb-1">
-              Transaction ID: {tx.id}
-            </h2>
-            <p className="text-xs text-gray-500 mb-1">
-              {new Date(tx.createdAt).toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-600 mb-1">
-              Payment: {tx.paymentMethod}
-            </p>
-            {tx.paymentMethod === "credit" && (
-              <p className="text-xs text-gray-600 mb-2">
-                Creditor: {tx.creditorName || "-"}
-              </p>
-            )}
-            <div className="mt-2">
-              <h3 className="text-xs font-medium text-gray-700 mb-1">
-                Products:
-              </h3>
-              {tx.items.map((item, idx) => {
-                const product = products.find((p) => p.id === item.product.id);
-                return (
-                  <div key={idx} className="border-b border-gray-100 pb-1 mb-1">
-                    <p className="text-xs text-gray-800">{item.product.name}</p>
-                    <p className="text-xs text-gray-500">
-                      Qty: {item.quantity} | Price:{" "}
-                      {product ? product.price : "N/A"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Total: {product ? item.quantity * product.price : "N/A"}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex justify-between items-center mt-3">
-              <span className="font-semibold text-gray-700 text-sm">
-                Total: {calculateTotalPrice(tx.items)}
-              </span>
-              <button
-                onClick={() => generatePDF(tx)}
-                className="px-4 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        {/* Date Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="dateFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Date
+          </label>
+          <input
+            type="date"
+            id="dateFilter"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, date: e.target.value }))
+            }
+          />
+        </div>
+
+        {/* Payment Method Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="paymentMethodFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Payment Method
+          </label>
+          <select
+            id="paymentMethodFilter"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))
+            }
+          >
+            <option value="">All</option>
+            {PAYMENT_METHODS.map((pm) => (
+              <option key={pm.value} value={pm.value}>
+                {pm.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Product Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="productFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Product
+          </label>
+          <input
+            type="text"
+            id="productFilter"
+            placeholder="Search product"
+            className="w-64 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100"
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, product: e.target.value }))
+            }
+          />
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="statusFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Status
+          </label>
+          <select
+            id="statusFilter"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100"
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, status: e.target.value }))
+            }
+          >
+            <option value="">All</option>
+            <option value="payed">Payed</option>
+            <option value="unpayed">Unpayed</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Enhanced Transactions Table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow rounded-lg">
+          <thead className="sticky top-0 bg-gray-100 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Transaction ID
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Payment Method
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Products
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {paginated.map((tx, index) => (
+              <tr
+                key={tx.id}
+                className={`${
+                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                } hover:bg-gray-100 transition-colors duration-200`}
               >
-                Print PDF
-              </button>
-            </div>
-          </div>
-        ))}
+                <td className="px-6 py-4 text-sm text-gray-800">{tx.id}</td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {new Date(tx.createdAt).toLocaleString()}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.paymentMethod}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.items.map((item, idx) => {
+                    const product = products.find(
+                      (p) => p.id === item.product.id
+                    );
+                    return (
+                      <div key={idx} className="mb-2">
+                        <p>{item.product.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Qty: {item.quantity} | Price:{" "}
+                          {product ? product.price : "N/A"}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {calculateTotalPrice(tx.items)}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.status === "unpayed" && tx.paymentMethod === "credit" ? (
+                    <button
+                      onClick={() => updateTransactionStatus(tx.id, "payed")}
+                      className="px-4 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                    >
+                      Mark as Payed
+                    </button>
+                  ) : (
+                    tx.status
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  <button
+                    onClick={() => generatePDF(tx)}
+                    className="px-4 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                  >
+                    Print PDF
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       {/* Pagination */}
       <div className="flex justify-end items-center gap-2 py-4">
@@ -371,7 +529,7 @@ function SalesTransactionsPage() {
             setFormItems([{ productId: "", quantity: 1 }]);
           }}
           title="Create Sales Transaction"
-          size="lg"
+          size="xl" // Increased the width of the modal
         >
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-4">
@@ -387,7 +545,7 @@ function SalesTransactionsPage() {
                 onChange={(e) =>
                   handleFormChange("paymentMethod", e.target.value)
                 }
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
                 required
               >
                 <option value="">Select Payment Method</option>
@@ -418,7 +576,7 @@ function SalesTransactionsPage() {
                   onChange={(e) =>
                     handleFormChange("creditorName", e.target.value)
                   }
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
                   required={form.paymentMethod === "credit"}
                 />
                 {formErrors && formErrors.creditorName && (
@@ -432,59 +590,142 @@ function SalesTransactionsPage() {
               <label className="block mb-1 text-sm font-medium text-gray-700">
                 Products
               </label>
-              {formItems.map((item, idx) => (
-                <div key={idx} className="flex gap-4 mb-4 items-center">
-                  <select
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
-                    value={item.productId}
-                    onChange={(e) =>
-                      handleItemChange(idx, "productId", e.target.value)
-                    }
-                    required
-                  >
-                    <option value="">Select Product</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min={1}
-                    className="w-24 px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(idx, "quantity", Number(e.target.value))
-                    }
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(idx)}
-                    className="text-red-500 hover:text-red-700 transition duration-200 ease-in-out"
-                  >
-                    Remove
-                  </button>
-                  {formErrors && formErrors[`product_${idx}`] && (
-                    <p className="text-red-500 text-sm">
-                      {formErrors[`product_${idx}`]}
-                    </p>
-                  )}
-                  {formErrors && formErrors[`quantity_${idx}`] && (
-                    <p className="text-red-500 text-sm">
-                      {formErrors[`quantity_${idx}`]}
-                    </p>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addItem}
-                className="text-blue-500 hover:text-blue-700 transition duration-200 ease-in-out"
-              >
-                Add Product
-              </button>
+              <div className="overflow-x-auto">
+                <table className="min-w-full bg-white shadow rounded-lg">
+                  <thead className="bg-gray-100 border-b">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        No
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Product
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Quantity
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Price
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Unit
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {formItems.map((item, idx) => {
+                      const product = products.find(
+                        (p) => p.id === item.productId
+                      );
+                      const price = product ? product.price : 0;
+                      const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
+                      const total = item.quantity * price;
+                      return (
+                        <tr key={idx}>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            {idx + 1}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            <input
+                              type="text"
+                              placeholder="Search or select product"
+                              className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
+                              list={`product-list-${idx}`}
+                              value={
+                                products.find((p) => p.id === item.productId)
+                                  ?.name || item.productId
+                              } // Ensure the input reflects the product name or typed value
+                              onChange={(e) => {
+                                const typedValue = e.target.value;
+                                const selectedProduct = products.find(
+                                  (p) => p.name === typedValue
+                                );
+                                handleItemChange(
+                                  idx,
+                                  "productId",
+                                  selectedProduct
+                                    ? selectedProduct.id
+                                    : typedValue
+                                ); // Update productId or keep the typed value
+                              }}
+                            />
+                            <datalist id={`product-list-${idx}`}>
+                              {products.map((p) => (
+                                <option key={p.id} value={p.name} />
+                              ))}
+                            </datalist>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            <input
+                              type="number"
+                              min={1}
+                              className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleItemChange(
+                                  idx,
+                                  "quantity",
+                                  Number(e.target.value)
+                                )
+                              }
+                              required
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            {price}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            {unit}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            {total}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            <button
+                              type="button"
+                              onClick={() => removeItem(idx)}
+                              className="text-red-500 hover:text-red-700 transition duration-200 ease-in-out cursor-pointer transform hover:scale-110"
+                            >
+                              <span className="text-lg">-</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        <button
+                          type="button"
+                          onClick={addItem}
+                          className="text-green-500 hover:text-green-700 transition duration-200 ease-in-out cursor-pointer transform hover:scale-110"
+                        >
+                          <span className="text-lg">+</span>
+                        </button>
+                      </td>
+                      <td
+                        colSpan={3}
+                        className="px-6 py-4 text-right font-bold text-gray-800"
+                      >
+                        All Total:
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800 font-bold">
+                        {formItems.reduce((sum, item) => {
+                          const product = products.find(
+                            (p) => p.id === item.productId
+                          );
+                          const price = product ? product.price : 0;
+                          return sum + item.quantity * price;
+                        }, 0)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
             <div className="flex justify-end gap-4">
               <Button

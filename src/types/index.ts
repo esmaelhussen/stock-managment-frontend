@@ -265,6 +265,7 @@ export interface SalesTransaction {
   totalPrice: number;
   createdAt: string;
   items: SalesTransactionItem[];
+  status: 'unpayed' | 'payed';
 }
 
 export interface CreateSalesTransactionItemInput {

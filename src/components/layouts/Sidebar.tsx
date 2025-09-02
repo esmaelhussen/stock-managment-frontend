@@ -29,9 +29,6 @@ const Sidebar: React.FC = () => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-    { name: "Users", href: "/users", icon: UserGroupIcon },
-    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
-    { name: "Permissions", href: "/permissions", icon: KeyIcon },
     { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
     { name: "Shops", href: "/shops", icon: ShoppingCartIcon },
     { name: "Categories", href: "/categories", icon: TagIcon },
@@ -78,6 +75,18 @@ const Sidebar: React.FC = () => {
     }
   }, [menuOpen]);
 
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const toggleAccountMenu = () => {
+    setAccountMenuOpen((prev) => !prev);
+  };
+
+  const accountLinks = [
+    { name: "Users", href: "/users", icon: UserGroupIcon },
+    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
+    { name: "Permissions", href: "/permissions", icon: KeyIcon },
+  ];
+
   return (
     <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-screen h-16 relative md:fixed md:top-0 md:left-0 md:z-30">
       {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
@@ -117,16 +126,92 @@ const Sidebar: React.FC = () => {
 
       {/* Desktop sidebar */}
       <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-hidden bg-white sticky top-16">
-        {navigation.map((item) => {
-          if (item.name === "Users" && !permission.includes("users.read"))
-            return null;
-          if (item.name === "Roles" && !permission.includes("roles.read"))
-            return null;
+        {navigation.map((item, index) => {
+          if (index === 1) {
+            return (
+              <div key="account-group">
+                <button
+                  onClick={toggleAccountMenu}
+                  className="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 11c1.656 0 3-1.344 3-3s-1.344-3-3-3-3 1.344-3 3 1.344 3 3 3zm0 2c-2.672 0-8 1.344-8 4v1h16v-1c0-2.656-5.328-4-8-4z"
+                    />
+                  </svg>
+                  Account
+                  <span className="ml-auto">
+                    {accountMenuOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-5 h-5 text-gray-400 group-hover:text-indigo-700"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 9l6 6 6-6"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-5 h-5 text-gray-400 group-hover:text-indigo-700"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 6l6 6-6 6"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {accountMenuOpen && (
+                  <div className="ml-6 space-y-1">
+                    {accountLinks.map((link) => (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        className={cn(
+                          "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                          pathname === link.href
+                            ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                        )}
+                      >
+                        <link.icon className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110" />
+                        {link.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
           if (
-            item.name === "Permissions" &&
-            !permission.includes("permissions.read")
-          )
-            return null;
+            item.name === "Users" ||
+            item.name === "Roles" ||
+            item.name === "Permissions"
+          ) {
+            return null; // Skip these links as they are now under Account
+          }
           if (
             item.name === "Warehouses" &&
             !permission.includes("warehouses.read")
