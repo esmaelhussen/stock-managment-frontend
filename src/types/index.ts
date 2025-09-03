@@ -27,6 +27,8 @@ export interface User {
   userRoles: UserRole[];
   warehouseId?: string;
   warehouse?: Warehouse;
+  shopId?: string;
+  shop?: Shop;
   createdAt: string;
   updatedAt: string;
 }
@@ -232,21 +234,18 @@ export interface Shop {
   name: string;
   address: string;
   description?: string;
-  warehouse: Warehouse;
 }
 
 export interface CreateShopInput {
   name: string;
   address: string;
   description?: string;
-  warehouseId: string;
 }
 
 export interface UpdateShopInput {
   name?: string;
   address?: string;
   description?: string;
-  warehouseId?: string;
 }
 
 export interface SalesTransactionItem {
@@ -260,12 +259,12 @@ export interface SalesTransactionItem {
 export interface SalesTransaction {
   id: string;
   shop: Shop;
-  paymentMethod: 'telebirr' | 'cbe' | 'awash' | 'e-birr' | 'credit';
+  paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
   creditorName?: string;
   totalPrice: number;
   createdAt: string;
   items: SalesTransactionItem[];
-  status: 'unpayed' | 'payed';
+  status: "unpayed" | "payed";
 }
 
 export interface CreateSalesTransactionItemInput {
@@ -275,7 +274,7 @@ export interface CreateSalesTransactionItemInput {
 
 export interface CreateSalesTransactionInput {
   shopId: string;
-  paymentMethod: 'telebirr' | 'cbe' | 'awash' | 'e-birr' | 'credit';
+  paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
   creditorName?: string;
   items: CreateSalesTransactionItemInput[];
 }

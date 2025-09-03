@@ -26,6 +26,10 @@ export class SaleService {
       status,
     });
   }
+
+  async getSalesReport(shopId: string): Promise<any> {
+    return apiClient.get(`/sales-transactions/report?shopId=${shopId}`);
+  }
 }
 
 export const saleService = new SaleService();

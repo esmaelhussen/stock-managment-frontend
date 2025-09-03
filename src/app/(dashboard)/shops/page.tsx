@@ -7,7 +7,7 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { shopService } from "@/services/shop.service";
-import { warehouseService } from "@/services/warehouse.service";
+// import { warehouseService } from "@/services/warehouse.service";
 import { Shop, CreateShopInput, UpdateShopInput } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
@@ -19,20 +19,20 @@ const createShopSchema = yup.object({
   name: yup.string().required("Shop name is required"),
   address: yup.string().required("Address is required"),
   description: yup.string(),
-  warehouseId: yup.string().required("Warehouse is required"),
+  // warehouseId: yup.string().required("Warehouse is required"),
 });
 
 const updateShopSchema = yup.object({
   name: yup.string().required("Shop name is required"),
   address: yup.string().required("Address is required"),
   description: yup.string(),
-  warehouseId: yup.string().required("Warehouse is required"),
+  // warehouseId: yup.string().required("Warehouse is required"),
 });
 
 export default function ShopsPage() {
   const [allShops, setAllShops] = useState<Shop[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
-  const [warehouses, setWarehouses] = useState([]);
+  // const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function ShopsPage() {
 
   useEffect(() => {
     fetchShops();
-    fetchWarehouses();
+    // fetchWarehouses();
   }, []);
 
   useEffect(() => {
@@ -65,14 +65,14 @@ export default function ShopsPage() {
     }
   };
 
-  const fetchWarehouses = async () => {
-    try {
-      const data = await warehouseService.getAll();
-      setWarehouses(data);
-    } catch (error) {
-      toast.error("Failed to fetch warehouses");
-    }
-  };
+  // const fetchWarehouses = async () => {
+  //   try {
+  //     const data = await warehouseService.getAll();
+  //     setWarehouses(data);
+  //   } catch (error) {
+  //     toast.error("Failed to fetch warehouses");
+  //   }
+  // };
 
   const handleCreate = async (data: CreateShopInput) => {
     try {
@@ -116,7 +116,7 @@ export default function ShopsPage() {
           name: selectedShop?.name || "",
           address: selectedShop?.address || "",
           description: selectedShop?.description || "",
-          warehouseId: selectedShop?.warehouse?.id || "",
+          // warehouseId: selectedShop?.warehouse?.id || "",
         },
       }
     : {
@@ -125,7 +125,7 @@ export default function ShopsPage() {
           name: "",
           address: "",
           description: "",
-          warehouseId: "",
+          // warehouseId: "",
         },
       };
 
@@ -183,9 +183,6 @@ export default function ShopsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Description
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Warehouse
-              </th>
               {(permissions.includes("shops.update") ||
                 permissions.includes("shops.delete")) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -207,9 +204,6 @@ export default function ShopsPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {shop.description}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {shop.warehouse.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex space-x-2">
@@ -299,7 +293,7 @@ export default function ShopsPage() {
             {...register("description")}
             error={errors.description?.message}
           />
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">
               Warehouse
             </label>
@@ -324,7 +318,7 @@ export default function ShopsPage() {
                 {errors.warehouseId.message}
               </p>
             )}
-          </div>
+          </div> */}
           <div className="flex justify-end space-x-2">
             <Button
               variant="secondary"

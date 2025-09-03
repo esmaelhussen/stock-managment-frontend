@@ -25,8 +25,12 @@ function SalesTransactionsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    string | null
+  >(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(6);
+  const [pageSize, setPageSize] = useState(8);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
     null
   );
@@ -171,6 +175,17 @@ function SalesTransactionsPage() {
     doc.text("Total Price:", 130, totalYPosition, { align: "right" });
     doc.text(`${totalPrice}`, 165, totalYPosition, { align: "right" });
 
+    // Add transaction status at the bottom with a highlighted background
+    const statusYPosition = totalYPosition + 15;
+    doc.setFillColor(52, 152, 219); // Blue background
+    doc.rect(10, statusYPosition - 5, 190, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255); // White text
+    doc.text("Status:", 130, statusYPosition, { align: "right" });
+    doc.text(transaction.status.toUpperCase(), 165, statusYPosition, {
+      align: "right",
+    });
+
     // Save the PDF
     doc.save(`transaction_${transaction.id}.pdf`);
   };
@@ -283,7 +298,7 @@ function SalesTransactionsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 12].map((size) => (
+              {[8, 7, 10].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -467,7 +482,10 @@ function SalesTransactionsPage() {
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.status === "unpayed" && tx.paymentMethod === "credit" ? (
                     <button
-                      onClick={() => updateTransactionStatus(tx.id, "payed")}
+                      onClick={() => {
+                        setSelectedTransactionId(tx.id);
+                        setIsConfirmModalOpen(true);
+                      }}
                       className="px-4 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
                     >
                       Mark as Payed
@@ -747,6 +765,38 @@ function SalesTransactionsPage() {
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+      {/* Confirm Status Update Modal */}
+      {isConfirmModalOpen && (
+        <Modal
+          isOpen={isConfirmModalOpen}
+          onClose={() => setIsConfirmModalOpen(false)}
+          title="Confirm Status Update"
+        >
+          <div className="mt-2">
+            <p className="text-sm text-gray-500">
+              Are you sure you want to mark this transaction as payed? This
+              action cannot be undone.
+            </p>
+          </div>
+          <div className="mt-4 flex justify-end space-x-2">
+            <Button
+              variant="secondary"
+              onClick={() => setIsConfirmModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                updateTransactionStatus(selectedTransactionId, "payed");
+                setIsConfirmModalOpen(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </div>
         </Modal>
       )}
     </div>

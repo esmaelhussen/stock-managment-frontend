@@ -22,9 +22,9 @@ export class ShopService {
     await apiClient.delete(`/shops/${id}`);
   }
 
-  async getShopsByWarehouse(warehouseId: string): Promise<Shop[]> {
-    return await apiClient.get<Shop[]>(`/warehouses/${warehouseId}/shops`);
-  }
+  // async getShopsByWarehouse(warehouseId: string): Promise<Shop[]> {
+  //   return await apiClient.get<Shop[]>(`/warehouses/${warehouseId}/shops`);
+  // }
 }
 
 export const shopService = new ShopService();
