@@ -21,6 +21,8 @@ function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
   const total = allProducts.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
 
@@ -37,8 +39,24 @@ function ProductsPage() {
   const fetchProducts = async () => {
     try {
       const data = await productService.getAll();
-      setAllProducts(data);
+      console.log("Raw API Response:", data); // Log raw API response for debugging
+      const baseUrl = "http://localhost:3008"; // Replace with your backend URL
+      const updatedData = data.map((product) => {
+        let image = null;
+        if (product.image && typeof product.image === "string") {
+          image = `${baseUrl}${product.image}`;
+        } else if (product.image && typeof product.image === "object") {
+          console.warn("Unexpected image format:", product.image);
+        }
+        return {
+          ...product,
+          image,
+        };
+      });
+      console.log("Updated Products Data:", updatedData); // Debugging log
+      setAllProducts(updatedData);
     } catch (error) {
+      console.error("Error fetching products:", error); // Log error details
       toast.error("Failed to fetch products");
     } finally {
       setLoading(false);
@@ -144,6 +162,9 @@ function ProductsPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Image
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,6 +179,7 @@ function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unit
               </th>
+
               {(permissions.includes("products.update") ||
                 permissions.includes("products.delete")) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -167,54 +189,87 @@ function ProductsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => (
-              <tr key={product.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {product.name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.sku}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.price}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.category.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {product.unit.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex space-x-2">
-                    {permissions.includes("products.update") && (
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setIsEditModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                      </button>
+            {products.map((product) => {
+              console.log("Product Image URL:", product.image); // Debugging log for image URL
+              return (
+                <tr key={product.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {product.image ? (
+                      <>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 object-cover rounded-full cursor-pointer"
+                          onClick={() => {
+                            setModalImage(product.image);
+                            setIsImageModalOpen(true);
+                          }}
+                        />
+                        {isImageModalOpen && modalImage === product.image && (
+                          <Modal
+                            isOpen={isImageModalOpen}
+                            onClose={() => setIsImageModalOpen(false)}
+                          >
+                            <img
+                              src={modalImage}
+                              alt="Product Large"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </Modal>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-gray-500">No Image</span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.sku}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.price}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.category.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.unit.name}
+                  </td>
 
-                    {permissions.includes("products.delete") && (
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-900 "
-                      >
-                        <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex space-x-2">
+                      {permissions.includes("products.update") && (
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                        </button>
+                      )}
+
+                      {permissions.includes("products.delete") && (
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-900 "
+                        >
+                          <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

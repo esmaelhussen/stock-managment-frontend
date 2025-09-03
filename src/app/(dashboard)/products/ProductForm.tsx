@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal"; // Import a modal component
 import {
   Product,
   CreateProductInput,
@@ -23,20 +24,25 @@ const createSchema = yup.object({
   sku: yup.string().required("SKU is required"),
   price: yup
     .number()
-    .typeError("Price must be a number")
+    .typeError("Price must be a valid number") // Updated error message
     .required("Price is required")
     .positive("Price must be positive"),
   categoryId: yup.string().required("Category is required"),
   unitId: yup.string().required("Unit is required"),
+  image: yup.mixed().notRequired(),
 });
 
 const updateSchema = yup.object({
   name: yup.string(),
   description: yup.string(),
   sku: yup.string(),
-  price: yup.number(),
+  price: yup
+    .number()
+    .typeError("Price must be a valid number") // Updated error message
+    .positive("Price must be positive"),
   categoryId: yup.string(),
   unitId: yup.string(),
+  image: yup.mixed().notRequired(),
 });
 
 interface ProductFormProps {
@@ -55,6 +61,8 @@ export default function ProductForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false); // Modal state
 
   const formConfig = isEdit
     ? {
@@ -99,7 +107,24 @@ export default function ProductForm({
   };
 
   const onSubmitHandler = (data: any) => {
+    if (data.image instanceof FileList && data.image.length > 0) {
+      data.image = data.image[0]; // Extract the first file from the FileList
+    }
+    console.log("Form data submitted:", data); // Log the updated form data for debugging
     onSubmit(data);
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewImage(null);
+    }
   };
 
   return (
@@ -172,6 +197,56 @@ export default function ProductForm({
               </option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Image
+          </label>
+          <div className="flex items-center space-x-4">
+            <label
+              htmlFor="image-upload"
+              className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+            >
+              Upload Image
+            </label>
+            <input
+              id="image-upload"
+              type="file"
+              {...register("image")}
+              onChange={(e) => {
+                handleImageChange(e);
+                register("image").onChange(e);
+              }}
+              className="hidden"
+            />
+            {previewImage && (
+              <>
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  className="h-16 w-16 object-cover rounded-md border cursor-pointer"
+                  onClick={() => setIsImageModalOpen(true)} // Open modal on click
+                />
+                {isImageModalOpen && (
+                  <Modal onClose={() => setIsImageModalOpen(false)}>
+                    <img
+                      src={previewImage}
+                      alt="Preview Large"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </Modal>
+                )}
+              </>
+            )}
+          </div>
+          {errors.image && (
+            <p className="mt-2 text-sm text-red-600">
+              {errors.image.message?.toString()}
+            </p>
+          )}
         </div>
       </div>
 

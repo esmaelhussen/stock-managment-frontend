@@ -11,11 +11,39 @@ export class ProductService {
   }
 
   async create(data: CreateProductInput): Promise<Product> {
-    return await apiClient.post<Product>("/products", data);
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        if (key === "image" && value instanceof File) {
+          formData.append("file", value); // Use the field name `file` for the image
+        } else if (key === "price") {
+          formData.append(key, value.toString()); // Ensure price is sent as a number
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+    return await apiClient.post<Product>("/products", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   }
 
   async update(id: string, data: UpdateProductInput): Promise<Product> {
-    return await apiClient.patch<Product>(`/products/${id}`, data);
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        if (key === "image" && value instanceof File) {
+          formData.append("file", value); // Use the field name `file` for the image
+        } else if (key === "price") {
+          formData.append(key, value.toString()); // Ensure price is sent as a number
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+    return await apiClient.patch<Product>(`/products/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
   }
 
   async delete(id: string): Promise<void> {

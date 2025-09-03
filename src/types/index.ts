@@ -181,6 +181,7 @@ export interface Product {
   price: number;
   category: Category;
   unit: Unit;
+  image?: string; // Added image field
 }
 
 export interface CreateProductInput {
@@ -190,6 +191,7 @@ export interface CreateProductInput {
   price: number;
   categoryId: string;
   unitId: string;
+  image?: string | File; // Added image field
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {}

@@ -158,22 +158,21 @@ export default function StockTransactionsPage() {
     if (isWarehouseRole && userWarehouseId) {
       setValue("sourceId", `warehouse:${userWarehouseId}`);
       // Fetch shops for this warehouse
-      // shopService
-      //   .getShopsByWarehouse(userWarehouseId)
-      //   .then((shops) => setSourceWarehouseShops(shops))
-      //   .catch(() => setSourceWarehouseShops([]));
+      shopService
+        .getShopsByWarehouse(userWarehouseId)
+        .then((shops) => setSourceWarehouseShops(shops))
+        .catch(() => setSourceWarehouseShops([]));
     }
     // Shop user
     else if (isShopRole && userShopId) {
       setValue("sourceId", `shop:${userShopId}`);
-
       // Fetch shops in user's warehouse (if needed)
-      // if (shop?.warehouse?.id) {
-      //   shopService
-      //     .getShopsByWarehouse(shop.warehouse.id)
-      //     .then((shops) => setSourceWarehouseShops(shops))
-      //     .catch(() => setSourceWarehouseShops([]));
-      // }
+      if (shop?.warehouse?.id) {
+        shopService
+          .getShopsByWarehouse(shop.warehouse.id)
+          .then((shops) => setSourceWarehouseShops(shops))
+          .catch(() => setSourceWarehouseShops([]));
+      }
     }
     // Neither warehouse nor shop
     else {
@@ -448,12 +447,12 @@ export default function StockTransactionsPage() {
                       : "not required for this transaction"
                     : isWarehouseRole
                       ? transaction.targetWarehouse?.name
-                        ? `WAREHOUSE: ${transaction.targetWarehouse.name}`
+                        ? `Warehouse ${transaction.targetWarehouse.name}`
                         : "not required for this transaction"
                       : transaction.targetWarehouse?.name
-                        ? `WAREHOUSE: ${transaction.targetWarehouse.name}`
+                        ? `Warehouse ${transaction.targetWarehouse.name}`
                         : transaction.targetShop?.name
-                          ? `SHOP: ${transaction.targetShop.name}`
+                          ? `SHOP ${transaction.targetShop.name}`
                           : "not required for this transaction"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -650,32 +649,29 @@ export default function StockTransactionsPage() {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                   >
                     <option value="">Select Target</option>
-                    {/* Role: neither warehouse nor shop
-                    {!isWarehouseRole && !isShopRole && ( */}
-                    <>
-                      {warehouses
-                        .filter(
-                          (w) =>
-                            w.id !== (watch("sourceId")?.split(":")[1] || "")
-                        )
-                        .map((w) => (
-                          <option key={w.id} value={`warehouse:${w.id}`}>
-                            Warehouse: {w.name}
-                          </option>
-                        ))}
-                      {shops
-                        .filter(
-                          (s) =>
-                            s.id !== (watch("sourceId")?.split(":")[1] || "")
-                        )
-                        .map((s) => (
+
+                    {/* Role: neither warehouse nor shop */}
+                    {!isWarehouseRole && !isShopRole && (
+                      <>
+                        {warehouses
+                          .filter(
+                            (w) =>
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
+                          )
+                          .map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              Warehouse: {w.name}
+                            </option>
+                          ))}
+                        {shops.map((s) => (
                           <option key={s.id} value={`shop:${s.id}`}>
                             Shop: {s.name}
                           </option>
                         ))}
-                    </>
-                    //
-                    {/* Warehouse role
+                      </>
+                    )}
+
+                    {/* Warehouse role */}
                     {isWarehouseRole && userWarehouseId && (
                       <>
                         {warehouses
@@ -685,19 +681,18 @@ export default function StockTransactionsPage() {
                               Warehouse: {w.name}
                             </option>
                           ))}
-                        {shops
-                          .filter((s) => s.id !== userWarehouseId)
-                          .map((s) => (
-                            <option key={s.id} value={`shop:${s.id}`}>
-                              Shop: {s.name}
-                            </option>
-                          ))}
+                        {sourceWarehouseShops.map((s) => (
+                          <option key={s.id} value={`shop:${s.id}`}>
+                            Shop: {s.name}
+                          </option>
+                        ))}
                       </>
-                    )} */}
+                    )}
+
                     {/* Shop role */}
                     {/* Shop role - Target options: shops belonging to user's warehouse */}
                     {/* Shop role - target options */}
-                    {/* {isShopRole && userShopId && (
+                    {isShopRole && userShopId && (
                       <>
                         {sourceWarehouseShops.map((s) => (
                           <option key={s.id} value={`shop:${s.id}`}>
@@ -705,13 +700,13 @@ export default function StockTransactionsPage() {
                           </option>
                         ))}
                       </>
-                    )} */}
+                    )}
                   </select>
-                  {/* {errors.targetId && (
+                  {errors.targetId && (
                     <p className="text-red-500 text-sm">
                       {errors.targetId.message?.toString()}
                     </p>
-                  )} */}
+                  )}
                 </div>
               </>
             )}
