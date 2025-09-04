@@ -105,18 +105,19 @@ export default function UserForm({
   useEffect(() => {
     fetchRoles();
     fetchWarehouses();
+    fetchShops();
   }, []);
 
   useEffect(() => {
     if (watchedRoleIds && roles.length > 0) {
       const selectedRoleObjects = roles.filter((role) =>
-        watchedRoleIds.includes(role.id)
+        watchedRoleIds.includes(role.id),
       );
       const hasWarehouse = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("warehouse")
+        role.name.toLowerCase().includes("warehouse"),
       );
       const hasShop = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("shop")
+        role.name.toLowerCase().includes("shop"),
       );
       setHasWarehouseRole(hasWarehouse);
       setHasShopRole(hasShop);
@@ -152,7 +153,7 @@ export default function UserForm({
     }
   };
 
-  const fetchShops = async (warehouseId: string) => {
+  const fetchShops = async () => {
     try {
       const data = await shopService.getAll();
       setShops(data);
@@ -164,7 +165,14 @@ export default function UserForm({
   const onFormSubmit = async (data: any) => {
     setLoading(true);
     try {
-      if (!hasWarehouseRole && !hasShopRole) {
+      if (hasWarehouseRole && !hasShopRole) {
+        // Only keep warehouseId
+        delete data.shopId;
+      } else if (hasShopRole && !hasWarehouseRole) {
+        // Only keep shopId
+        delete data.warehouseId;
+      } else if (!hasWarehouseRole && !hasShopRole) {
+        // Remove both if neither role applies
         delete data.warehouseId;
         delete data.shopId;
       }
