@@ -35,11 +35,11 @@ const StockPage = () => {
       if (isWarehouseRole) {
         filteredData = data.filter(
           (stock) =>
-            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase(),
+            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase()
         );
       } else if (isShopRole) {
         filteredData = data.filter(
-          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase(),
+          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase()
         );
       } else {
         filteredData = data;
