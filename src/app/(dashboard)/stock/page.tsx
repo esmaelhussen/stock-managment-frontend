@@ -12,6 +12,11 @@ const StockPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
+  const [search, setSearch] = useState({
+    product: "",
+    quantity: "",
+    stockName: "",
+  });
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
   const roles = JSON.parse(Cookies.get("roles") || "[]");
   const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
@@ -62,9 +67,34 @@ const StockPage = () => {
     }
   };
 
-  const total = allStock.length;
+  const handleSearchChange = (field, value) => {
+    setSearch((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const paginatedStock = allStock.slice((page - 1) * pageSize, page * pageSize);
+  const filteredStock = allStock.filter((stock) => {
+    const matchesProduct = stock.product.name
+      .toLowerCase()
+      .includes(search.product.toLowerCase());
+    const matchesQuantity = search.quantity
+      ? stock.quantity === parseInt(search.quantity, 10)
+      : true;
+    const matchesStockName =
+      stock.shop?.name
+        ?.toLowerCase()
+        .includes(search.stockName.toLowerCase()) ||
+      stock.warehouse?.name
+        ?.toLowerCase()
+        .includes(search.stockName.toLowerCase());
+
+    return matchesProduct && matchesQuantity && matchesStockName;
+  });
+
+  const total = filteredStock.length;
+
+  const paginatedStock = filteredStock.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -122,6 +152,56 @@ const StockPage = () => {
               </svg>
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="productFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Product
+          </label>
+          <input
+            type="text"
+            placeholder="Search by product"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            value={search.product}
+            onChange={(e) => handleSearchChange("product", e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label
+            htmlFor="quantityFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Quantity
+          </label>
+          <input
+            type="text"
+            placeholder="Search by quantity"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            value={search.quantity}
+            onChange={(e) => handleSearchChange("quantity", e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="stockNameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Stock Name
+          </label>
+          <input
+            type="text"
+            placeholder="Search by stock name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            value={search.stockName}
+            onChange={(e) => handleSearchChange("stockName", e.target.value)}
+          />
         </div>
       </div>
 

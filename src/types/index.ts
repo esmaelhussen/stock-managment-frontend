@@ -214,7 +214,7 @@ export interface CreateStockTransactionInput {
   productId: string;
   quantity: number;
   type: "add" | "remove" | "transfer";
-  sourceWarehouseId: string;
+  sourceWarehouseId?: string;
   targetWarehouseId?: string;
   sourceShopId?: string;
   targetShopId?: string;

@@ -79,21 +79,21 @@ export default function StockTransactionsPage() {
           warehouseId = shop.warehouseId;
         }
 
-        if (warehouseId) {
-          const shopsForWarehouse =
-            await shopService.getShopsByWarehouse(warehouseId);
+        // if (warehouseId) {
+        //   const shopsForWarehouse =
+        //     await shopService.getShopsByWarehouse(warehouseId);
 
-          // For shop-role: exclude the source shop from target list
-          if (isShopRole && userShopId) {
-            setSourceWarehouseShops(
-              shopsForWarehouse.filter((s) => s.id !== userShopId)
-            );
-          } else {
-            setSourceWarehouseShops(shopsForWarehouse);
-          }
-        } else {
-          setSourceWarehouseShops([]);
-        }
+        // For shop-role: exclude the source shop from target list
+        //   if (isShopRole && userShopId) {
+        //     setSourceWarehouseShops(
+        //       shopsForWarehouse.filter((s) => s.id !== userShopId)
+        //     );
+        //   } else {
+        //     setSourceWarehouseShops(shopsForWarehouse);
+        //   }
+        // } else {
+        //   setSourceWarehouseShops([]);
+        // }
       } catch (error) {
         console.error("Failed to fetch shops for warehouse", error);
         setSourceWarehouseShops([]);
@@ -158,21 +158,21 @@ export default function StockTransactionsPage() {
     if (isWarehouseRole && userWarehouseId) {
       setValue("sourceId", `warehouse:${userWarehouseId}`);
       // Fetch shops for this warehouse
-      shopService
-        .getShopsByWarehouse(userWarehouseId)
-        .then((shops) => setSourceWarehouseShops(shops))
-        .catch(() => setSourceWarehouseShops([]));
+      // shopService
+      //   .getShopsByWarehouse(userWarehouseId)
+      //   .then((shops) => setSourceWarehouseShops(shops))
+      //   .catch(() => setSourceWarehouseShops([]));
     }
     // Shop user
     else if (isShopRole && userShopId) {
       setValue("sourceId", `shop:${userShopId}`);
       // Fetch shops in user's warehouse (if needed)
-      if (shop?.warehouse?.id) {
-        shopService
-          .getShopsByWarehouse(shop.warehouse.id)
-          .then((shops) => setSourceWarehouseShops(shops))
-          .catch(() => setSourceWarehouseShops([]));
-      }
+      // if (shop?.warehouse?.id) {
+      //   shopService
+      //     .getShopsByWarehouse(shop.warehouse.id)
+      //     .then((shops) => setSourceWarehouseShops(shops))
+      //     .catch(() => setSourceWarehouseShops([]));
+      // }
     }
     // Neither warehouse nor shop
     else {
@@ -649,29 +649,32 @@ export default function StockTransactionsPage() {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                   >
                     <option value="">Select Target</option>
-
                     {/* Role: neither warehouse nor shop */}
-                    {!isWarehouseRole && !isShopRole && (
-                      <>
-                        {warehouses
-                          .filter(
-                            (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || "")
-                          )
-                          .map((w) => (
-                            <option key={w.id} value={`warehouse:${w.id}`}>
-                              Warehouse: {w.name}
-                            </option>
-                          ))}
-                        {shops.map((s) => (
+                    {/* {!isWarehouseRole && !isShopRole && ( */}
+                    <>
+                      {warehouses
+                        .filter(
+                          (w) =>
+                            w.id !== (watch("sourceId")?.split(":")[1] || "")
+                        )
+                        .map((w) => (
+                          <option key={w.id} value={`warehouse:${w.id}`}>
+                            Warehouse: {w.name}
+                          </option>
+                        ))}
+                      {shops
+                        .filter(
+                          (s) =>
+                            s.id !== (watch("sourceId")?.split(":")[1] || "")
+                        )
+                        .map((s) => (
                           <option key={s.id} value={`shop:${s.id}`}>
                             Shop: {s.name}
                           </option>
                         ))}
-                      </>
-                    )}
+                    </>
 
-                    {/* Warehouse role */}
+                    {/* Warehouse role
                     {isWarehouseRole && userWarehouseId && (
                       <>
                         {warehouses
@@ -687,12 +690,11 @@ export default function StockTransactionsPage() {
                           </option>
                         ))}
                       </>
-                    )}
-
+                    )} */}
                     {/* Shop role */}
                     {/* Shop role - Target options: shops belonging to user's warehouse */}
                     {/* Shop role - target options */}
-                    {isShopRole && userShopId && (
+                    {/* {isShopRole && userShopId && (
                       <>
                         {sourceWarehouseShops.map((s) => (
                           <option key={s.id} value={`shop:${s.id}`}>
@@ -700,7 +702,7 @@ export default function StockTransactionsPage() {
                           </option>
                         ))}
                       </>
-                    )}
+                    )} */}
                   </select>
                   {errors.targetId && (
                     <p className="text-red-500 text-sm">
