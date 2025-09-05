@@ -29,6 +29,7 @@ const Sidebar: React.FC = () => {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
+    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
     { name: "Warehouses", href: "/warehouses", icon: ArchiveBoxIcon },
     { name: "Shops", href: "/shops", icon: ShoppingCartIcon },
     { name: "Categories", href: "/categories", icon: TagIcon },
