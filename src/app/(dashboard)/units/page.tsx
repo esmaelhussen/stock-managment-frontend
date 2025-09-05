@@ -24,16 +24,19 @@ function UnitsPage() {
   const [pageSize, setPageSize] = useState(10);
   const total = allUnits.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+  });
 
   useEffect(() => {
     fetchUnits();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setUnits(allUnits.slice(start, end));
-  }, [allUnits, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setUnits(allUnits.slice(start, end));
+  // }, [allUnits, page, pageSize]);
 
   const fetchUnits = async () => {
     try {
@@ -86,6 +89,19 @@ function UnitsPage() {
       toast.error(error.response?.data?.message || "Failed to delete unit");
     }
   };
+
+  const filteredUnits = allUnits.filter((unit) => {
+    const matchesName = unit.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase());
+    return matchesName;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredUnits.slice((page - 1) * pageSize, page * pageSize);
 
   if (loading) {
     return (
@@ -147,6 +163,24 @@ function UnitsPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            unit Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by unit name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -163,7 +197,7 @@ function UnitsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {units.map((unit) => (
+            {paginated.map((unit) => (
               <tr key={unit.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">

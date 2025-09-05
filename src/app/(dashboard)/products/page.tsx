@@ -174,7 +174,7 @@ function ProductsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[5, 10, 15].map((size) => (
                 <option
                   key={size}
                   value={size}

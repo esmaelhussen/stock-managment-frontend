@@ -37,6 +37,9 @@ function RolesPage() {
   });
   const [permissionSearch, setPermissionSearch] = useState(""); // State for search query
   const permission = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+  });
 
   useEffect(() => {
     fetchRoles();
@@ -143,6 +146,19 @@ function RolesPage() {
     permission.name.toLowerCase().includes(permissionSearch.toLowerCase())
   );
 
+  const filteredRoles = allRoles.filter((role) => {
+    const matchesName = role.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase());
+    return matchesName;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredRoles.slice((page - 1) * pageSize, page * pageSize);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -202,8 +218,27 @@ function RolesPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        {/* Product Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by role name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {roles.map((role) => (
+        {paginated.map((role) => (
           <div key={role.id} className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div>

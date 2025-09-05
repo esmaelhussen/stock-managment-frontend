@@ -26,19 +26,23 @@ function CategoriesPage() {
     identifier?: string;
   } | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
   const total = allCategories.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+    identifier: "",
+  });
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setCategories(allCategories.slice(start, end));
-  }, [allCategories, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setCategories(allCategories.slice(start, end));
+  // }, [allCategories, page, pageSize]);
 
   const fetchCategories = async () => {
     try {
@@ -94,6 +98,25 @@ function CategoriesPage() {
     }
   };
 
+  const filteredCategories = allCategories.filter((category) => {
+    const matchesName = category.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase().trim());
+    const matchesIdentifier = category.identifier
+      .toLowerCase()
+      .includes(filters.identifier.toLowerCase().trim());
+    return matchesName && matchesIdentifier;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredCategories.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -118,7 +141,7 @@ function CategoriesPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 12, 16].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -156,6 +179,39 @@ function CategoriesPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by category name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="identifierFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Identifier
+          </label>
+          <Input
+            id="identifierFilter"
+            value={filters.identifier}
+            onChange={(e) => handleFilterChange("identifier", e.target.value)}
+            placeholder="Search by category identifier"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -175,7 +231,7 @@ function CategoriesPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {categories.map((category) => (
+            {paginated.map((category) => (
               <tr key={category.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">

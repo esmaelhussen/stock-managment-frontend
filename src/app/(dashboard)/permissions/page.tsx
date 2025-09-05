@@ -17,6 +17,7 @@ import { Permission } from "@/types";
 import Cookies from "js-cookie";
 import Input from "@/components/ui/Input";
 import withPermission from "@/hoc/withPermission";
+import { stat } from "fs";
 
 function PermissionsPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
@@ -28,20 +29,24 @@ function PermissionsPage() {
   const [selectedPermission, setSelectedPermission] =
     useState<Permission | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
-  const [resourceFilter, setResourceFilter] = useState(""); // State for resource filter
+  const [pageSize, setPageSize] = useState(12); // State for resource filter
   const total = allPermissions.length;
   const rolePermission = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    resource: "",
+    action: "",
+    status: "",
+  });
 
   useEffect(() => {
     fetchPermissions();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setPermissions(allPermissions.slice(start, end));
-  }, [allPermissions, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setPermissions(allPermissions.slice(start, end));
+  // }, [allPermissions, page, pageSize]);
 
   const fetchPermissions = async () => {
     try {
@@ -82,14 +87,36 @@ function PermissionsPage() {
     }
   };
 
-  useEffect(() => {
-    const filtered = allPermissions.filter((permission) =>
-      permission.resource.toLowerCase().includes(resourceFilter.toLowerCase())
-    );
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setPermissions(filtered.slice(start, end));
-  }, [allPermissions, resourceFilter, page, pageSize]);
+  // useEffect(() => {
+  //   const filtered = allPermissions.filter((permission) =>
+  //     permission.resource.toLowerCase().includes(resourceFilter.toLowerCase())
+  //   );
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setPermissions(filtered.slice(start, end));
+  // }, [allPermissions, resourceFilter, page, pageSize]);
+
+  const filteredPermissions = allPermissions.filter((permission) => {
+    const matchesResource = permission.resource
+      .toLowerCase()
+      .includes(filters.resource.toLowerCase().trim());
+    const matchesAction = permission.action
+      .toLowerCase()
+      .includes(filters.action.toLowerCase().trim());
+    const matchesStatus = filters.status
+      ? permission.isActive === (filters.status === "active")
+      : true;
+
+    return matchesResource && matchesAction && matchesStatus;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+  const paginated = filteredPermissions.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   if (loading) {
     return (
@@ -106,7 +133,7 @@ function PermissionsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          {/* <div className="relative">
             <Input
               type="text"
               placeholder="Filter by resource..."
@@ -114,7 +141,7 @@ function PermissionsPage() {
               onChange={(e) => setResourceFilter(e.target.value)}
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
             />
-          </div>
+          </div> */}
           <div className="relative">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
@@ -124,7 +151,7 @@ function PermissionsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 12, 20].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -159,6 +186,58 @@ function PermissionsPage() {
           )}
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="resourceFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Resource
+          </label>
+          <Input
+            id="resourceFilter"
+            value={filters.resource}
+            onChange={(e) => handleFilterChange("resource", e.target.value)}
+            placeholder="Search by resource"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="actionFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Action
+          </label>
+          <Input
+            id="actionFilter"
+            value={filters.action}
+            onChange={(e) => handleFilterChange("action", e.target.value)}
+            placeholder="Search by action"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="statusFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Status
+          </label>
+          <select
+            id="statusFilter"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -187,7 +266,7 @@ function PermissionsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {permissions.map((permission) => (
+            {paginated.map((permission) => (
               <tr key={permission.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {permission.name}

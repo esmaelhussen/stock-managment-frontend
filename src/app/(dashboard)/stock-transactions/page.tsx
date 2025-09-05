@@ -31,7 +31,7 @@ export default function StockTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(12);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -337,7 +337,7 @@ export default function StockTransactionsPage() {
     return matchesProduct && matchesType && matchesTransactedBy;
   });
 
-  const handleFilterChange = (field, value) => {
+  const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -370,7 +370,7 @@ export default function StockTransactionsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[5, 15, 20].map((size) => (
+              {[6, 12, 16].map((size) => (
                 <option
                   key={size}
                   value={size}

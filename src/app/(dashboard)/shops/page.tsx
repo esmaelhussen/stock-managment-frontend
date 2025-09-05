@@ -39,20 +39,24 @@ export default function ShopsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(12);
   const total = allShops.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+    address: "",
+  });
 
   useEffect(() => {
     fetchShops();
     // fetchWarehouses();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setShops(allShops.slice(start, end));
-  }, [allShops, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setShops(allShops.slice(start, end));
+  // }, [allShops, page, pageSize]);
 
   const fetchShops = async () => {
     try {
@@ -146,6 +150,22 @@ export default function ShopsPage() {
     }
   };
 
+  const filteredShops = allShops.filter((shop) => {
+    const matchesName = shop.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase().trim());
+    const matchesAddress = shop.address
+      .toLowerCase()
+      .includes(filters.address.toLowerCase().trim());
+    return matchesName && matchesAddress;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredShops.slice((page - 1) * pageSize, page * pageSize);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -161,12 +181,80 @@ export default function ShopsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <select
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              value={pageSize}
+              onChange={(e) => {
+                setPage(1);
+                setPageSize(Number(e.target.value));
+              }}
+            >
+              {[6, 12, 16].map((size) => (
+                <option
+                  key={size}
+                  value={size}
+                  className="bg-white text-black font-bold"
+                >
+                  {size} per page
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
+          </div>
           {permissions.includes("shops.create") && (
             <Button onClick={() => setIsCreateModalOpen(true)}>
               <PlusIcon className="h-5 w-5 mr-2" />
               Add Shop
             </Button>
           )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by shops name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="addressFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Address
+          </label>
+          <Input
+            id="addressFilter"
+            value={filters.address}
+            onChange={(e) => handleFilterChange("address", e.target.value)}
+            placeholder="Search by shops address"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
         </div>
       </div>
 
@@ -192,7 +280,7 @@ export default function ShopsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {shops.map((shop) => (
+            {paginated.map((shop) => (
               <tr key={shop.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">

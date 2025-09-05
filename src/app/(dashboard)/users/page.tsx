@@ -11,6 +11,8 @@ import { roleService } from "@/services/role.service";
 import { User, CreateUserInput, UpdateUserInput } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
+import { stat } from "fs";
+import Input from "@/components/ui/Input";
 
 function UsersPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -22,11 +24,16 @@ function UsersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(13);
+  const [pageSize, setPageSize] = useState(11);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const total = allUsers.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+    role: "",
+    status: "",
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -105,6 +112,27 @@ function UsersPage() {
     }
   };
 
+  const filteredUsers = allUsers.filter((user) => {
+    const matchesName =
+      user.firstName.toLowerCase().includes(filters.name.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(filters.name.toLowerCase());
+    const matchesRole = filters.role
+      ? user.userRoles.some((ur) => ur.roleId === filters.role)
+      : true;
+    const matchesStatus = filters.status
+      ? filters.status === "active"
+        ? user.isActive
+        : !user.isActive
+      : true;
+    return matchesName && matchesRole && matchesStatus;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -120,47 +148,22 @@ function UsersPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder="Search by name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-            />
-          </div>
-          <div className="relative">
-            <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-              value={selectedRole}
-              onChange={(e) => {
-                setPage(1);
-                setSelectedRole(e.target.value);
-              }}
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
             >
-              <option value="">All Roles</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </span>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </span>
+
           <div className="relative">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
@@ -170,7 +173,7 @@ function UsersPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 13].map((size) => (
+              {[5, 11, 15].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -206,6 +209,63 @@ function UsersPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by user name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="roleFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Role
+          </label>
+          <select
+            id="roleFilter"
+            value={filters.role}
+            onChange={(e) => handleFilterChange("role", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Roles</option>
+            {roles.map((role: any) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="statusFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Status
+          </label>
+          <select
+            id="statusFilter"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -234,7 +294,7 @@ function UsersPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
+            {paginated.map((user) => (
               <tr key={user.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
