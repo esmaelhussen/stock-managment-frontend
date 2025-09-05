@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -10,6 +15,8 @@ import { productService } from "@/services/product.service";
 import { Product, CreateProductInput, UpdateProductInput } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
+import { categoryService } from "@/services/category.service";
+import { Category } from "@/types";
 
 function ProductsPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -25,16 +32,23 @@ function ProductsPage() {
   const [modalImage, setModalImage] = useState<string | null>(null);
   const total = allProducts.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [filters, setFilters] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    price: "",
+  });
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setProducts(allProducts.slice(start, end));
-  }, [allProducts, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setProducts(allProducts.slice(start, end));
+  // }, [allProducts, page, pageSize]);
 
   const fetchProducts = async () => {
     try {
@@ -98,6 +112,44 @@ function ProductsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const [categoriesData] = await Promise.all([categoryService.getAll()]);
+      setCategories(categoriesData);
+    } catch (error) {
+      toast.error("Failed to fetch categories");
+    }
+  };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const filteredProducts = allProducts.filter((product) => {
+    const matchesName = product.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase());
+    const matchesSKU = product.sku
+      .toLowerCase()
+      .includes(filters.sku.toLowerCase());
+    const matchesCategory = filters.category
+      ? product.category?.name.toLowerCase() === filters.category.toLowerCase()
+      : true;
+    const matchesPrice = product.price
+      .toString()
+      .toLowerCase()
+      .includes(filters.price.toLowerCase());
+    return matchesName && matchesSKU && matchesCategory && matchesPrice;
+  });
+
+  const handlefilteredChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredProducts.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -156,6 +208,74 @@ function ProductsPage() {
           )}
         </div>
       </div>
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Product Name
+          </label>
+          <input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handlefilteredChange("name", e.target.value)}
+            placeholder="Filter by name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="skuFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            SKU
+          </label>
+          <input
+            id="skuFilter"
+            value={filters.sku}
+            onChange={(e) => handlefilteredChange("sku", e.target.value)}
+            placeholder="Filter by SKU"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="categoryFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Category
+          </label>
+          <select
+            id="categoryFilter"
+            value={filters.category}
+            onChange={(e) => handlefilteredChange("category", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="priceFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Price
+          </label>
+          <input
+            id="priceFilter"
+            value={filters.price}
+            onChange={(e) => handlefilteredChange("price", e.target.value)}
+            placeholder="Filter by Price"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -189,7 +309,7 @@ function ProductsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => {
+            {paginated.map((product) => {
               console.log("Product Image URL:", product.image); // Debugging log for image URL
               return (
                 <tr key={product.id}>

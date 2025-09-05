@@ -31,7 +31,7 @@ export default function StockTransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [pageSize, setPageSize] = useState(15);
   const [products, setProducts] = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -41,6 +41,11 @@ export default function StockTransactionsPage() {
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const [userShopId, setUserShopId] = useState<string | null>(null);
   const [sourceWarehouseShops, setSourceWarehouseShops] = useState<Shop[]>([]);
+  const [filters, setFilters] = useState({
+    product: "",
+    type: "",
+    transactedBy: "",
+  });
 
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
@@ -111,11 +116,11 @@ export default function StockTransactionsPage() {
     setUserShopId(shopId);
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setTransactions(allTransactions.slice(start, end));
-  }, [allTransactions, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setTransactions(filteredTransactions.slice(start, end));
+  // }, [allTransactions, page, pageSize]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -313,6 +318,34 @@ export default function StockTransactionsPage() {
     handleCreate(transformedData);
   };
 
+  // Filtered transactions based on selected filters
+  const filteredTransactions = allTransactions.filter((transaction) => {
+    const matchesProduct = transaction.product.name
+      .toLowerCase()
+      .includes(filters.product.toLowerCase());
+    const matchesType = filters.type
+      ? transaction.type.toLowerCase() === filters.type.toLowerCase()
+      : true;
+    const matchesTransactedBy = (
+      transaction.transactedBy?.firstName +
+      " " +
+      transaction.transactedBy?.middleName
+    )
+      ?.toLowerCase()
+      .includes(filters.transactedBy.toLowerCase());
+
+    return matchesProduct && matchesType && matchesTransactedBy;
+  });
+
+  const handleFilterChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredTransactions.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -337,7 +370,7 @@ export default function StockTransactionsPage() {
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 12].map((size) => (
+              {[5, 15, 20].map((size) => (
                 <option
                   key={size}
                   value={size}
@@ -373,6 +406,64 @@ export default function StockTransactionsPage() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+        {/* Product Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="productFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Product
+          </label>
+          <Input
+            id="productFilter"
+            value={filters.product}
+            onChange={(e) => handleFilterChange("product", e.target.value)}
+            placeholder="Search by product name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+
+        {/* Type Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="typeFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Type
+          </label>
+          <select
+            id="typeFilter"
+            value={filters.type}
+            onChange={(e) => handleFilterChange("type", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Types</option>
+            <option value="add">Add</option>
+            <option value="remove">Remove</option>
+            <option value="transfer">Transfer</option>
+          </select>
+        </div>
+
+        {/* Transacted By Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="transactedByFilter"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Transacted Person
+          </label>
+          <Input
+            id="transactedByFilter"
+            value={filters.transactedBy}
+            onChange={(e) => handleFilterChange("transactedBy", e.target.value)}
+            placeholder="Search by Transactor"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+      </div>
+
       {/* Transactions Table */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -405,66 +496,65 @@ export default function StockTransactionsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {transactions.map((transaction) => (
-              <tr key={transaction.id}>
+            {paginated.map((tx, index) => (
+              <tr key={tx.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {transaction.product.name}
+                  {tx.product.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.quantity}
+                  {tx.quantity}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.price}
+                  {tx.price}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {transaction.type}
+                  {tx.type}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {isShopRole
                     ? `${
-                        transaction.sourceShop?.name
-                          ? `SHOP: ${transaction.sourceShop.name}`
-                          : transaction.sourceWarehouse?.name
-                            ? `WAREHOUSE: ${transaction.sourceWarehouse.name}`
+                        tx.sourceShop?.name
+                          ? `SHOP: ${tx.sourceShop.name}`
+                          : tx.sourceWarehouse?.name
+                            ? `WAREHOUSE: ${tx.sourceWarehouse.name}`
                             : "N/A"
                       }`
                     : isWarehouseRole
-                      ? transaction.sourceWarehouse?.name
-                        ? `WAREHOUSE: ${transaction.sourceWarehouse.name}`
-                        : transaction.sourceShop?.name
-                          ? `SHOP: ${transaction.sourceShop.name}`
+                      ? tx.sourceWarehouse?.name
+                        ? `WAREHOUSE: ${tx.sourceWarehouse.name}`
+                        : tx.sourceShop?.name
+                          ? `SHOP: ${tx.sourceShop.name}`
                           : "N/A"
-                      : transaction.sourceWarehouse?.name
-                        ? `WareHouse: ${transaction.sourceWarehouse.name}`
-                        : transaction.sourceShop?.name
-                          ? `SHOP: ${transaction.sourceShop.name}`
+                      : tx.sourceWarehouse?.name
+                        ? `WareHouse: ${tx.sourceWarehouse.name}`
+                        : tx.sourceShop?.name
+                          ? `SHOP: ${tx.sourceShop.name}`
                           : "N/A"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {isShopRole
-                    ? transaction.targetShop?.name
-                      ? `SHOP ${transaction.targetShop.name}`
+                    ? tx.targetShop?.name
+                      ? `SHOP ${tx.targetShop.name}`
                       : "not required for this transaction"
                     : isWarehouseRole
-                      ? transaction.targetWarehouse?.name
-                        ? `Warehouse ${transaction.targetWarehouse.name}`
+                      ? tx.targetWarehouse?.name
+                        ? `Warehouse ${tx.targetWarehouse.name}`
                         : "not required for this transaction"
-                      : transaction.targetWarehouse?.name
-                        ? `Warehouse ${transaction.targetWarehouse.name}`
-                        : transaction.targetShop?.name
-                          ? `SHOP ${transaction.targetShop.name}`
+                      : tx.targetWarehouse?.name
+                        ? `Warehouse ${tx.targetWarehouse.name}`
+                        : tx.targetShop?.name
+                          ? `SHOP ${tx.targetShop.name}`
                           : "not required for this transaction"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(transaction.timestamp).toLocaleString()}
+                  {new Date(tx.timestamp).toLocaleString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <span className="font-bold">
-                    {transaction.transactedBy?.firstName}{" "}
-                    {transaction.transactedBy?.middleName}
+                    {tx.transactedBy?.firstName} {tx.transactedBy?.middleName}
                     {": "}
                   </span>
-                  {transaction.transactedBy?.phoneNumber}
+                  {tx.transactedBy?.phoneNumber}
                 </td>
               </tr>
             ))}
@@ -702,7 +792,7 @@ export default function StockTransactionsPage() {
                           </option>
                         ))}
                       </>
-                    )} */}
+                    } */}
                   </select>
                   {errors.targetId && (
                     <p className="text-red-500 text-sm">
