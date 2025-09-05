@@ -25,7 +25,7 @@ import { shopService } from "@/services/shop.service";
 
 export default function StockTransactionsPage() {
   const [allTransactions, setAllTransactions] = useState<StockTransaction[]>(
-    [],
+    []
   );
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function StockTransactionsPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null,
+    null
   );
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const [userShopId, setUserShopId] = useState<string | null>(null);
@@ -46,6 +46,7 @@ export default function StockTransactionsPage() {
     type: "",
     transactedBy: "",
   });
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
 
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
@@ -270,7 +271,7 @@ export default function StockTransactionsPage() {
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create transaction",
+        error.response?.data?.message || "Failed to create transaction"
       );
     }
   };
@@ -344,7 +345,12 @@ export default function StockTransactionsPage() {
 
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
+  );
+
+  // Filtered products based on the search term
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -763,7 +769,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -774,7 +780,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              s.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -785,7 +791,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -796,7 +802,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              s.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -821,7 +827,7 @@ export default function StockTransactionsPage() {
                           </option>
                         ))}
                       </>
-                    )} */}
+                    } */}
                     {/* Shop role */}
                     {/* Shop role - Target options: shops belonging to user's warehouse */}
                     {/* Shop role - target options */}
@@ -867,7 +873,7 @@ export default function StockTransactionsPage() {
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               >
                 <option value="">Select a Product</option>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name}
                   </option>
