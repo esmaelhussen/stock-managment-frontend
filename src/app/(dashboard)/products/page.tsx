@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
@@ -209,6 +209,8 @@ function ProductsPage() {
                           <Modal
                             isOpen={isImageModalOpen}
                             onClose={() => setIsImageModalOpen(false)}
+                            title="Image Preview"
+                            size="lg"
                           >
                             <img
                               src={modalImage}

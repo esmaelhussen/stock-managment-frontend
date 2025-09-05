@@ -231,7 +231,12 @@ export default function ProductForm({
                   onClick={() => setIsImageModalOpen(true)} // Open modal on click
                 />
                 {isImageModalOpen && (
-                  <Modal onClose={() => setIsImageModalOpen(false)}>
+                  <Modal
+                    isOpen={isImageModalOpen}
+                    onClose={() => setIsImageModalOpen(false)}
+                    title="Image Preview"
+                    size="lg"
+                  >
                     <img
                       src={previewImage}
                       alt="Preview Large"
