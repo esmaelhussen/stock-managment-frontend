@@ -40,11 +40,11 @@ const StockPage = () => {
       if (isWarehouseRole) {
         filteredData = data.filter(
           (stock) =>
-            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase()
+            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase(),
         );
       } else if (isShopRole) {
         filteredData = data.filter(
-          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase()
+          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase(),
         );
       } else {
         filteredData = data;
@@ -93,7 +93,7 @@ const StockPage = () => {
 
   const paginatedStock = filteredStock.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   const handlePageChange = (newPage: number) => {
@@ -188,21 +188,23 @@ const StockPage = () => {
             onChange={(e) => handleSearchChange("quantity", e.target.value)}
           />
         </div>
-        <div className="flex flex-col">
-          <label
-            htmlFor="stockNameFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Stock Name
-          </label>
-          <input
-            type="text"
-            placeholder="Search by stock name"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
-            value={search.stockName}
-            onChange={(e) => handleSearchChange("stockName", e.target.value)}
-          />
-        </div>
+        {!isShopRole && !isWarehouseRole && (
+          <div className="flex flex-col">
+            <label
+              htmlFor="stockNameFilter"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Stock Name
+            </label>
+            <input
+              type="text"
+              placeholder="Search by stock name"
+              className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+              value={search.stockName}
+              onChange={(e) => handleSearchChange("stockName", e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
