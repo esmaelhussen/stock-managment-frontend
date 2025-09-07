@@ -3,320 +3,456 @@
 import React, { useState, useEffect } from "react";
 import { saleService } from "@/services/sale.service";
 import toast from "react-hot-toast";
-import Button from "@/components/ui/Button";
 import withPermission from "@/hoc/withPermission";
-import { Bar, Pie, Line } from "react-chartjs-2";
+import { Pie, Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import Cookies from "js-cookie";
 
-const getWeekNumber = (date) => {
-  const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
-  return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-};
+type Period = "daily" | "weekly" | "monthly" | "yearly";
 
-const blueBackgroundColor = "#2980B9"; // Blue background color used in SalesTransactionsPage
+const blueBackgroundColor = "#2980B9";
 
 function SalesReportPage() {
-  const [reportData, setReportData] = useState<{
-    productSales: Record<string, { quantity: number; total: number }>;
-    paymentMethods: Record<string, number>;
-    salesOverTime: Record<string, number>;
-    paymentStatus: { payed: number; unpayed: number };
-  } | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("daily");
+  const [period, setPeriod] = useState<Period>("daily");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchReportData();
-  }, []);
+    fetchReportData(period);
+  }, [period]);
 
-  const fetchReportData = async () => {
+  const fetchReportData = async (selectedPeriod: Period) => {
     setLoading(true);
     try {
       const shopId = Cookies.get("shopId");
-      if (!shopId) {
-        throw new Error("Shop ID not found in cookies");
+      if (!shopId) throw new Error("Shop ID not found in cookies");
+
+      const res = await saleService.getSalesReport(shopId, selectedPeriod);
+      console.log("Full API Response:", res); // Log the full response for debugging
+
+      if (!res) {
+        console.error("API response is null or undefined");
+        setReportData(null);
+        return;
       }
-      const data = await saleService.getSalesReport(shopId);
-      setReportData(data);
+
+      // Check if the data exists in a different key
+      const fetchedData = res || res.body || res.result || null;
+      console.log("Processed Report Data:", fetchedData); // Log the processed data
+
+      // Extract and process the data
+      const groupedData = fetchedData.grouped || {};
+      const summaryData = fetchedData.summary || {};
+
+      // Example: Combine grouped and summary data
+      const processedData = {
+        grouped: groupedData,
+        summary: summaryData,
+      };
+
+      console.log("Processed Report Data:", processedData);
+      setReportData(processedData);
+      setSelectedDate(null); // Reset drill-down when period changes
     } catch (error) {
+      console.error("Failed to fetch report data", error); // Log the error
       toast.error("Failed to fetch report data");
+      setReportData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterSalesOverTime = () => {
-    const filteredData = {};
-    Object.keys(reportData.salesOverTime).forEach((date) => {
-      const key =
-        timeRange === "daily"
-          ? date
-          : timeRange === "weekly"
-            ? `Week ${getWeekNumber(new Date(date))}`
-            : new Date(date).getFullYear();
-      filteredData[key] =
-        (filteredData[key] || 0) + reportData.salesOverTime[date];
-    });
-    return filteredData;
-  };
-
-  const salesOverTimeData = reportData ? filterSalesOverTime() : {};
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">Loading...</div>
-    );
-  }
-
-  // Chart options with consistent blue color
   const chartOptions = {
     plugins: {
       legend: {
         labels: {
-          color: blueBackgroundColor, // Apply consistent blue color
+          color: blueBackgroundColor,
         },
       },
     },
   };
 
-  // Section style with blue background color
-  const sectionStyle = {
-    backgroundColor: blueBackgroundColor,
-    color: "white", // Ensure text is readable
-    padding: "10px",
-    borderRadius: "5px",
-  };
+  const summary = reportData?.summary || reportData; // backend may return grouped+summary
+  const grouped = reportData?.grouped;
 
   return (
     <div className="p-6 rounded-lg shadow-lg">
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-black flex items-center gap-2">
-            Sales Report
-          </h1>
+        <h1 className="text-3xl font-bold text-black">Sales Report</h1>
+        <select
+          className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as Period)}
+        >
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex justify-center items-center h-64">Loading...</div>
+      )}
+
+      {/* No Data */}
+      {!loading && !reportData && (
+        <div className="text-center text-gray-500 italic mb-8">
+          No report found for this period
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </span>
+      )}
+
+      {/* Summary Section */}
+      {!loading && summary && (
+        <div className="overflow-x-auto mb-8">
+          <table className="min-w-full bg-white shadow rounded-lg">
+            <thead className="sticky top-0 bg-gray-100 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Metric
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Value
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  Total Transactions
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {summary.totals?.totalTransactions || 0}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  Total Quantity
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {summary.totals?.totalQuantity || 0}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-800">Total Price</td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {summary.totals?.totalPrice || 0} Birr
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  Most Used Payment Method
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {summary.mostUsedPaymentMethod || "-"}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  Unpayed Transactions
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {summary.paymentStatus.unpayed || "-"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Charts */}
+      {!loading && summary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {/* Product Sales */}
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-black">
+              Products Sold
+            </h2>
+            <Pie
+              data={{
+                labels: Object.values(summary.productSales || {}).map(
+                  (p: any) => p.name,
+                ),
+                datasets: [
+                  {
+                    data: Object.values(summary.productSales || {}).map(
+                      (p: any) => p.quantity,
+                    ),
+                    backgroundColor: [
+                      "#FF6384",
+                      "#36A2EB",
+                      "#FFCE56",
+                      "#4BC0C0",
+                      "#9966FF",
+                      "#FF9F40",
+                      "#de4321",
+                      "#21de43",
+                      "#2143de",
+                      "#de2143",
+                      "#43de21",
+                      "#a834cd",
+                      "#cd34a8",
+                      "#34cda8",
+                      "#a8cd34",
+                      "#cd8a34",
+                      "#348acd",
+                    ],
+                  },
+                ],
+              }}
+              options={{
+                ...chartOptions,
+                plugins: { legend: { position: "bottom" } },
+              }}
+            />
+          </div>
+
+          {/* Payment Methods */}
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-black">
+              Payment Methods
+            </h2>
+            <Pie
+              data={{
+                labels: Object.keys(summary.paymentMethods || {}),
+                datasets: [
+                  {
+                    data: Object.values(summary.paymentMethods || {}),
+                    backgroundColor: [
+                      "#FF6384",
+                      "#36A2EB",
+                      "#FFCE56",
+                      "#4BC0C0",
+                      "#9966FF",
+                      "#FF9F40",
+                      "#de4321",
+                      "#21de43",
+                      "#2143de",
+                      "#de2143",
+                      "#43de21",
+                    ],
+                  },
+                ],
+              }}
+              options={{
+                ...chartOptions,
+                plugins: { legend: { position: "bottom" } },
+              }}
+            />
+          </div>
+
+          {/* Payment Status */}
+          <div className="bg-white p-6 rounded-lg shadow-lg ">
+            <h2 className="text-2xl font-bold  text-black">Payment Status</h2>
+            <Bar
+              data={{
+                labels: ["Payed", "Unpayed"],
+                datasets: [
+                  {
+                    label: "Count",
+                    data: [
+                      summary.paymentStatus?.payed || 0,
+                      summary.paymentStatus?.unpayed || 0,
+                    ],
+                    backgroundColor: ["#10B981", "#EF4444"],
+                  },
+                ],
+              }}
+              options={{
+                ...chartOptions,
+                plugins: { legend: { display: false } },
+              }}
+              className="mt-28"
+            />
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow rounded-lg">
-          <thead className="sticky top-0 bg-gray-100 border-b">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Metric
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Value
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            <tr>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                Total Products Sold
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                {Object.values(reportData.productSales).reduce(
-                  (sum: number, p: any) => sum + (p.quantity || 0),
-                  0
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                Most Used Payment Method
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                {Object.keys(reportData.paymentMethods).reduce((a, b) =>
-                  reportData.paymentMethods[a] > reportData.paymentMethods[b]
-                    ? a
-                    : b
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                Highest Sales Period
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-800">
-                {Object.keys(salesOverTimeData).reduce((a, b) =>
-                  salesOverTimeData[a] > salesOverTimeData[b] ? a : b
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-8">
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Products Sold
+      {/* Drilldown for weekly/monthly/yearly */}
+      {!loading && period !== "daily" && grouped && (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-4 text-black">
+            Drilldown by Date
           </h2>
-          <p className="text-gray-600 mb-4 text-lg">
-            Total Products Sold:{" "}
-            {Object.values(reportData.productSales).reduce(
-              (sum: number, p: any) => sum + (p.quantity || 0),
-              0
-            )}
-          </p>
-          <Bar
-            data={{
-              labels: Object.values(reportData.productSales).map(
-                (p: any) => p.name
-              ),
-              datasets: [
-                {
-                  label: "Quantity Sold",
-                  data: Object.values(reportData.productSales).map(
-                    (p: any) => p.quantity
-                  ),
-                  backgroundColor: "#6366F1",
-                },
-              ],
-            }}
-            options={{
-              ...chartOptions,
-              plugins: {
-                legend: { display: false },
-              },
-            }}
-          />
-        </div>
+          <select
+            className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow mb-6"
+            value={selectedDate || ""}
+            onChange={(e) => setSelectedDate(e.target.value || null)}
+          >
+            <option value="">Select a date</option>
+            {Object.keys(grouped).map((date) => (
+              <option key={date} value={date}>
+                {date}
+              </option>
+            ))}
+          </select>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Payment Methods
-          </h2>
-          <p className="text-gray-600 mb-4 text-lg">
-            Most Used Payment Method:{" "}
-            {Object.keys(reportData.paymentMethods).reduce((a, b) =>
-              reportData.paymentMethods[a] > reportData.paymentMethods[b]
-                ? a
-                : b
-            )}
-          </p>
-          <Pie
-            data={{
-              labels: Object.keys(reportData.paymentMethods),
-              datasets: [
-                {
-                  data: Object.values(reportData.paymentMethods),
-                  backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-                },
-              ],
-            }}
-            options={{
-              ...chartOptions,
-              plugins: {
-                legend: { position: "bottom" },
-              },
-            }}
-          />
-        </div>
+          {selectedDate && (
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-lg font-bold mb-4 text-black">
+                Report for {selectedDate}
+              </h3>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Sales Over Time
-          </h2>
-          <div className="flex justify-end mb-6">
-            <select
-              className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-          <p className="text-gray-600 mb-4 text-lg">
-            Highest Sales Period:{" "}
-            {Object.keys(salesOverTimeData).reduce((a, b) =>
-              salesOverTimeData[a] > salesOverTimeData[b] ? a : b
-            )}
-          </p>
-          <Line
-            data={{
-              labels: Object.keys(salesOverTimeData),
-              datasets: [
-                {
-                  label: "Total Sales",
-                  data: Object.values(salesOverTimeData),
-                  borderColor: "#10B981",
-                  backgroundColor: "rgba(16, 185, 129, 0.2)",
-                  fill: true,
-                },
-              ],
-            }}
-            options={{
-              ...chartOptions,
-              plugins: {
-                legend: { display: false },
-              },
-            }}
-          />
-        </div>
+              {/* Summary Section */}
+              <div className="overflow-x-auto mb-8">
+                <table className="min-w-full bg-white shadow rounded-lg">
+                  <thead className="sticky top-0 bg-gray-100 border-b">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Metric
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Value
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        Total Transactions
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {grouped[selectedDate]?.totals?.totalTransactions || 0}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        Total Quantity
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {grouped[selectedDate]?.totals?.totalQuantity || 0}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        Total Price
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {grouped[selectedDate]?.totals?.totalPrice || 0}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        Most Used Payment Method
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {grouped[selectedDate]?.mostUsedPaymentMethod || ""}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        Unpayed Transactions
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800">
+                        {grouped[selectedDate]?.paymentStatus.unpayed || 0}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Payment Status
-          </h2>
-          <p className="text-gray-600 mb-4 text-lg">
-            Payed: {reportData.paymentStatus.payed}, Unpayed:{" "}
-            {reportData.paymentStatus.unpayed}
-          </p>
-          <Pie
-            data={{
-              labels: ["Payed", "Unpayed"],
-              datasets: [
-                {
-                  data: [
-                    reportData.paymentStatus.payed,
-                    reportData.paymentStatus.unpayed,
-                  ],
-                  backgroundColor: ["#10B981", "#EF4444"],
-                },
-              ],
-            }}
-            options={{
-              ...chartOptions,
-              plugins: {
-                legend: { position: "bottom" },
-              },
-            }}
-          />
+              {/* Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {/* Product Sales */}
+                <div className="bg-white p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-black">
+                    Products Sold
+                  </h2>
+                  <Pie
+                    data={{
+                      labels: Object.values(
+                        grouped[selectedDate]?.productSales || {},
+                      ).map((p: any) => p.name),
+                      datasets: [
+                        {
+                          data: Object.values(
+                            grouped[selectedDate]?.productSales || {},
+                          ).map((p: any) => p.quantity),
+                          backgroundColor: [
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40",
+                          ],
+                        },
+                      ],
+                    }}
+                    options={{
+                      ...chartOptions,
+                      plugins: { legend: { position: "bottom" } },
+                    }}
+                  />
+                </div>
+
+                {/* Payment Methods */}
+                <div className="bg-white p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-black">
+                    Payment Methods
+                  </h2>
+                  <Pie
+                    data={{
+                      labels: Object.keys(
+                        grouped[selectedDate]?.paymentMethods || {},
+                      ),
+                      datasets: [
+                        {
+                          data: Object.values(
+                            grouped[selectedDate]?.paymentMethods || {},
+                          ),
+                          backgroundColor: [
+                            "#FF6384",
+                            "#36A2EB",
+                            "#FFCE56",
+                            "#4BC0C0",
+                            "#9966FF",
+                            "#FF9F40",
+                          ],
+                        },
+                      ],
+                    }}
+                    options={{
+                      ...chartOptions,
+                      plugins: { legend: { position: "bottom" } },
+                    }}
+                  />
+                </div>
+
+                {/* Payment Status */}
+                <div className="bg-white p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-black">
+                    Payment Status
+                  </h2>
+                  <Bar
+                    data={{
+                      labels: ["Payed", "Unpayed"],
+                      datasets: [
+                        {
+                          label: "Count",
+                          data: [
+                            grouped[selectedDate]?.paymentStatus?.payed || 0,
+                            grouped[selectedDate]?.paymentStatus?.unpayed || 0,
+                          ],
+                          backgroundColor: ["#10B981", "#EF4444"],
+                        },
+                      ],
+                    }}
+                    options={{
+                      ...chartOptions,
+                      plugins: { legend: { display: false } },
+                    }}
+                    className="mt-28"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

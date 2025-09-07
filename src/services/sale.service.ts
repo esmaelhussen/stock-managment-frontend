@@ -7,28 +7,33 @@ export class SaleService {
   }
 
   async createSalesTransaction(
-    data: CreateSalesTransactionInput
+    data: CreateSalesTransactionInput,
   ): Promise<SalesTransaction> {
     return apiClient.post<SalesTransaction>("/sales-transactions", data);
   }
 
   async getSalesTransactions(shopId: string): Promise<SalesTransaction[]> {
     return apiClient.get<SalesTransaction[]>(
-      `/sales-transactions?shopId=${shopId}`
+      `/sales-transactions?shopId=${shopId}`,
     );
   }
 
   async updateTransactionStatus(
     transactionId: string,
-    status: "unpayed" | "payed"
+    status: "unpayed" | "payed",
   ): Promise<void> {
     await apiClient.patch(`/sales-transactions/${transactionId}/status`, {
       status,
     });
   }
 
-  async getSalesReport(shopId: string): Promise<any> {
-    return apiClient.get(`/sales-transactions/report?shopId=${shopId}`);
+  async getSalesReport(
+    shopId: string,
+    period: "daily" | "weekly" | "monthly" | "yearly",
+  ): Promise<any> {
+    return apiClient.get(
+      `/sales-transactions/report?shopId=${shopId}&period=${period}`,
+    );
   }
 }
 
