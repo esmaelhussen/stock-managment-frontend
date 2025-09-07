@@ -7,6 +7,8 @@ import withPermission from "@/hoc/withPermission";
 import { Pie, Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import Cookies from "js-cookie";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 
@@ -75,6 +77,87 @@ function SalesReportPage() {
 
   const summary = reportData?.summary || reportData; // backend may return grouped+summary
   const grouped = reportData?.grouped;
+
+  const generatePDF = (title, summary, chartsData) => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(title, 14, 20);
+
+    // Summary Table
+    if (summary) {
+      doc.setFontSize(14);
+      doc.text("Summary", 14, 30);
+      autoTable(doc, {
+        startY: 35,
+        head: [["Metric", "Value"]],
+        body: [
+          ["Total Transactions", summary.totals?.totalTransactions || 0],
+          ["Total Quantity", summary.totals?.totalQuantity || 0],
+          ["Total Price", summary.totals?.totalPrice || 0],
+          ["Most Used Payment Method", summary.mostUsedPaymentMethod || "-"],
+        ],
+      });
+    }
+
+    // Charts
+    if (chartsData) {
+      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 50;
+      chartsData.forEach((chart) => {
+        const canvas = document.querySelector(chart.selector);
+        if (canvas) {
+          const imgData = canvas.toDataURL("image/png");
+          doc.addImage(imgData, "PNG", 14, currentY, 120, 50);
+          doc.text(chart.title, 14, currentY + 100);
+          currentY += 110; // Add spacing for the next chart
+
+          // Check if the next chart will overflow the page
+          if (currentY + 100 > doc.internal.pageSize.height) {
+            doc.addPage();
+            currentY = 20; // Reset Y position for the new page
+          }
+        }
+      });
+    }
+
+    doc.save(`${title}.pdf`);
+  };
+
+  const handlePrintSummary = () => {
+    generatePDF("Sales Summary Report", summary, [
+      {
+        title: "Products Sold",
+        selector: "#productsSoldChart",
+      },
+      {
+        title: "Payment Methods",
+        selector: "#paymentMethodsChart",
+      },
+      {
+        title: "Payment Status",
+        selector: "#paymentStatusChart",
+      },
+    ]);
+  };
+
+  const handlePrintDayReport = () => {
+    if (!selectedDate || !grouped[selectedDate]) return;
+    generatePDF(`Sales Report for ${selectedDate}`, grouped[selectedDate], [
+      {
+        title: "Products Sold",
+        selector: "#productsSoldChartDay",
+      },
+      {
+        title: "Payment Methods",
+        selector: "#paymentMethodsChartDay",
+      },
+      {
+        title: "Payment Status",
+        selector: "#paymentStatusChartDay",
+      },
+    ]);
+  };
 
   return (
     <div className="p-6 rounded-lg shadow-lg">
@@ -207,6 +290,7 @@ function SalesReportPage() {
                 ...chartOptions,
                 plugins: { legend: { position: "bottom" } },
               }}
+              id="productsSoldChart"
             />
           </div>
 
@@ -241,6 +325,7 @@ function SalesReportPage() {
                 ...chartOptions,
                 plugins: { legend: { position: "bottom" } },
               }}
+              id="paymentMethodsChart"
             />
           </div>
 
@@ -266,6 +351,7 @@ function SalesReportPage() {
                 plugins: { legend: { display: false } },
               }}
               className="mt-28"
+              id="paymentStatusChart"
             />
           </div>
         </div>
@@ -386,6 +472,7 @@ function SalesReportPage() {
                       ...chartOptions,
                       plugins: { legend: { position: "bottom" } },
                     }}
+                    id="productsSoldChartDay"
                   />
                 </div>
 
@@ -419,6 +506,7 @@ function SalesReportPage() {
                       ...chartOptions,
                       plugins: { legend: { position: "bottom" } },
                     }}
+                    id="paymentMethodsChartDay"
                   />
                 </div>
 
@@ -446,6 +534,7 @@ function SalesReportPage() {
                       plugins: { legend: { display: false } },
                     }}
                     className="mt-28"
+                    id="paymentStatusChartDay"
                   />
                 </div>
               </div>
@@ -453,6 +542,23 @@ function SalesReportPage() {
           )}
         </div>
       )}
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap justify-end gap-4 mt-8">
+        <button
+          onClick={handlePrintSummary}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+        >
+          Print Summary Report
+        </button>
+
+        <button
+          onClick={handlePrintDayReport}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+        >
+          Print Day Report
+        </button>
+      </div>
     </div>
   );
 }
