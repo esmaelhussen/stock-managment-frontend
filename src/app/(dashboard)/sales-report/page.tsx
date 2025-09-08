@@ -112,7 +112,7 @@ function SalesReportPage() {
         chartsData[2].selector,
       );
 
-      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 50;
+      let currentY = 100;
 
       // Products Sold and Payment Methods side by side
       if (productsSoldCanvas && paymentMethodsCanvas) {
