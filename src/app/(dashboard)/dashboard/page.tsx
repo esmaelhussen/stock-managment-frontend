@@ -180,7 +180,7 @@ function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl md:text-3xl font-extrabold text-gradient bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide drop-shadow-lg mb-8">
+      <h1 className="text-2xl md:text-3xl font-extrabold text-gradient bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide drop-shadow-lg mb-8 ">
         Dashboard
       </h1>
 
@@ -218,7 +218,8 @@ function DashboardPage() {
         <p className="text-gray-600">
           This is a comprehensive stock management system with user management,
           role-based access control, and permission management. Navigate through
-          the sidebar to manage users, roles, and permissions.
+          the sidebar to manage users, roles, permissions and others
+          functionalities.
         </p>
       </div>
 

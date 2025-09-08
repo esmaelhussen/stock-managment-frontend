@@ -589,17 +589,17 @@ function SalesReportPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap justify-end gap-4 mt-8">
+      <div className="flex flex-wrap justify-end gap-4 mt-8 ">
         <button
           onClick={handlePrintSummary}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition cursor-pointer"
         >
           Print Summary Report
         </button>
 
         <button
           onClick={handlePrintDayReport}
-          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition"
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white font-bold shadow hover:bg-blue-700 transition cursor-pointer"
         >
           Print Day Report
         </button>

@@ -95,19 +95,98 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-screen h-16 relative md:fixed md:top-0 md:left-0 md:z-30">
+    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-screen   md:fixed md:top-0  md:z-30 fixed">
       {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
 
       {/* Mobile menu */}
       <nav
         className={cn(
-          "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
+          "absolute top-2  w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
           menuOpen
-            ? "max-h-96 opacity-100 scale-100"
-            : "max-h-0 opacity-0 scale-95 overflow-hidden",
+            ? "w-full h-screen opacity-100 scale-100 z-50"
+            : "max-h-0 opacity-50 scale-95 overflow-hidden ",
         )}
       >
-        {navigation.map((item, idx) => {
+        {navigation.map((item, index) => {
+          if (index === 1) {
+            return (
+              <div key="account-group">
+                <button
+                  onClick={toggleAccountMenu}
+                  className="group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 11c1.656 0 3-1.344 3-3s-1.344-3-3-3-3 1.344-3 3 1.344 3 3 3zm0 2c-2.672 0-8 1.344-8 4v1h16v-1c0-2.656-5.328-4-8-4z"
+                    />
+                  </svg>
+                  Account
+                  <span className="ml-auto">
+                    {accountMenuOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-5 h-5 text-gray-400 group-hover:text-indigo-700"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 9l6 6 6-6"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-5 h-5 text-gray-400 group-hover:text-indigo-700"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 6l6 6-6 6"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {accountMenuOpen && (
+                  <div className="ml-6 space-y-1">
+                    {accountLinks.map((link) => (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        className={cn(
+                          "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                          pathname === link.href
+                            ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
+                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                        )}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <link.icon className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110" />
+                        {link.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
           if (item.name === "Users" && !permission.includes("users.read"))
             return null;
 
@@ -117,14 +196,15 @@ const Sidebar: React.FC = () => {
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
+                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
                   ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
               )}
               onClick={() => setMenuOpen(false)}
             >
               {/* Only show icon once at top, not in each menu item */}
+              <item.icon className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110" />
               {item.name}
             </Link>
           );
