@@ -7,7 +7,6 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import { shopService } from "@/services/shop.service";
-// import { warehouseService } from "@/services/warehouse.service";
 import { Shop, CreateShopInput, UpdateShopInput } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
@@ -29,7 +28,7 @@ const updateShopSchema = yup.object({
   // warehouseId: yup.string().required("Warehouse is required"),
 });
 
-export default function ShopsPage() {
+function ShopsPage() {
   const [allShops, setAllShops] = useState<Shop[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   // const [warehouses, setWarehouses] = useState([]);
@@ -451,3 +450,5 @@ export default function ShopsPage() {
     </div>
   );
 }
+
+export default withPermission(ShopsPage, "shops.read");

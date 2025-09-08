@@ -97,28 +97,39 @@ function SalesReportPage() {
           ["Total Quantity", summary.totals?.totalQuantity || 0],
           ["Total Price", summary.totals?.totalPrice || 0],
           ["Most Used Payment Method", summary.mostUsedPaymentMethod || "-"],
+          ["Unpayed Transactions", summary.paymentStatus?.unpayed || "-"],
         ],
       });
     }
 
     // Charts
     if (chartsData) {
-      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 50;
-      chartsData.forEach((chart) => {
-        const canvas = document.querySelector(chart.selector);
-        if (canvas) {
-          const imgData = canvas.toDataURL("image/png");
-          doc.addImage(imgData, "PNG", 14, currentY, 120, 50);
-          doc.text(chart.title, 14, currentY + 100);
-          currentY += 110; // Add spacing for the next chart
+      const productsSoldCanvas = document.querySelector(chartsData[0].selector);
+      const paymentMethodsCanvas = document.querySelector(
+        chartsData[1].selector,
+      );
+      const paymentStatusCanvas = document.querySelector(
+        chartsData[2].selector,
+      );
 
-          // Check if the next chart will overflow the page
-          if (currentY + 100 > doc.internal.pageSize.height) {
-            doc.addPage();
-            currentY = 20; // Reset Y position for the new page
-          }
-        }
-      });
+      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 50;
+
+      // Products Sold and Payment Methods side by side
+      if (productsSoldCanvas && paymentMethodsCanvas) {
+        const productsSoldImg = productsSoldCanvas.toDataURL("image/png");
+        const paymentMethodsImg = paymentMethodsCanvas.toDataURL("image/png");
+
+        doc.addImage(productsSoldImg, "PNG", 14, currentY, 90, 90);
+        doc.addImage(paymentMethodsImg, "PNG", 109, currentY, 90, 90);
+
+        currentY += 100; // Move Y position below the side-by-side charts
+      }
+
+      // Payment Status centered below
+      if (paymentStatusCanvas) {
+        const paymentStatusImg = paymentStatusCanvas.toDataURL("image/png");
+        doc.addImage(paymentStatusImg, "PNG", 50, currentY, 110, 90);
+      }
     }
 
     doc.save(`${title}.pdf`);
@@ -164,16 +175,33 @@ function SalesReportPage() {
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <h1 className="text-3xl font-bold text-black">Sales Report</h1>
-        <select
-          className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as Period)}
-        >
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
+        <div className="relative">
+          <select
+            className=" appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as Period)}
+          >
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </span>
+        </div>
       </div>
 
       {/* Loading */}
@@ -360,21 +388,38 @@ function SalesReportPage() {
       {/* Drilldown for weekly/monthly/yearly */}
       {!loading && period !== "daily" && grouped && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold mb-4 text-black">
-            Drilldown by Date
-          </h2>
-          <select
-            className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow mb-6"
-            value={selectedDate || ""}
-            onChange={(e) => setSelectedDate(e.target.value || null)}
-          >
-            <option value="">Select a date</option>
-            {Object.keys(grouped).map((date) => (
-              <option key={date} value={date}>
-                {date}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
+            <h2 className="text-3xl font-bold text-black">Drilldown by Date</h2>
+            <div className="relative">
+              <select
+                className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                value={selectedDate || ""}
+                onChange={(e) => setSelectedDate(e.target.value || null)}
+              >
+                <option value="">Select a date</option>
+                {Object.keys(grouped).map((date) => (
+                  <option key={date} value={date}>
+                    {date}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
 
           {selectedDate && (
             <div className="bg-white p-6 rounded-lg shadow-lg">

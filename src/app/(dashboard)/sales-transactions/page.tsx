@@ -32,7 +32,7 @@ function SalesTransactionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null
+    null,
   );
   const [formItems, setFormItems] = useState([{ productId: "", quantity: 1 }]);
   const [form, setForm] = useState({ paymentMethod: "", creditorName: "" });
@@ -114,7 +114,7 @@ function SalesTransactionsPage() {
       15,
       {
         align: "center",
-      }
+      },
     );
 
     // Reset text color for the content
@@ -127,7 +127,7 @@ function SalesTransactionsPage() {
     doc.text(
       `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
       10,
-      40
+      40,
     );
     doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
     if (transaction.paymentMethod === "credit") {
@@ -162,7 +162,7 @@ function SalesTransactionsPage() {
         `${product ? item.quantity * product.price : "N/A"}`,
         165,
         yPosition,
-        { align: "right" }
+        { align: "right" },
       );
     });
 
@@ -227,7 +227,7 @@ function SalesTransactionsPage() {
       generatePDF(createdTransaction);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Failed to create transaction"
+        error?.response?.data?.message || "Failed to create transaction",
       );
     }
   };
@@ -252,7 +252,7 @@ function SalesTransactionsPage() {
       ? tx.items.some((item) =>
           item.product.name
             .toLowerCase()
-            .includes(filters.product.toLowerCase())
+            .includes(filters.product.toLowerCase()),
         )
       : true;
     const matchesStatus = filters.status ? tx.status === filters.status : true;
@@ -262,7 +262,7 @@ function SalesTransactionsPage() {
   });
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   const updateTransactionStatus = async (transactionId, newStatus) => {
@@ -438,6 +438,9 @@ function SalesTransactionsPage() {
                 Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Creditor Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -463,7 +466,7 @@ function SalesTransactionsPage() {
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.items.map((item, idx) => {
                     const product = products.find(
-                      (p) => p.id === item.product.id
+                      (p) => p.id === item.product.id,
                     );
                     return (
                       <div key={idx} className="mb-2">
@@ -478,6 +481,10 @@ function SalesTransactionsPage() {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {calculateTotalPrice(tx.items)}
+                </td>
+
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.creditorName}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.status === "unpayed" && tx.paymentMethod === "credit" ? (
@@ -638,7 +645,7 @@ function SalesTransactionsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {formItems.map((item, idx) => {
                       const product = products.find(
-                        (p) => p.id === item.productId
+                        (p) => p.id === item.productId,
                       );
                       const price = product ? product.price : 0;
                       const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
@@ -661,14 +668,14 @@ function SalesTransactionsPage() {
                               onChange={(e) => {
                                 const typedValue = e.target.value;
                                 const selectedProduct = products.find(
-                                  (p) => p.name === typedValue
+                                  (p) => p.name === typedValue,
                                 );
                                 handleItemChange(
                                   idx,
                                   "productId",
                                   selectedProduct
                                     ? selectedProduct.id
-                                    : typedValue
+                                    : typedValue,
                                 ); // Update productId or keep the typed value
                               }}
                             />
@@ -688,7 +695,7 @@ function SalesTransactionsPage() {
                                 handleItemChange(
                                   idx,
                                   "quantity",
-                                  Number(e.target.value)
+                                  Number(e.target.value),
                                 )
                               }
                               required
@@ -734,7 +741,7 @@ function SalesTransactionsPage() {
                       <td className="px-6 py-4 text-sm text-gray-800 font-bold">
                         {formItems.reduce((sum, item) => {
                           const product = products.find(
-                            (p) => p.id === item.productId
+                            (p) => p.id === item.productId,
                           );
                           const price = product ? product.price : 0;
                           return sum + item.quantity * price;
