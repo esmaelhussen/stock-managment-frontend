@@ -10,27 +10,27 @@ import { shopService } from "@/services/shop.service";
 import { Shop, CreateShopInput, UpdateShopInput } from "@/types";
 import Cookies from "js-cookie";
 import withPermission from "@/hoc/withPermission";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
+// import { useForm, SubmitHandler } from "react-hook-form";
+// import { yupResolver } from "@hookform/resolvers/yup";
+// import * as yup from "yup";
 
-const createShopSchema = yup.object({
-  name: yup.string().required("Shop name is required"),
-  address: yup.string().required("Address is required"),
-  description: yup.string(),
-  // warehouseId: yup.string().required("Warehouse is required"),
-});
-
-const updateShopSchema = yup.object({
-  name: yup.string().required("Shop name is required"),
-  address: yup.string().required("Address is required"),
-  description: yup.string(),
-  // warehouseId: yup.string().required("Warehouse is required"),
-});
+// const createShopSchema = yup.object({
+//   name: yup.string().required("Shop name is required"),
+//   address: yup.string().required("Address is required"),
+//   description: yup.string(),
+//   // warehouseId: yup.string().required("Warehouse is required"),
+// });
+//
+// const updateShopSchema = yup.object({
+//   name: yup.string().required("Shop name is required"),
+//   address: yup.string().required("Address is required"),
+//   description: yup.string(),
+//   // warehouseId: yup.string().required("Warehouse is required"),
+// });
 
 function ShopsPage() {
   const [allShops, setAllShops] = useState<Shop[]>([]);
-  const [shops, setShops] = useState<Shop[]>([]);
+  // const [shops, setShops] = useState<Shop[]>([]);
   // const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -39,6 +39,11 @@ function ShopsPage() {
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    address?: string;
+    description?: string;
+  } | null>(null);
   const total = allShops.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
   const [filters, setFilters] = useState({
@@ -78,6 +83,14 @@ function ShopsPage() {
   // };
 
   const handleCreate = async (data: CreateShopInput) => {
+    const errors: { name?: string; address?: string; description?: string } =
+      {};
+    if (!data.name.trim()) errors.name = "Warehouse name is required";
+    if (!data.address.trim()) errors.address = "Address is required";
+
+    setFormErrors(Object.keys(errors).length ? errors : null);
+    if (Object.keys(errors).length) return;
+
     try {
       await shopService.create(data);
       toast.success("Shop created successfully");
@@ -112,42 +125,42 @@ function ShopsPage() {
     }
   };
 
-  const formConfig = isEditModalOpen
-    ? {
-        resolver: yupResolver(updateShopSchema as any),
-        defaultValues: {
-          name: selectedShop?.name || "",
-          address: selectedShop?.address || "",
-          description: selectedShop?.description || "",
-          // warehouseId: selectedShop?.warehouse?.id || "",
-        },
-      }
-    : {
-        resolver: yupResolver(createShopSchema as any),
-        defaultValues: {
-          name: "",
-          address: "",
-          description: "",
-          // warehouseId: "",
-        },
-      };
+  // const formConfig = isEditModalOpen
+  //   ? {
+  //       resolver: yupResolver(updateShopSchema as any),
+  //       defaultValues: {
+  //         name: selectedShop?.name || "",
+  //         address: selectedShop?.address || "",
+  //         description: selectedShop?.description || "",
+  //         // warehouseId: selectedShop?.warehouse?.id || "",
+  //       },
+  //     }
+  //   : {
+  //       resolver: yupResolver(createShopSchema as any),
+  //       defaultValues: {
+  //         name: "",
+  //         address: "",
+  //         description: "",
+  //         // warehouseId: "",
+  //       },
+  //     };
+  //
+  // const {
+  //   register,
+  //   handleSubmit,
+  //   formState: { errors },
+  // } = useForm<CreateShopInput>({
+  //   ...formConfig,
+  //   resolver: formConfig.resolver as any,
+  // });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CreateShopInput>({
-    ...formConfig,
-    resolver: formConfig.resolver as any,
-  });
-
-  const onSubmitHandler: SubmitHandler<CreateShopInput> = (data) => {
-    if (isEditModalOpen) {
-      handleUpdate(data);
-    } else {
-      handleCreate(data);
-    }
-  };
+  // const onSubmitHandler: SubmitHandler<CreateShopInput> = (data) => {
+  //   if (isEditModalOpen) {
+  //     handleUpdate(data);
+  //   } else {
+  //     handleCreate(data);
+  //   }
+  // };
 
   const filteredShops = allShops.filter((shop) => {
     const matchesName = shop.name
@@ -164,7 +177,6 @@ function ShopsPage() {
   };
 
   const paginated = filteredShops.slice((page - 1) * pageSize, page * pageSize);
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -365,20 +377,71 @@ function ShopsPage() {
         size="lg"
       >
         <div className="space-y-4">
+          {/*<Input*/}
+          {/*  label="Shop Name"*/}
+          {/*  value={selectedShop?.name || ""}*/}
+          {/*  /!*{...register("name")}*!/*/}
+          {/*  /!*error={errors.name?.message}*!/*/}
+          {/*/>*/}
           <Input
             label="Shop Name"
-            {...register("name")}
-            error={errors.name?.message}
+            value={selectedShop?.name || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedShop((prev) => ({ ...prev, name: value }));
+              setFormErrors((errors) => {
+                if (!value.trim()) {
+                  return { ...errors, name: "Shop name is required" };
+                } else {
+                  return { ...errors, name: undefined };
+                }
+              });
+            }}
+            error={formErrors?.name}
           />
+          {/*<Input*/}
+          {/*  label="Address"*/}
+          {/*  {...register("address")}*/}
+          {/*  error={errors.address?.message}*/}
+          {/*/>*/}
+
           <Input
             label="Address"
-            {...register("address")}
-            error={errors.address?.message}
+            value={selectedShop?.address || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedShop((prev) => ({ ...prev, address: value }));
+              setFormErrors((errors) => {
+                if (!value.trim()) {
+                  return { ...errors, address: "Address is required" };
+                } else {
+                  return { ...errors, address: undefined };
+                }
+              });
+            }}
+            error={formErrors?.address}
           />
+          {/*<Input*/}
+          {/*  label="Description"*/}
+          {/*  {...register("description")}*/}
+          {/*  error={errors.description?.message}*/}
+          {/*/>*/}
+
           <Input
             label="Description"
-            {...register("description")}
-            error={errors.description?.message}
+            value={selectedShop?.description || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSelectedShop((prev) => ({ ...prev, description: value }));
+              // setFormErrors((errors) => {
+              //   if (!value.trim()) {
+              //     return { ...errors, description: "Description is required" };
+              //   } else {
+              //     return { ...errors, description: undefined };
+              //   }
+              // });
+            }}
+            // error={formErrors?.description}
           />
           {/* <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">
@@ -417,7 +480,16 @@ function ShopsPage() {
             >
               Cancel
             </Button>
-            <Button onClick={handleSubmit(onSubmitHandler)}>
+            <Button
+              onClick={() => {
+                const data = {
+                  name: selectedShop?.name || "",
+                  address: selectedShop?.address || "",
+                  description: selectedShop?.description || "",
+                };
+                isEditModalOpen ? handleUpdate(data) : handleCreate(data);
+              }}
+            >
               {isEditModalOpen ? "Update" : "Create"}
             </Button>
           </div>

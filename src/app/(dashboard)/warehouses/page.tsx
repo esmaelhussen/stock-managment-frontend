@@ -13,13 +13,13 @@ import withPermission from "@/hoc/withPermission";
 
 function WarehousesPage() {
   const [allWarehouses, setAllWarehouses] = useState<Warehouse[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  // const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(
-    null
+    null,
   );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(14);
@@ -39,11 +39,11 @@ function WarehousesPage() {
     fetchWarehouses();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setWarehouses(allWarehouses.slice(start, end));
-  }, [allWarehouses, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setWarehouses(allWarehouses.slice(start, end));
+  // }, [allWarehouses, page, pageSize]);
 
   const fetchWarehouses = async () => {
     try {
@@ -62,8 +62,7 @@ function WarehousesPage() {
       {};
     if (!data.name.trim()) errors.name = "Warehouse name is required";
     if (!data.address.trim()) errors.address = "Address is required";
-    if (!data.description.trim())
-      errors.description = "Description is required";
+
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
 
@@ -74,7 +73,7 @@ function WarehousesPage() {
       fetchWarehouses();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create warehouse"
+        error.response?.data?.message || "Failed to create warehouse",
       );
     }
   };
@@ -88,7 +87,7 @@ function WarehousesPage() {
       fetchWarehouses();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to update warehouse"
+        error.response?.data?.message || "Failed to update warehouse",
       );
     }
   };
@@ -102,12 +101,12 @@ function WarehousesPage() {
       fetchWarehouses();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to delete warehouse"
+        error.response?.data?.message || "Failed to delete warehouse",
       );
     }
   };
 
-  const filteredWarehouses = warehouses.filter((warehouse) => {
+  const filteredWarehouses = allWarehouses.filter((warehouse) => {
     const matchesName = warehouse.name
       .toLowerCase()
       .includes(filters.name.toLowerCase());
@@ -122,7 +121,7 @@ function WarehousesPage() {
   };
   const paginated = filteredWarehouses.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   if (loading) {
@@ -364,15 +363,15 @@ function WarehousesPage() {
             onChange={(e) => {
               const value = e.target.value;
               setSelectedWarehouse((prev) => ({ ...prev, description: value }));
-              setFormErrors((errors) => {
-                if (!value.trim()) {
-                  return { ...errors, description: "Description is required" };
-                } else {
-                  return { ...errors, description: undefined };
-                }
-              });
+              // setFormErrors((errors) => {
+              //   if (!value.trim()) {
+              //     return { ...errors, description: "Description is required" };
+              //   } else {
+              //     return { ...errors, description: undefined };
+              //   }
+              // });
             }}
-            error={formErrors?.description}
+            // error={formErrors?.description}
           />
           <div className="flex justify-end space-x-2">
             <Button
