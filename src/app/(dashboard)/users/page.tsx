@@ -365,7 +365,7 @@ function UsersPage() {
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -385,7 +385,7 @@ function UsersPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >

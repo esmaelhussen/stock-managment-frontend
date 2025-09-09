@@ -180,7 +180,7 @@ function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl md:text-3xl font-extrabold text-gradient bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide drop-shadow-lg mb-8 ">
+      <h1 className="text-2xl md:text-3xl font-extrabold text-gradient bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent tracking-wide  mb-8 ">
         Dashboard
       </h1>
 
@@ -225,18 +225,18 @@ function DashboardPage() {
 
       {/* Interactive Pie Chart */}
       <div className="mt-16 w-full">
-        <div className="bg-white shadow rounded-lg p-8 flex flex-col  w-full">
-          <div className="w-full flex justify-center">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 ">
+        <div className="bg-white shadow rounded-lg sm:p-8 flex flex-col  w-full">
+          <div className="w-full flex justify-center ">
+            <h3 className="text-lg font-bold text-gray-800 mb-6 m-4">
               System Overview
             </h3>
           </div>
           <div
-            className="w-full pl-20"
+            className="w-full flex justify-center items-center"
             style={{
-              minHeight: 220,
-              height: "30vw",
-              maxHeight: "40vh",
+              minHeight: 200,
+              height: "50vh",
+              maxHeight: "320vh",
               overflow: "hidden",
               alignItems: "center",
             }}

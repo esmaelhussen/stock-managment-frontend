@@ -52,7 +52,7 @@ function SalesTransactionsPage() {
   const isShopRole = roles.includes("shop");
 
   useEffect(() => {
-    if (!isShopRole) return;
+    // if (!isShopRole) return;
     fetchProducts();
     fetchTransactions();
   }, [isShopRole, shopId]);
@@ -289,7 +289,7 @@ function SalesTransactionsPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
@@ -420,7 +420,7 @@ function SalesTransactionsPage() {
       {/* Enhanced Transactions Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow rounded-lg">
-          <thead className="sticky top-0 bg-gray-100 border-b">
+          <thead className=" top-0 bg-gray-100 border-b">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Transaction ID
@@ -517,7 +517,7 @@ function SalesTransactionsPage() {
       {/* Pagination */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -537,7 +537,7 @@ function SalesTransactionsPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -629,13 +629,13 @@ function SalesTransactionsPage() {
                         Quantity
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Price
+                        Unit Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Unit
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total
+                        Sub Total price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions

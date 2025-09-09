@@ -28,11 +28,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Hamburger for mobile at top left, hidden on desktop */}
         <div className="flex items-center">
           <button
-            className="sm:hidden flex flex-col justify-center items-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 mr-2"
+            className="sm:hidden flex flex-col justify-center  items-center w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-blue-500 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 mr-2"
             aria-label="Open menu"
             onClick={() => {
               window.dispatchEvent(
-                new CustomEvent("openSidebarMenu", { detail: !hamburgerOpen })
+                new CustomEvent("openSidebarMenu", { detail: !hamburgerOpen }),
               );
             }}
           >

@@ -68,7 +68,7 @@ function PermissionsPage() {
       fetchPermissions();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to update permission"
+        error.response?.data?.message || "Failed to update permission",
       );
     }
   };
@@ -82,7 +82,7 @@ function PermissionsPage() {
       fetchPermissions();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to delete permission"
+        error.response?.data?.message || "Failed to delete permission",
       );
     }
   };
@@ -115,7 +115,7 @@ function PermissionsPage() {
   };
   const paginated = filteredPermissions.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   if (loading) {
@@ -142,7 +142,7 @@ function PermissionsPage() {
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
             />
           </div> */}
-          <div className="relative">
+          <div className="">
             <select
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
@@ -323,7 +323,7 @@ function PermissionsPage() {
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -343,7 +343,7 @@ function PermissionsPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >

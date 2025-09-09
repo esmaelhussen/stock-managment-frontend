@@ -101,9 +101,9 @@ const Sidebar: React.FC = () => {
       {/* Mobile menu */}
       <nav
         className={cn(
-          "absolute top-2  w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
+          " absolute top-2  w-20 bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
           menuOpen
-            ? "w-full h-screen opacity-100 scale-100 z-50"
+            ? "w-full h-screen opacity-100 scale-100 z-50 "
             : "max-h-0 opacity-50 scale-95 overflow-hidden ",
         )}
       >
@@ -190,7 +190,7 @@ const Sidebar: React.FC = () => {
           if (item.name === "Users" && !permission.includes("users.read"))
             return null;
 
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href;
           return (
             <Link
               key={item.name}
