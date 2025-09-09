@@ -105,13 +105,13 @@ function SalesReportPage() {
     if (chartsData) {
       const productsSoldCanvas = document.querySelector(chartsData[0].selector);
       const paymentMethodsCanvas = document.querySelector(
-        chartsData[1].selector
+        chartsData[1].selector,
       );
       const paymentStatusCanvas = document.querySelector(
-        chartsData[2].selector
+        chartsData[2].selector,
       );
 
-      let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 20 : 50;
+      let currentY = 80;
 
       // Products Sold and Payment Methods side by side
       if (productsSoldCanvas && paymentMethodsCanvas) {
@@ -267,12 +267,12 @@ function SalesReportPage() {
             <Pie
               data={{
                 labels: Object.values(summary.productSales || {}).map(
-                  (p: any) => p.name
+                  (p: any) => p.name,
                 ),
                 datasets: [
                   {
                     data: Object.values(summary.productSales || {}).map(
-                      (p: any) => p.quantity
+                      (p: any) => p.quantity,
                     ),
                     backgroundColor: [
                       "#FF6384",
@@ -460,12 +460,12 @@ function SalesReportPage() {
                   <Pie
                     data={{
                       labels: Object.values(
-                        grouped[selectedDate]?.productSales || {}
+                        grouped[selectedDate]?.productSales || {},
                       ).map((p: any) => p.name),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.productSales || {}
+                            grouped[selectedDate]?.productSales || {},
                           ).map((p: any) => p.quantity),
                           backgroundColor: [
                             "#FF6384",
@@ -494,12 +494,12 @@ function SalesReportPage() {
                   <Pie
                     data={{
                       labels: Object.keys(
-                        grouped[selectedDate]?.paymentMethods || {}
+                        grouped[selectedDate]?.paymentMethods || {},
                       ),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.paymentMethods || {}
+                            grouped[selectedDate]?.paymentMethods || {},
                           ),
                           backgroundColor: [
                             "#FF6384",
