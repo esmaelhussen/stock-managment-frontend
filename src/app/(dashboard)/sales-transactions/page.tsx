@@ -740,6 +740,22 @@ function SalesTransactionsPage() {
                       } else if (stockType === "warehouse") {
                         handleFormChange("selectedWarehouseId", e.target.value);
                         handleFormChange("selectedShopId", ""); // Clear shop ID
+                      } else if (stockType === "All") {
+                        const selectedId = e.target.value;
+                        const isShop = shops.some(
+                          (shop) => shop.id === selectedId
+                        );
+                        const isWarehouse = warehouses.some(
+                          (warehouse) => warehouse.id === selectedId
+                        );
+
+                        if (isShop) {
+                          handleFormChange("selectedShopId", selectedId);
+                          handleFormChange("selectedWarehouseId", ""); // Clear warehouse ID
+                        } else if (isWarehouse) {
+                          handleFormChange("selectedWarehouseId", selectedId);
+                          handleFormChange("selectedShopId", ""); // Clear shop ID
+                        }
                       }
                     }}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
@@ -759,20 +775,17 @@ function SalesTransactionsPage() {
                       ))}
                     {stockType === "All" && (
                       <>
-                        <optgroup label="Shops">
-                          {shops.map((shop) => (
-                            <option key={shop.id} value={shop.id}>
-                              {shop.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Warehouses">
-                          {warehouses.map((warehouse) => (
-                            <option key={warehouse.id} value={warehouse.id}>
-                              {warehouse.name}
-                            </option>
-                          ))}
-                        </optgroup>
+                        {shops.map((shop) => (
+                          <option key={shop.id} value={shop.id}>
+                            {shop.name}
+                          </option>
+                        ))}
+
+                        {warehouses.map((warehouse) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name}
+                          </option>
+                        ))}
                       </>
                     )}
                   </select>

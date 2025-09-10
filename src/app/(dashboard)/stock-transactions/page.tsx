@@ -773,7 +773,7 @@ export default function StockTransactionsPage() {
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
-                              Warehouse: {w.name}
+                              {w.name}
                             </option>
                           ))}
                       {targetType === "shop" &&
@@ -784,7 +784,7 @@ export default function StockTransactionsPage() {
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
-                              Shop: {s.name}
+                              {s.name}
                             </option>
                           ))}
                       {targetType === "All" &&
