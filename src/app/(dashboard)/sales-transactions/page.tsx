@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import type { SalesTransaction } from "@/types";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
@@ -52,6 +52,11 @@ function SalesTransactionsPage() {
     product: "",
     status: "",
   });
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState("");
+
+  const dropdownRef = useRef(null);
 
   // Parse cookies for roles and shopId as in stock-transactions
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
@@ -335,10 +340,28 @@ function SalesTransactionsPage() {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowProductDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
     );
+
+  // Filter products based on the search term
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(productSearch.toLowerCase())
+  );
 
   return (
     <div>
@@ -792,6 +815,60 @@ function SalesTransactionsPage() {
                 </div>
               </>
             )}
+            {/* Replace the product search input with a select dropdown */}
+
+            <div className="space-y-4">
+              <label
+                htmlFor="productSearchSelect"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Search and Select Product
+              </label>
+              <div className="relative" ref={dropdownRef}>
+                <input
+                  type="text"
+                  id="productSearchSelect"
+                  placeholder="Search or Select Product"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  onFocus={() => setShowProductDropdown(true)}
+                />
+                {showProductDropdown && (
+                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-md max-h-60 overflow-y-auto">
+                    {filteredProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="flex justify-between items-center p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          const existingItem = formItems.find(
+                            (item) => item.productId === product.id
+                          );
+                          if (!existingItem) {
+                            setFormItems((prev) => [
+                              ...prev,
+                              { productId: product.id, quantity: 1 },
+                            ]);
+                          }
+                          setProductSearch(product.name);
+                          setShowProductDropdown(false);
+                        }}
+                      >
+                        <span className="text-sm text-gray-500">
+                          {product.name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {product.unit.name}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {product.price}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -918,7 +995,7 @@ function SalesTransactionsPage() {
                         colSpan={3}
                         className="px-6 py-4 text-right font-bold text-gray-800"
                       >
-                        All Total:
+                        Total:
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-800 font-bold">
                         {formItems.reduce((sum, item) => {
@@ -934,6 +1011,9 @@ function SalesTransactionsPage() {
                 </table>
               </div>
             </div>
+
+            {/* Enhance the select dropdown to support typing and searching within the same input */}
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
