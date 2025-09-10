@@ -11,6 +11,8 @@ import { saleService } from "@/services/sale.service";
 import { productService } from "@/services/product.service";
 import jsPDF from "jspdf";
 import withPermission from "@/hoc/withPermission";
+import { warehouseService } from "@/services/warehouse.service";
+import { shopService } from "@/services/shop.service";
 
 const PAYMENT_METHODS = [
   { value: "telebirr", label: "Telebirr" },
@@ -23,6 +25,8 @@ const PAYMENT_METHODS = [
 function SalesTransactionsPage() {
   const [transactions, setTransactions] = useState<SalesTransaction[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [shops, setShops] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -32,10 +36,16 @@ function SalesTransactionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null,
+    null
   );
   const [formItems, setFormItems] = useState([{ productId: "", quantity: 1 }]);
-  const [form, setForm] = useState({ paymentMethod: "", creditorName: "" });
+  const [form, setForm] = useState({
+    paymentMethod: "",
+    creditorName: "",
+    selectedShopId: "",
+    selectedWarehouseId: "",
+  });
+  const [stockType, setStockType] = useState("");
   const [filters, setFilters] = useState({
     date: "",
     paymentMethod: "",
@@ -45,17 +55,17 @@ function SalesTransactionsPage() {
 
   // Parse cookies for roles and shopId as in stock-transactions
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
-  const userId = JSON.parse(Cookies.get("user") || "{}")?.id;
+  const userId = JSON.parse(Cookies.get("user") || "{}").id; // Extract userId from cookies
   const roles = JSON.parse(Cookies.get("roles") || "[]");
   const shop = JSON.parse(Cookies.get("user") || "null")?.shop;
   const shopId = shop?.id || Cookies.get("shopId");
+  const warehouseId = Cookies.get("warehouseId");
   const isShopRole = roles.includes("shop");
 
   useEffect(() => {
-    // if (!isShopRole) return;
     fetchProducts();
     fetchTransactions();
-  }, [isShopRole, shopId]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -66,14 +76,42 @@ function SalesTransactionsPage() {
     }
   };
 
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const fetchedWarehouses = await warehouseService.getAll();
+        setWarehouses(fetchedWarehouses);
+      } catch (error) {
+        console.error("Failed to fetch warehouses", error);
+      }
+    };
+
+    const fetchShops = async () => {
+      try {
+        const fetchedShops = await shopService.getAll();
+        setShops(fetchedShops);
+      } catch (error) {
+        console.log("failed to fetch shops", error);
+      }
+    };
+
+    fetchWarehouses();
+    fetchShops();
+  }, []);
+
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const res = await saleService.getSalesTransactions(shopId);
-      let filtered = Array.isArray(res) ? res : [];
-      if (isShopRole && shopId) {
-        filtered = filtered.filter((tx) => tx.shop?.id === shopId);
+      let res;
+      if (isShopRole) {
+        res = await saleService.getSalesTransactions(shopId, "shop");
+      } else if (roles.includes("warehouse")) {
+        res = await saleService.getSalesTransactions(warehouseId, "warehouse");
+      } else {
+        res = await saleService.getSalesTransactions(undefined, undefined);
       }
+
+      const filtered = Array.isArray(res) ? res : [];
       setTransactions(filtered);
     } catch (error) {
       toast.error("Failed to fetch transactions");
@@ -114,7 +152,7 @@ function SalesTransactionsPage() {
       15,
       {
         align: "center",
-      },
+      }
     );
 
     // Reset text color for the content
@@ -127,7 +165,7 @@ function SalesTransactionsPage() {
     doc.text(
       `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
       10,
-      40,
+      40
     );
     doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
     if (transaction.paymentMethod === "credit") {
@@ -162,7 +200,7 @@ function SalesTransactionsPage() {
         `${product ? item.quantity * product.price : "N/A"}`,
         165,
         yPosition,
-        { align: "right" },
+        { align: "right" }
       );
     });
 
@@ -204,9 +242,22 @@ function SalesTransactionsPage() {
     });
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
+
+    let selectedShopId = shopId;
+    let selectedWarehouseId = warehouseId;
+
+    if (!isShopRole && !roles.includes("warehouse")) {
+      // Logic to select shop or warehouse for other roles
+      selectedShopId = form.selectedShopId;
+      selectedWarehouseId = form.selectedWarehouseId;
+    }
+
     try {
       const createdTransaction = await saleService.createSalesTransaction({
-        shopId,
+        shopId: isShopRole ? shopId : selectedShopId,
+        warehouseId: roles.includes("warehouse")
+          ? warehouseId
+          : selectedWarehouseId,
         paymentMethod: form.paymentMethod as
           | "telebirr"
           | "cbe"
@@ -216,10 +267,16 @@ function SalesTransactionsPage() {
         creditorName:
           form.paymentMethod === "credit" ? form.creditorName : undefined,
         items: formItems,
+        transactedById: userId, // Include userId in the payload
       });
       toast.success("Sales transaction created");
       setIsCreateModalOpen(false);
-      setForm({ paymentMethod: "", creditorName: "" });
+      setForm({
+        paymentMethod: "",
+        creditorName: "",
+        selectedShopId: "",
+        selectedWarehouseId: "",
+      });
       setFormItems([{ productId: "", quantity: 1 }]);
       fetchTransactions();
 
@@ -227,7 +284,7 @@ function SalesTransactionsPage() {
       generatePDF(createdTransaction);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Failed to create transaction",
+        error?.response?.data?.message || "Failed to create transaction"
       );
     }
   };
@@ -252,7 +309,7 @@ function SalesTransactionsPage() {
       ? tx.items.some((item) =>
           item.product.name
             .toLowerCase()
-            .includes(filters.product.toLowerCase()),
+            .includes(filters.product.toLowerCase())
         )
       : true;
     const matchesStatus = filters.status ? tx.status === filters.status : true;
@@ -262,8 +319,10 @@ function SalesTransactionsPage() {
   });
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
+
+  console.log("Paginated Transactions:", paginated); // Debugging log
 
   const updateTransactionStatus = async (transactionId, newStatus) => {
     try {
@@ -444,6 +503,9 @@ function SalesTransactionsPage() {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Transacted By
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -466,7 +528,7 @@ function SalesTransactionsPage() {
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.items.map((item, idx) => {
                     const product = products.find(
-                      (p) => p.id === item.product.id,
+                      (p) => p.id === item.product.id
                     );
                     return (
                       <div key={idx} className="mb-2">
@@ -500,6 +562,9 @@ function SalesTransactionsPage() {
                   ) : (
                     tx.status
                   )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.transactedBy?.firstName || "N/A"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   <button
@@ -550,7 +615,12 @@ function SalesTransactionsPage() {
           isOpen={isCreateModalOpen}
           onClose={() => {
             setIsCreateModalOpen(false);
-            setForm({ paymentMethod: "", creditorName: "" });
+            setForm({
+              paymentMethod: "",
+              creditorName: "",
+              selectedShopId: "",
+              selectedWarehouseId: "",
+            });
             setFormItems([{ productId: "", quantity: 1 }]);
           }}
           title="Create Sales Transaction"
@@ -611,6 +681,92 @@ function SalesTransactionsPage() {
                 )}
               </div>
             )}
+            {!isShopRole && !roles.includes("warehouse") && (
+              <>
+                <div className="flex items-center justify-between ">
+                  <div>
+                    <label
+                      htmlFor="targetId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Transacted Stock
+                    </label>
+                  </div>
+                  <div>
+                    <select
+                      value={stockType}
+                      onChange={(e) => setStockType(e.target.value)}
+                      className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out "
+                    >
+                      <option value="">Select Stock Type</option>
+                      <option value="warehouse">Warehouse</option>
+                      <option value="shop">Shop</option>
+                      <option value="All">All</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label
+                    htmlFor="selectedId"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Select Stock
+                  </label>
+                  <select
+                    id="selectedId"
+                    value={
+                      stockType === "shop"
+                        ? form.selectedShopId
+                        : form.selectedWarehouseId
+                    }
+                    onChange={(e) => {
+                      if (stockType === "shop") {
+                        handleFormChange("selectedShopId", e.target.value);
+                        handleFormChange("selectedWarehouseId", ""); // Clear warehouse ID
+                      } else if (stockType === "warehouse") {
+                        handleFormChange("selectedWarehouseId", e.target.value);
+                        handleFormChange("selectedShopId", ""); // Clear shop ID
+                      }
+                    }}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                  >
+                    <option value="">Select Stock</option>
+                    {stockType === "shop" &&
+                      shops.map((shop) => (
+                        <option key={shop.id} value={shop.id}>
+                          {shop.name}
+                        </option>
+                      ))}
+                    {stockType === "warehouse" &&
+                      warehouses.map((warehouse) => (
+                        <option key={warehouse.id} value={warehouse.id}>
+                          {warehouse.name}
+                        </option>
+                      ))}
+                    {stockType === "All" && (
+                      <>
+                        <optgroup label="Shops">
+                          {shops.map((shop) => (
+                            <option key={shop.id} value={shop.id}>
+                              {shop.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Warehouses">
+                          {warehouses.map((warehouse) => (
+                            <option key={warehouse.id} value={warehouse.id}>
+                              {warehouse.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </>
+                    )}
+                  </select>
+                </div>
+              </>
+            )}
+
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">
                 Products
@@ -645,7 +801,7 @@ function SalesTransactionsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {formItems.map((item, idx) => {
                       const product = products.find(
-                        (p) => p.id === item.productId,
+                        (p) => p.id === item.productId
                       );
                       const price = product ? product.price : 0;
                       const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
@@ -668,14 +824,14 @@ function SalesTransactionsPage() {
                               onChange={(e) => {
                                 const typedValue = e.target.value;
                                 const selectedProduct = products.find(
-                                  (p) => p.name === typedValue,
+                                  (p) => p.name === typedValue
                                 );
                                 handleItemChange(
                                   idx,
                                   "productId",
                                   selectedProduct
                                     ? selectedProduct.id
-                                    : typedValue,
+                                    : typedValue
                                 ); // Update productId or keep the typed value
                               }}
                             />
@@ -695,7 +851,7 @@ function SalesTransactionsPage() {
                                 handleItemChange(
                                   idx,
                                   "quantity",
-                                  Number(e.target.value),
+                                  Number(e.target.value)
                                 )
                               }
                               required
@@ -741,7 +897,7 @@ function SalesTransactionsPage() {
                       <td className="px-6 py-4 text-sm text-gray-800 font-bold">
                         {formItems.reduce((sum, item) => {
                           const product = products.find(
-                            (p) => p.id === item.productId,
+                            (p) => p.id === item.productId
                           );
                           const price = product ? product.price : 0;
                           return sum + item.quantity * price;
@@ -757,7 +913,12 @@ function SalesTransactionsPage() {
                 type="button"
                 onClick={() => {
                   setIsCreateModalOpen(false);
-                  setForm({ paymentMethod: "", creditorName: "" });
+                  setForm({
+                    paymentMethod: "",
+                    creditorName: "",
+                    selectedShopId: "",
+                    selectedWarehouseId: "",
+                  });
                   setFormItems([{ productId: "", quantity: 1 }]);
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"

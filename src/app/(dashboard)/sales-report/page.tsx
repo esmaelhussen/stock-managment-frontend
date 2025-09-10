@@ -19,6 +19,24 @@ function SalesReportPage() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("daily");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [shopId, setShopId] = useState<string | null>(null);
+  const [warehouseId, setWarehouseId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedShopId = Cookies.get("shopId");
+    const savedWarehouseId = Cookies.get("warehouseId");
+
+    if (savedShopId) {
+      setShopId(savedShopId);
+      setWarehouseId(null);
+    } else if (savedWarehouseId) {
+      setWarehouseId(savedWarehouseId);
+      setShopId(null);
+    } else {
+      // Prompt user to select shop or warehouse
+      // This can be replaced with a modal or dropdown logic
+    }
+  }, []);
 
   useEffect(() => {
     fetchReportData(period);
@@ -27,10 +45,21 @@ function SalesReportPage() {
   const fetchReportData = async (selectedPeriod: Period) => {
     setLoading(true);
     try {
-      const shopId = Cookies.get("shopId");
-      if (!shopId) throw new Error("Shop ID not found in cookies");
+      const params: { locationId?: string; type?: "shop" | "warehouse" } = {};
 
-      const res = await saleService.getSalesReport(shopId, selectedPeriod);
+      if (shopId) {
+        params.locationId = shopId;
+        params.type = "shop";
+      } else if (warehouseId) {
+        params.locationId = warehouseId;
+        params.type = "warehouse";
+      }
+
+      const res = await saleService.getSalesReport(
+        params.locationId || "",
+        params.type as "shop" | "warehouse", // Ensure type safety
+        selectedPeriod
+      );
       console.log("Full API Response:", res); // Log the full response for debugging
 
       if (!res) {
@@ -105,10 +134,10 @@ function SalesReportPage() {
     if (chartsData) {
       const productsSoldCanvas = document.querySelector(chartsData[0].selector);
       const paymentMethodsCanvas = document.querySelector(
-        chartsData[1].selector,
+        chartsData[1].selector
       );
       const paymentStatusCanvas = document.querySelector(
-        chartsData[2].selector,
+        chartsData[2].selector
       );
 
       let currentY = 80;
@@ -267,12 +296,12 @@ function SalesReportPage() {
             <Pie
               data={{
                 labels: Object.values(summary.productSales || {}).map(
-                  (p: any) => p.name,
+                  (p: any) => p.name
                 ),
                 datasets: [
                   {
                     data: Object.values(summary.productSales || {}).map(
-                      (p: any) => p.quantity,
+                      (p: any) => p.quantity
                     ),
                     backgroundColor: [
                       "#FF6384",
@@ -460,12 +489,12 @@ function SalesReportPage() {
                   <Pie
                     data={{
                       labels: Object.values(
-                        grouped[selectedDate]?.productSales || {},
+                        grouped[selectedDate]?.productSales || {}
                       ).map((p: any) => p.name),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.productSales || {},
+                            grouped[selectedDate]?.productSales || {}
                           ).map((p: any) => p.quantity),
                           backgroundColor: [
                             "#FF6384",
@@ -494,12 +523,12 @@ function SalesReportPage() {
                   <Pie
                     data={{
                       labels: Object.keys(
-                        grouped[selectedDate]?.paymentMethods || {},
+                        grouped[selectedDate]?.paymentMethods || {}
                       ),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.paymentMethods || {},
+                            grouped[selectedDate]?.paymentMethods || {}
                           ),
                           backgroundColor: [
                             "#FF6384",

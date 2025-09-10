@@ -267,6 +267,7 @@ export interface SalesTransaction {
   createdAt: string;
   items: SalesTransactionItem[];
   status: "unpayed" | "payed";
+  transactedBy?: User;
 }
 
 export interface CreateSalesTransactionItemInput {
@@ -275,8 +276,10 @@ export interface CreateSalesTransactionItemInput {
 }
 
 export interface CreateSalesTransactionInput {
-  shopId: string;
+  shopId?: string;
+  warehouseId?: string;
   paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
   creditorName?: string;
   items: CreateSalesTransactionItemInput[];
+  transactedById?: string; // Added userId to include the user ID in the payload
 }
