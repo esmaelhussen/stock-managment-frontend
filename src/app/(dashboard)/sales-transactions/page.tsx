@@ -61,6 +61,7 @@ function SalesTransactionsPage() {
   const shopId = shop?.id || Cookies.get("shopId");
   const warehouseId = Cookies.get("warehouseId");
   const isShopRole = roles.includes("shop");
+  const isWarehouseRole = roles.includes("warehouse");
 
   useEffect(() => {
     fetchProducts();
@@ -503,6 +504,9 @@ function SalesTransactionsPage() {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Transacted Stock Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Transacted By
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -562,6 +566,15 @@ function SalesTransactionsPage() {
                   ) : (
                     tx.status
                   )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  <td>
+                    {tx.transactedBy?.shop?.name
+                      ? `Shop: ${tx.transactedBy.shop.name}`
+                      : tx.transactedBy?.warehouse?.name
+                        ? `Warehouse: ${tx.transactedBy.warehouse.name}`
+                        : "N/A"}
+                  </td>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.transactedBy?.firstName || "N/A"}
