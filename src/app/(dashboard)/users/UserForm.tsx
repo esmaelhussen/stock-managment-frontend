@@ -302,6 +302,7 @@ export default function UserForm({
             {filteredRoles.map((role) => (
               <label
                 htmlFor={`role-${role.id}`}
+                key={role.id}
                 className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg shadow-md transition duration-150 ease-in-out"
               >
                 {/* <div key={role.id} className="flex items-center"> */}
