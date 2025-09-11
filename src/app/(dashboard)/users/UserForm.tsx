@@ -33,19 +33,10 @@ const createSchema = yup.object({
     .array()
     .of(yup.string())
     .min(1, "At least one role must be selected"),
-  warehouseId: yup.string().when("roleIds", {
-    is: (roleIds: string[]) =>
-      roleIds.some((role) => role.toLowerCase().includes("warehouse")),
-    then: (schema) =>
-      schema.required("Warehouse name is required for warehouse role"),
-    otherwise: (schema) => schema.nullable(),
-  }),
-  shopId: yup.string().when("roleIds", {
-    is: (roleIds: string[]) =>
-      roleIds.some((role) => role.toLowerCase().includes("shop")),
-    then: (schema) => schema.required("Shop name is required for shop role"),
-    otherwise: (schema) => schema.nullable(),
-  }),
+  warehouseId: yup
+    .string()
+    .required("Warehouse is required for warehouse role"),
+  shopId: yup.string().required("Shop is required for shop role"),
   // warehouseId: yup.string().when("roleIds", {
   //   is: (roleIds: string[]) => roleIds.some((role) => role === "shop"),
   //   then: (schema) => schema.required("Warehouse is required for shop role"),
@@ -329,13 +320,12 @@ export default function UserForm({
               </label>
             ))}
           </div>
-
-          {errors.roleIds && (
-            <div className="text-red-500 text-sm mt-2">
-              {"At least one role must be selected" as string}
-            </div>
-          )}
         </div>
+        {errors.roleIds && (
+          <div className="text-red-500 text-sm mt-2">
+            {"At least one role must be selected" as string}
+          </div>
+        )}
       </div>
 
       {hasWarehouseRole && (

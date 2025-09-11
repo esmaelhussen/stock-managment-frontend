@@ -754,9 +754,7 @@ function SalesTransactionsPage() {
                     value={
                       stockType === "shop"
                         ? form.selectedShopId
-                        : stockType === "warehouse"
-                          ? form.selectedWarehouseId
-                          : form.selectedShopId || form.selectedWarehouseId // For "All"
+                        : form.selectedWarehouseId
                     }
                     onChange={(e) => {
                       if (stockType === "shop") {
