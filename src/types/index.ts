@@ -189,6 +189,7 @@ export interface Product {
   price: number;
   category: Category;
   unit: Unit;
+  brand?: string;
   image?: string; // Added image field
 }
 

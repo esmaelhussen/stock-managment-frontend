@@ -38,6 +38,7 @@ function ProductsPage() {
     sku: "",
     category: "",
     price: "",
+    brand: "",
   });
 
   useEffect(() => {
@@ -86,7 +87,7 @@ function ProductsPage() {
     try {
       // Check if the selected category has subcategories
       const selectedCategory = categories.find(
-        (category) => category.id === data.categoryId
+        (category) => category.id === data.categoryId,
       );
 
       if (selectedCategory && selectedCategory.subcategories?.length > 0) {
@@ -136,13 +137,13 @@ function ProductsPage() {
       const [categoriesData] = await Promise.all([categoryService.getAll()]);
       // Filter out subcategories (categories with a parentCategoryId)
       const parentCategories = categoriesData.filter(
-        (category) => !category.parentCategoryId
+        (category) => !category.parentCategoryId,
       );
 
       // Attach subcategories to their parent categories
       parentCategories.forEach((parent) => {
         parent.subcategories = categoriesData.filter(
-          (category) => category.parentCategoryId === parent.id
+          (category) => category.parentCategoryId === parent.id,
         );
       });
 
@@ -169,7 +170,16 @@ function ProductsPage() {
       .toString()
       .toLowerCase()
       .includes(filters.price.toLowerCase());
-    return matchesName && matchesSKU && matchesCategory && matchesPrice;
+    const matchesBrand = filters.brand
+      ? product.brand?.toLowerCase().includes(filters.brand.toLowerCase())
+      : true;
+    return (
+      matchesName &&
+      matchesSKU &&
+      matchesCategory &&
+      matchesPrice &&
+      matchesBrand
+    );
   });
 
   const handlefilteredChange = (field, value) => {
@@ -178,7 +188,7 @@ function ProductsPage() {
 
   const paginated = filteredProducts.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   if (loading) {
@@ -272,6 +282,21 @@ function ProductsPage() {
         </div>
         <div className="flex flex-col">
           <label
+            htmlFor="brandFilter"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Brand
+          </label>
+          <input
+            id="brandFilter"
+            value={filters.brand}
+            onChange={(e) => handlefilteredChange("brand", e.target.value)}
+            placeholder="Filter by Brand"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
             htmlFor="categoryFilter"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
@@ -332,6 +357,9 @@ function ProductsPage() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unit
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Brand
               </th>
 
               {(permissions.includes("products.update") ||
@@ -402,6 +430,9 @@ function ProductsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {product.unit.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.brand || "N/A"}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

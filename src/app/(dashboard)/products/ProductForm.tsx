@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 const createSchema = yup.object({
   name: yup.string().required("Name is required"),
   description: yup.string(),
+  brand: yup.string(),
   sku: yup.string().required("SKU is required"),
   price: yup
     .number()
@@ -35,6 +36,7 @@ const createSchema = yup.object({
 const updateSchema = yup.object({
   name: yup.string(),
   description: yup.string(),
+  brand: yup.string(),
   sku: yup.string(),
   price: yup
     .number()
@@ -73,6 +75,7 @@ export default function ProductForm({
           ? {
               name: product.name,
               description: product.description || "",
+              brand: product.brand || "",
               sku: product.sku,
               price: product.price,
               categoryId: product.category?.id || "",
@@ -104,12 +107,12 @@ export default function ProductForm({
 
       // Filter out parent categories and attach subcategories
       const parentCategories = categoriesData.filter(
-        (category) => !category.parentCategoryId
+        (category) => !category.parentCategoryId,
       );
 
       parentCategories.forEach((parent) => {
         parent.subcategories = categoriesData.filter(
-          (category) => category.parentCategoryId === parent.id
+          (category) => category.parentCategoryId === parent.id,
         );
       });
 
@@ -252,7 +255,11 @@ export default function ProductForm({
                 Select a subcategory
               </option>
               {subcategories.map((subcategory) => (
-                <option key={subcategory.id} value={subcategory.id} style={{ color: "#000" }}>
+                <option
+                  key={subcategory.id}
+                  value={subcategory.id}
+                  style={{ color: "#000" }}
+                >
                   {subcategory.name}
                 </option>
               ))}
@@ -313,6 +320,13 @@ export default function ProductForm({
               {errors.image.message?.toString()}
             </p>
           )}
+        </div>
+        <div>
+          <Input
+            label="Brand"
+            {...register("brand")}
+            error={errors.brand?.message as string}
+          />
         </div>
       </div>
 
