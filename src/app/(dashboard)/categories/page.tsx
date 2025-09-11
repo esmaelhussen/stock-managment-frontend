@@ -15,7 +15,7 @@ function CategoriesPage() {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null,
+    null
   );
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -62,8 +62,17 @@ function CategoriesPage() {
     if (!data.identifier?.trim()) errors.identifier = "Identifier is required";
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
+
+    // Send parentCategoryId directly
+    const requestData = {
+      ...data,
+      parentCategoryId: data.parentCategoryId || undefined,
+    };
+
+    console.log("Data sent to create category:", requestData);
+
     try {
-      await categoryService.create(data);
+      await categoryService.create(requestData);
       toast.success("Category created successfully");
       setIsCreateModalOpen(false);
       fetchCategories();
@@ -76,37 +85,55 @@ function CategoriesPage() {
     if (!selectedCategory) return;
     try {
       await categoryService.update(selectedCategory.id, data);
-      toast.success("Category updated successfully");
+      toast.success(
+        selectedCategory?.parentCategoryId !== null && selectedCategory?.parentCategoryId !== undefined
+          ? "Subcategory updated successfully"
+          : "Category updated successfully"
+      );
       setIsEditModalOpen(false);
       setSelectedCategory(null);
       fetchCategories();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update category");
+      toast.error(
+        error.response?.data?.message || "Failed to update category"
+      );
     }
   };
 
   const handleDelete = async () => {
     if (!selectedCategory) return;
+    console.log("Deleting category with ID:", selectedCategory.id);
     try {
       await categoryService.remove(selectedCategory.id);
-      toast.success("Category deleted successfully");
+      toast.success(
+        selectedCategory.parentCategoryId
+          ? "Subcategory deleted successfully"
+          : "Category deleted successfully"
+      );
       setIsDeleteModalOpen(false);
       setSelectedCategory(null);
       fetchCategories();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete category");
+      toast.error(
+        error.response?.data?.message || "Failed to delete category"
+      );
     }
   };
 
-  const filteredCategories = allCategories.filter((category) => {
-    const matchesName = category.name
-      .toLowerCase()
-      .includes(filters.name.toLowerCase().trim());
-    const matchesIdentifier = category.identifier
-      .toLowerCase()
-      .includes(filters.identifier.toLowerCase().trim());
-    return matchesName && matchesIdentifier;
-  });
+  const filteredCategories = allCategories
+    .filter((category) => !category.parentCategoryId) // Only include categories without a parentCategoryId
+    .filter((category) => {
+      const matchesName = category.name
+        .toLowerCase()
+        .includes(filters.name.toLowerCase().trim());
+      const matchesIdentifier = category.identifier
+        .toLowerCase()
+        .includes(filters.identifier.toLowerCase().trim());
+      return matchesName && matchesIdentifier;
+    });
+
+  console.log("allCategories", allCategories);
+  console.log("filteredCategories", filteredCategories);
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -114,7 +141,7 @@ function CategoriesPage() {
 
   const paginated = filteredCategories.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   if (loading) {
@@ -222,6 +249,7 @@ function CategoriesPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Identifier
               </th>
+
               {(permissions.includes("categories.update") ||
                 permissions.includes("categories.delete")) && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -232,43 +260,103 @@ function CategoriesPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginated.map((category) => (
-              <tr key={category.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {category.name}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {category.identifier || "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex space-x-2">
-                    {permissions.includes("categories.update") && (
-                      <button
-                        onClick={() => {
-                          setSelectedCategory(category);
-                          setIsEditModalOpen(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                      </button>
-                    )}
+              <React.Fragment key={category.id}>
+                <tr>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {category.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {category.identifier || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex space-x-2">
+                      {permissions.includes("categories.update") && (
+                        <button
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                        </button>
+                      )}
 
-                    {permissions.includes("categories.delete") && (
-                      <button
-                        onClick={() => {
-                          setSelectedCategory(category);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
+                      {permissions.includes("categories.delete") && (
+                        <button
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                {category.subcategories && category.subcategories.length > 0 ? (
+                  <>
+                    <tr className="bg-gray-100">
+                      <td colSpan={3} className="px-6 py-2">
+                        <div className="text-sm font-semibold text-gray-700">
+                          Subcategories:
+                        </div>
+                      </td>
+                    </tr>
+                    {category.subcategories.map((subcategory) => (
+                      <tr key={subcategory.id} className="bg-blue-50">
+                        <td className="px-6 py-4 pl-12 whitespace-nowrap">
+                          <div className="text-sm text-blue-700 font-medium">
+                            {subcategory.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-500">
+                          {subcategory.identifier || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="flex space-x-2">
+                            {permissions.includes("categories.update") && (
+                              <button
+                                onClick={() => {
+                                  setSelectedCategory(subcategory);
+                                  setIsEditModalOpen(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                              </button>
+                            )}
+
+                            {permissions.includes("categories.delete") && (
+                              <button
+                                onClick={() => {
+                                  setSelectedCategory(subcategory);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                ) : (
+                  <tr className="bg-gray-50">
+                    <td colSpan={3} className="px-6 py-4">
+                      <div className="pl-6 italic text-sm text-gray-500">
+                        No subcategories
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
@@ -350,6 +438,29 @@ function CategoriesPage() {
             }}
             error={formErrors?.identifier}
           />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Parent Category (Optional) for Sub Categories Only
+            </label>
+            <select
+              value={selectedCategory?.parentCategoryId || ""}
+              onChange={(e) => {
+                const value = e.target.value || null;
+                setSelectedCategory((prev) => ({
+                  ...prev,
+                  parentCategoryId: value,
+                }));
+              }}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            >
+              <option value="">None</option>
+              {filteredCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex justify-end space-x-2">
             <Button
               variant="secondary"
@@ -366,6 +477,7 @@ function CategoriesPage() {
                 const data = {
                   name: selectedCategory?.name || "",
                   identifier: selectedCategory?.identifier,
+                  parentCategoryId: selectedCategory?.parentCategoryId || "",
                 };
                 isEditModalOpen ? handleUpdate(data) : handleCreate(data);
               }}

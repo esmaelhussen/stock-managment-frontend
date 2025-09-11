@@ -818,10 +818,7 @@ function SalesTransactionsPage() {
             {/* Replace the product search input with a select dropdown */}
 
             <div className="space-y-4">
-              <label
-                htmlFor="productSearchSelect"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label className="block text-sm font-medium text-gray-700">
                 Search and Select Product
               </label>
               <div className="relative" ref={dropdownRef}>

@@ -78,7 +78,26 @@ function ProductsPage() {
   };
 
   const handleCreate = async (data: CreateProductInput) => {
+    if (!data.categoryId) {
+      toast.error("Please select a category");
+      return;
+    }
+
     try {
+      // Check if the selected category has subcategories
+      const selectedCategory = categories.find(
+        (category) => category.id === data.categoryId
+      );
+
+      if (selectedCategory && selectedCategory.subcategories?.length > 0) {
+        // Prompt user to select a subcategory
+        if (!data.categoryId) {
+          toast.error("Please select a subcategory");
+          return;
+        }
+        data.categoryId = data.categoryId; // Store the subcategory ID
+      }
+
       await productService.create(data);
       toast.success("Product created successfully");
       setIsCreateModalOpen(false);
@@ -115,7 +134,19 @@ function ProductsPage() {
   const fetchCategories = async () => {
     try {
       const [categoriesData] = await Promise.all([categoryService.getAll()]);
-      setCategories(categoriesData);
+      // Filter out subcategories (categories with a parentCategoryId)
+      const parentCategories = categoriesData.filter(
+        (category) => !category.parentCategoryId
+      );
+
+      // Attach subcategories to their parent categories
+      parentCategories.forEach((parent) => {
+        parent.subcategories = categoriesData.filter(
+          (category) => category.parentCategoryId === parent.id
+        );
+      });
+
+      setCategories(parentCategories);
     } catch (error) {
       toast.error("Failed to fetch categories");
     }
@@ -147,7 +178,7 @@ function ProductsPage() {
 
   const paginated = filteredProducts.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   if (loading) {
@@ -297,6 +328,9 @@ function ProductsPage() {
                 Category
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sub Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unit
               </th>
 
@@ -356,7 +390,15 @@ function ProductsPage() {
                     {product.price}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.category.name}
+                    {product.category.parentCategory
+                      ? product.category.parentCategory.name
+                      : product.category.name}
+                  </td>
+
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.category?.parentCategory
+                      ? product.category.name // Display subcategory name
+                      : "No Subcategory"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {product.unit.name}

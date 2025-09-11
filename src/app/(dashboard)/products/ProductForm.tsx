@@ -63,6 +63,8 @@ export default function ProductForm({
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false); // Modal state
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
 
   const formConfig = isEdit
     ? {
@@ -99,7 +101,19 @@ export default function ProductForm({
         categoryService.getAll(),
         unitService.getAll(),
       ]);
-      setCategories(categoriesData);
+
+      // Filter out parent categories and attach subcategories
+      const parentCategories = categoriesData.filter(
+        (category) => !category.parentCategoryId
+      );
+
+      parentCategories.forEach((parent) => {
+        parent.subcategories = categoriesData.filter(
+          (category) => category.parentCategoryId === parent.id
+        );
+      });
+
+      setCategories(parentCategories);
       setUnits(unitsData);
     } catch (error) {
       toast.error("Failed to fetch categories or units");
@@ -110,6 +124,15 @@ export default function ProductForm({
     if (data.image instanceof FileList && data.image.length > 0) {
       data.image = data.image[0]; // Extract the first file from the FileList
     }
+
+    // Determine whether to send categoryId or subcategoryId
+    if (data.subcategoryId) {
+      data.categoryId = data.subcategoryId; // Use subcategory ID if available
+      delete data.subcategoryId; // Remove subcategoryId from the payload
+    } else {
+      delete data.subcategoryId; // Ensure subcategoryId is not sent if not used
+    }
+
     console.log("Form data submitted:", data); // Log the updated form data for debugging
     onSubmit(data);
   };
@@ -124,6 +147,18 @@ export default function ProductForm({
       reader.readAsDataURL(file);
     } else {
       setPreviewImage(null);
+    }
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+
+    // Find the selected category and update subcategories
+    const category = categories.find((cat) => cat.id === categoryId);
+    if (category && category.subcategories?.length > 0) {
+      setSubcategories(category.subcategories);
+    } else {
+      setSubcategories([]); // Clear subcategories if none exist
     }
   };
 
@@ -163,6 +198,7 @@ export default function ProductForm({
             {...register("categoryId")}
             className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
             style={{ color: "#000" }}
+            onChange={(e) => handleCategoryChange(e.target.value)}
           >
             <option value="" disabled style={{ color: "#9CA3AF" }}>
               Select a category
@@ -199,6 +235,31 @@ export default function ProductForm({
           </select>
         </div>
       </div>
+
+      {/* Subcategory Dropdown */}
+      {subcategories.length > 0 && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Subcategory
+            </label>
+            <select
+              {...register("subcategoryId")}
+              className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
+              style={{ color: "#000" }}
+            >
+              <option value="" disabled style={{ color: "#9CA3AF" }}>
+                Select a subcategory
+              </option>
+              {subcategories.map((subcategory) => (
+                <option key={subcategory.id} value={subcategory.id} style={{ color: "#000" }}>
+                  {subcategory.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

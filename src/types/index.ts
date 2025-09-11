@@ -2,6 +2,9 @@ export interface Category {
   id: string;
   name: string;
   identifier?: string;
+  subcategories?: Category[]; // Added subcategories field
+  parentCategoryId?: string | null; // Updated to string or null
+  parentCategory?: Category | null; // Added parentCategory field
   createdAt?: string;
   updatedAt?: string;
 }
@@ -9,11 +12,16 @@ export interface Category {
 export interface CreateCategoryInput {
   name: string;
   identifier?: string;
+  subcategories?: string[];
+  parentCategoryId?: string;
 }
 
 export interface UpdateCategoryInput {
   name?: string;
   identifier?: string;
+  parentCategoryId?: string;
+  parentCategory?: Category; // Added parentCategory field
+  subcategories?: Category[]; // Added subcategories field
 }
 export interface User {
   id: string;

@@ -15,7 +15,14 @@ export class CategoryService {
   }
 
   async update(id: string, data: UpdateCategoryInput): Promise<Category> {
-    return await apiClient.patch<Category>(`/categories/${id}`, data);
+    const { parentCategoryId, ...updateData } = data; // Extract parentCategoryId
+
+    // Include parentCategoryId only if it exists
+    const payload = parentCategoryId
+      ? { ...updateData, parentCategoryId }
+      : updateData;
+
+    return await apiClient.patch<Category>(`/categories/${id}`, payload);
   }
 
   async remove(id: string): Promise<void> {
