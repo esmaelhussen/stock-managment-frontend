@@ -33,6 +33,19 @@ const createSchema = yup.object({
     .array()
     .of(yup.string())
     .min(1, "At least one role must be selected"),
+  warehouseId: yup.string().when("roleIds", {
+    is: (roleIds: string[]) =>
+      roleIds.some((role) => role.toLowerCase().includes("warehouse")),
+    then: (schema) =>
+      schema.required("Warehouse name is required for warehouse role"),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  shopId: yup.string().when("roleIds", {
+    is: (roleIds: string[]) =>
+      roleIds.some((role) => role.toLowerCase().includes("shop")),
+    then: (schema) => schema.required("Shop name is required for shop role"),
+    otherwise: (schema) => schema.nullable(),
+  }),
   // warehouseId: yup.string().when("roleIds", {
   //   is: (roleIds: string[]) => roleIds.some((role) => role === "shop"),
   //   then: (schema) => schema.required("Warehouse is required for shop role"),
@@ -48,6 +61,8 @@ const updateSchema = yup.object({
   address: yup.string(),
   isActive: yup.boolean(),
   roleIds: yup.array().of(yup.string()),
+  warehouseId: yup.array().of(yup.string()),
+  shopId: yup.array().of(yup.string()),
 });
 
 interface UserFormProps {
@@ -70,6 +85,7 @@ export default function UserForm({
   const [hasWarehouseRole, setHasWarehouseRole] = useState(false);
   const [hasShopRole, setHasShopRole] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [roleSearch, setRoleSearch] = useState("");
 
   const formConfig = isEdit
     ? {
@@ -111,13 +127,13 @@ export default function UserForm({
   useEffect(() => {
     if (watchedRoleIds && roles.length > 0) {
       const selectedRoleObjects = roles.filter((role) =>
-        watchedRoleIds.includes(role.id),
+        watchedRoleIds.includes(role.id)
       );
       const hasWarehouse = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("warehouse"),
+        role.name.toLowerCase().includes("warehouse")
       );
       const hasShop = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("shop"),
+        role.name.toLowerCase().includes("shop")
       );
       setHasWarehouseRole(hasWarehouse);
       setHasShopRole(hasShop);
@@ -162,6 +178,10 @@ export default function UserForm({
     }
   };
 
+  const filteredRoles = roles.filter((role) =>
+    role.name.toLowerCase().includes(roleSearch.toLowerCase())
+  );
+
   const onFormSubmit = async (data: any) => {
     setLoading(true);
     try {
@@ -198,6 +218,7 @@ export default function UserForm({
           error={errors.firstName?.message as string}
           {...register("firstName")}
         />
+
         <Input
           label="Middle Name"
           error={errors.middleName?.message as string}
@@ -259,26 +280,56 @@ export default function UserForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Roles
+          Roles<span className="text-red-500">*</span>
         </label>
-        <div className="space-y-2">
-          {roles.map((role) => (
-            <div key={role.id} className="flex items-center">
-              <input
-                type="checkbox"
-                id={`role-${role.id}`}
-                value={role.id}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                {...register("roleIds")}
-              />
+        <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
+          <div className="relative mb-4">
+            <Input
+              type="text"
+              placeholder="Search roles..."
+              value={roleSearch}
+              onChange={(e) => setRoleSearch(e.target.value)}
+              className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            />
+            {/* <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span> */}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRoles.map((role) => (
               <label
                 htmlFor={`role-${role.id}`}
-                className="ml-2 block text-sm text-gray-900"
+                className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg shadow-md transition duration-150 ease-in-out"
               >
-                {role.name}
+                {/* <div key={role.id} className="flex items-center"> */}
+                <input
+                  type="checkbox"
+                  id={`role-${role.id}`}
+                  value={role.id}
+                  className="form-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  {...register("roleIds")}
+                />
+
+                <span className="text-sm font-medium text-gray-700">
+                  {role.name}
+                </span>
+                {/* </div> */}
               </label>
-            </div>
-          ))}
+            ))}
+          </div>
+
           {errors.roleIds && (
             <div className="text-red-500 text-sm mt-2">
               {"At least one role must be selected" as string}
@@ -310,7 +361,7 @@ export default function UserForm({
           </select>
           {errors.warehouseId && (
             <div className="text-red-500 text-sm mt-2">
-              {errors.warehouseId.message as string}
+              {"Warehouse name is required for warehouse role" as string}
             </div>
           )}
         </div>
