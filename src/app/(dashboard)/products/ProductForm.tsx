@@ -107,12 +107,12 @@ export default function ProductForm({
 
       // Filter out parent categories and attach subcategories
       const parentCategories = categoriesData.filter(
-        (category) => !category.parentCategoryId,
+        (category) => !category.parentCategoryId
       );
 
       parentCategories.forEach((parent) => {
         parent.subcategories = categoriesData.filter(
-          (category) => category.parentCategoryId === parent.id,
+          (category) => category.parentCategoryId === parent.id
         );
       });
 
@@ -198,14 +198,12 @@ export default function ProductForm({
             Category
           </label>
           <select
-            {...register("categoryId")}
+            {...register("categoryId", { required: "Category is required" })}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
             style={{ color: "#000" }}
-            onChange={(e) => handleCategoryChange(e.target.value)}
           >
-            <option value="" disabled style={{ color: "#9CA3AF" }}>
-              Select a category
-            </option>
+            <option value="">Select a category</option>
             {categories.map((category) => (
               <option
                 key={category.id}
@@ -217,7 +215,6 @@ export default function ProductForm({
             ))}
           </select>
         </div>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Unit
@@ -240,33 +237,37 @@ export default function ProductForm({
       </div>
 
       {/* Subcategory Dropdown */}
-      {subcategories.length > 0 && (
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Subcategory
-            </label>
-            <select
-              {...register("subcategoryId")}
-              className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
-              style={{ color: "#000" }}
-            >
-              <option value="" disabled style={{ color: "#9CA3AF" }}>
-                Select a subcategory
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Subcategory
+          </label>
+          <select
+            {...register("subcategoryId", {
+              validate: (value) => {
+                if (subcategories.length > 0 && !value) {
+                  return "Subcategory is required when available";
+                }
+                return true;
+              },
+            })}
+            disabled={subcategories.length === 0}
+            className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
+            style={{ color: "#000" }}
+          >
+            <option value="">Select a subcategory</option>
+            {subcategories.map((subcategory) => (
+              <option
+                key={subcategory.id}
+                value={subcategory.id}
+                style={{ color: "#000" }}
+              >
+                {subcategory.name}
               </option>
-              {subcategories.map((subcategory) => (
-                <option
-                  key={subcategory.id}
-                  value={subcategory.id}
-                  style={{ color: "#000" }}
-                >
-                  {subcategory.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            ))}
+          </select>
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
