@@ -87,7 +87,7 @@ function ProductsPage() {
     try {
       // Check if the selected category has subcategories
       const selectedCategory = categories.find(
-        (category) => category.id === data.categoryId,
+        (category) => category.id === data.categoryId
       );
 
       if (selectedCategory && selectedCategory.subcategories?.length > 0) {
@@ -137,13 +137,13 @@ function ProductsPage() {
       const [categoriesData] = await Promise.all([categoryService.getAll()]);
       // Filter out subcategories (categories with a parentCategoryId)
       const parentCategories = categoriesData.filter(
-        (category) => !category.parentCategoryId,
+        (category) => !category.parentCategoryId
       );
 
       // Attach subcategories to their parent categories
       parentCategories.forEach((parent) => {
         parent.subcategories = categoriesData.filter(
-          (category) => category.parentCategoryId === parent.id,
+          (category) => category.parentCategoryId === parent.id
         );
       });
 
@@ -171,7 +171,7 @@ function ProductsPage() {
       .toLowerCase()
       .includes(filters.price.toLowerCase());
     const matchesBrand = filters.brand
-      ? product.brand?.toLowerCase().includes(filters.brand.toLowerCase())
+      ? product.brand?.name.toLowerCase().includes(filters.brand.toLowerCase())
       : true;
     return (
       matchesName &&
@@ -188,7 +188,7 @@ function ProductsPage() {
 
   const paginated = filteredProducts.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   if (loading) {
@@ -432,7 +432,7 @@ function ProductsPage() {
                     {product.unit.name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.brand || "N/A"}
+                    {product.brand?.name}
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

@@ -13,15 +13,17 @@ import {
   UpdateProductInput,
   Category,
   Unit,
+  Brand,
 } from "@/types";
 import { categoryService } from "@/services/category.service";
 import { unitService } from "@/services/unit.service";
+import { brandService } from "@/services/brand.service";
 import toast from "react-hot-toast";
 
 const createSchema = yup.object({
   name: yup.string().required("Name is required"),
   description: yup.string(),
-  brand: yup.string(),
+
   sku: yup.string().required("SKU is required"),
   price: yup
     .number()
@@ -30,6 +32,7 @@ const createSchema = yup.object({
     .positive("Price must be positive"),
   categoryId: yup.string().required("Category is required"),
   unitId: yup.string().required("Unit is required"),
+  brandId: yup.string().required("Brand is required"),
   image: yup.mixed().notRequired(),
 });
 
@@ -62,6 +65,7 @@ export default function ProductForm({
 }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false); // Modal state
@@ -75,11 +79,12 @@ export default function ProductForm({
           ? {
               name: product.name,
               description: product.description || "",
-              brand: product.brand || "",
+
               sku: product.sku,
               price: product.price,
               categoryId: product.category?.id || "",
               unitId: product.unit?.id || "",
+              brandId: product.brand?.id || "",
             }
           : {},
       }
@@ -100,9 +105,10 @@ export default function ProductForm({
 
   const fetchCategoriesAndUnits = async () => {
     try {
-      const [categoriesData, unitsData] = await Promise.all([
+      const [categoriesData, unitsData, brandsData] = await Promise.all([
         categoryService.getAll(),
         unitService.getAll(),
+        brandService.getAll(),
       ]);
 
       // Filter out parent categories and attach subcategories
@@ -118,8 +124,9 @@ export default function ProductForm({
 
       setCategories(parentCategories);
       setUnits(unitsData);
+      setBrands(brandsData);
     } catch (error) {
-      toast.error("Failed to fetch categories or units");
+      toast.error("Failed to fetch categories or units or brands");
     }
   };
 
@@ -323,11 +330,23 @@ export default function ProductForm({
           )}
         </div>
         <div>
-          <Input
-            label="Brand"
-            {...register("brand")}
-            error={errors.brand?.message as string}
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Brand
+          </label>
+          <select
+            {...register("brandId")}
+            className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
+            style={{ color: "#000" }}
+          >
+            <option value="" disabled style={{ color: "#9CA3AF" }}>
+              Select a brand
+            </option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id} style={{ color: "#000" }}>
+                {brand.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

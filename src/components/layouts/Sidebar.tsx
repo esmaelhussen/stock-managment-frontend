@@ -17,6 +17,8 @@ import {
   ShoppingCartIcon,
   CreditCardIcon,
   DocumentTextIcon,
+  BellIcon,
+  GiftIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -39,6 +41,7 @@ const Sidebar: React.FC = () => {
       href: "/units",
       icon: ScaleIcon, // Updated to use ScaleIcon for units
     },
+    { name: "Brands", href: "/brands", icon: GiftIcon },
     { name: "Products", href: "/products", icon: ShoppingBagIcon },
     {
       name: "Stock Transactions",
@@ -77,7 +80,7 @@ const Sidebar: React.FC = () => {
   React.useEffect(() => {
     if (!menuOpen) {
       window.dispatchEvent(
-        new CustomEvent("openSidebarMenu", { detail: false }),
+        new CustomEvent("openSidebarMenu", { detail: false })
       );
     }
   }, [menuOpen]);
@@ -104,7 +107,7 @@ const Sidebar: React.FC = () => {
           " absolute top-2  w-20 bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
           menuOpen
             ? "w-full h-screen opacity-100 scale-100 z-50 "
-            : "max-h-0 opacity-50 scale-95 overflow-hidden ",
+            : "max-h-0 opacity-50 scale-95 overflow-hidden "
         )}
       >
         {navigation.map((item, index) => {
@@ -174,7 +177,7 @@ const Sidebar: React.FC = () => {
                           "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                           pathname === link.href
                             ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
                         )}
                         onClick={() => setMenuOpen(false)}
                       >
@@ -199,7 +202,7 @@ const Sidebar: React.FC = () => {
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
                   ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
               onClick={() => setMenuOpen(false)}
             >
@@ -280,7 +283,7 @@ const Sidebar: React.FC = () => {
                           "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                           pathname === link.href
                             ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                            : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
                         )}
                       >
                         <link.icon className="mr-3 h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-indigo-700 group-hover:scale-110" />
@@ -332,6 +335,8 @@ const Sidebar: React.FC = () => {
             !permission.includes("sales.read")
           )
             return null;
+          if (item.name === "Brands" && !permission.includes("brands.read"))
+            return null;
 
           const isActive = pathname === item.href;
           return (
@@ -342,7 +347,7 @@ const Sidebar: React.FC = () => {
                 "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
                 isActive
                   ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md",
+                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
               )}
             >
               <item.icon
@@ -350,7 +355,7 @@ const Sidebar: React.FC = () => {
                   "mr-3 h-6 w-6 flex-shrink-0",
                   isActive
                     ? "text-white drop-shadow"
-                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110",
+                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
                 )}
               />
               {item.name}

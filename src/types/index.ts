@@ -189,7 +189,7 @@ export interface Product {
   price: number;
   category: Category;
   unit: Unit;
-  brand?: string;
+  brand: Brand;
   image?: string; // Added image field
 }
 
@@ -200,6 +200,7 @@ export interface CreateProductInput {
   price: number;
   categoryId: string;
   unitId: string;
+  brandId: string;
   image?: string | File; // Added image field
 }
 
@@ -291,4 +292,17 @@ export interface CreateSalesTransactionInput {
   creditorName?: string;
   items: CreateSalesTransactionItemInput[];
   transactedById?: string; // Added userId to include the user ID in the payload
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+}
+
+export interface CreateBrandInput {
+  name: string;
+}
+
+export interface UpdateBrandInput {
+  name?: string;
 }

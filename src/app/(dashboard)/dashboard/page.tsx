@@ -15,6 +15,7 @@ import {
   ScaleIcon,
   ShoppingBagIcon,
   ShoppingCartIcon,
+  GiftIcon,
 } from "@heroicons/react/24/outline";
 import withPermission from "@/hoc/withPermission";
 
@@ -63,6 +64,12 @@ function DashboardPage() {
       icon: ShoppingCartIcon,
       color: "bg-red-500",
     },
+    {
+      name: "Brands",
+      value: "-",
+      icon: GiftIcon,
+      color: "bg-yellow-500",
+    },
   ]);
 
   useEffect(() => {
@@ -75,6 +82,7 @@ function DashboardPage() {
       units: number;
       products: number;
       shops: number;
+      brands: number;
     };
     apiClient.get<StatsResponse>("dashboard/stats").then((data) => {
       setStats([
@@ -126,6 +134,12 @@ function DashboardPage() {
           icon: ShoppingCartIcon,
           color: "bg-red-500",
         },
+        {
+          name: "Brands",
+          value: String(data.brands),
+          icon: GiftIcon,
+          color: "bg-yellow-500",
+        },
       ]);
     });
   }, []);
@@ -146,6 +160,7 @@ function DashboardPage() {
           "#14b8a6", // teal for units// yellow
           "#f97316",
           "#ef4444",
+          "#eab308",
           // orange for products
           // indigo for warehouses
         ],
