@@ -191,6 +191,7 @@ export interface Product {
   unit: Unit;
   brand: Brand;
   image?: string; // Added image field
+  alertQuantity: number; // Added alert quantity field
 }
 
 export interface CreateProductInput {
@@ -201,7 +202,9 @@ export interface CreateProductInput {
   categoryId: string;
   unitId: string;
   brandId: string;
-  image?: string | File; // Added image field
+  image?: string | File;
+  // Added image field
+  alertQuantity?: number;
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {}

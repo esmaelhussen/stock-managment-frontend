@@ -40,11 +40,11 @@ const StockPage = () => {
       if (isWarehouseRole) {
         filteredData = data.filter(
           (stock) =>
-            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase(),
+            stock.warehouse?.id?.toLowerCase() === warehouse?.id?.toLowerCase()
         );
       } else if (isShopRole) {
         filteredData = data.filter(
-          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase(),
+          (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase()
         );
       } else {
         filteredData = data;
@@ -93,7 +93,7 @@ const StockPage = () => {
 
   const paginatedStock = filteredStock.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   const handlePageChange = (newPage: number) => {
@@ -217,8 +217,12 @@ const StockPage = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Unit price
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantity
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Alert Quantity
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total product sold
@@ -233,7 +237,14 @@ const StockPage = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedStock.map((stock) => (
-              <tr key={stock.id}>
+              <tr
+                key={stock.id}
+                className={
+                  stock.quantity <= stock.product.alertQuantity
+                    ? "bg-red-100"
+                    : ""
+                }
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {stock.product.name}
                 </td>
@@ -242,6 +253,14 @@ const StockPage = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {stock.quantity}
+                  {stock.quantity <= stock.product.alertQuantity && (
+                    <span className="ml-2 text-red-600 font-bold">
+                      ⚠ Low Stock
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {stock.product.alertQuantity}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {stock.price}

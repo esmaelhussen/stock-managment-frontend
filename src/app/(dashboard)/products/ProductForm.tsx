@@ -34,6 +34,11 @@ const createSchema = yup.object({
   unitId: yup.string().required("Unit is required"),
   brandId: yup.string().required("Brand is required"),
   image: yup.mixed().notRequired(),
+  alertQuantity: yup
+    .number()
+    .typeError("Alert Quantity must be a valid number")
+    .required("Alert Quantity is required")
+    .positive("Alert Quantity must be positive"),
 });
 
 const updateSchema = yup.object({
@@ -48,6 +53,10 @@ const updateSchema = yup.object({
   categoryId: yup.string(),
   unitId: yup.string(),
   image: yup.mixed().notRequired(),
+  alertQuantity: yup
+    .number()
+    .typeError("Alert Quantity must be a valid number")
+    .positive("Alert Quantity must be positive"),
 });
 
 interface ProductFormProps {
@@ -85,6 +94,7 @@ export default function ProductForm({
               categoryId: product.category?.id || "",
               unitId: product.unit?.id || "",
               brandId: product.brand?.id || "",
+              alertQuantity: product.alertQuantity || 0,
             }
           : {},
       }
@@ -348,6 +358,14 @@ export default function ProductForm({
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="alertQuantity"
+          {...register("alertQuantity")}
+          error={errors.alertQuantity?.message as string}
+        />
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
