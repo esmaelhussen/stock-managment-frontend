@@ -25,7 +25,7 @@ import { shopService } from "@/services/shop.service";
 
 export default function StockTransactionsPage() {
   const [allTransactions, setAllTransactions] = useState<StockTransaction[]>(
-    [],
+    []
   );
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function StockTransactionsPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null,
+    null
   );
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const [userShopId, setUserShopId] = useState<string | null>(null);
@@ -279,7 +279,7 @@ export default function StockTransactionsPage() {
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create transaction",
+        error.response?.data?.message || "Failed to create transaction"
       );
     }
   };
@@ -353,12 +353,12 @@ export default function StockTransactionsPage() {
 
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize,
+    page * pageSize
   );
 
   // Filtered products based on the search term
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -729,7 +729,8 @@ export default function StockTransactionsPage() {
                     )}
 
                     {/* For warehouse role users */}
-                    {isWarehouseRole && !isShopRole &&
+                    {isWarehouseRole &&
+                      !isShopRole &&
                       warehouses.map((w) => (
                         <option key={w.id} value={`warehouse:${w.id}`}>
                           Warehouse: {w.name}
@@ -737,7 +738,8 @@ export default function StockTransactionsPage() {
                       ))}
 
                     {/* For shop role users */}
-                    {isShopRole && !isWarehouseRole &&
+                    {isShopRole &&
+                      !isWarehouseRole &&
                       shops.map((s) => (
                         <option key={s.id} value={`shop:${s.id}`}>
                           Shop: {s.name}
@@ -781,7 +783,7 @@ export default function StockTransactionsPage() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Source Select dropdown - modified for role-based display */}
                 <div className="space-y-4">
                   {(isWarehouseRole || isShopRole) && (
@@ -833,7 +835,8 @@ export default function StockTransactionsPage() {
                     )}
 
                     {/* For warehouse role users */}
-                    {isWarehouseRole && !isShopRole &&
+                    {isWarehouseRole &&
+                      !isShopRole &&
                       warehouses.map((w) => (
                         <option key={w.id} value={`warehouse:${w.id}`}>
                           Warehouse: {w.name}
@@ -841,7 +844,8 @@ export default function StockTransactionsPage() {
                       ))}
 
                     {/* For shop role users */}
-                    {isShopRole && !isWarehouseRole &&
+                    {isShopRole &&
+                      !isWarehouseRole &&
                       shops.map((s) => (
                         <option key={s.id} value={`shop:${s.id}`}>
                           Shop: {s.name}
@@ -894,7 +898,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -905,7 +909,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              s.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -916,7 +920,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              w.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -927,7 +931,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
+                              s.id !== (watch("sourceId")?.split(":")[1] || "")
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -1012,7 +1016,7 @@ export default function StockTransactionsPage() {
                   }}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                 />
-                
+
                 {/* Hidden input for productId */}
                 <input
                   type="hidden"
@@ -1038,7 +1042,9 @@ export default function StockTransactionsPage() {
                       >
                         <div className="font-semibold">{product.name}</div>
                         {product.sku && (
-                          <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                          <div className="text-xs text-gray-500">
+                            SKU: {product.sku}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -1046,11 +1052,15 @@ export default function StockTransactionsPage() {
                 )}
 
                 {/* No results message - positioned above */}
-                {showProductDropdown && searchTerm && filteredProducts.length === 0 && (
-                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-                    <p className="text-sm text-gray-500">No products found matching "{searchTerm}"</p>
-                  </div>
-                )}
+                {showProductDropdown &&
+                  searchTerm &&
+                  filteredProducts.length === 0 && (
+                    <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                      <p className="text-sm text-gray-500">
+                        No products found matching "{searchTerm}"
+                      </p>
+                    </div>
+                  )}
               </div>
               {errors.productId && (
                 <p className="text-red-500 text-sm">
