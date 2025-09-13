@@ -47,6 +47,8 @@ export default function StockTransactionsPage() {
     transactedBy: "",
   });
   const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [selectedProductName, setSelectedProductName] = useState("");
 
   const total = allTransactions.length;
   const permissions = JSON.parse(Cookies.get("permission") || "[]");
@@ -55,6 +57,7 @@ export default function StockTransactionsPage() {
   const warehouse = JSON.parse(Cookies.get("user") || "null").warehouse;
   const shop = JSON.parse(Cookies.get("user") || "null").shop;
   const [targetType, setTargetType] = useState("");
+  const [sourceType, setSourceType] = useState("");
   console.log("roles", roles.includes("warehouse"));
 
   const {
@@ -268,6 +271,11 @@ export default function StockTransactionsPage() {
       toast.success("Transaction created successfully");
       setIsCreateModalOpen(false);
       reset(); // Reset the form fields
+      setSearchTerm("");
+      setSelectedProductName("");
+      setShowProductDropdown(false);
+      setSourceType("");
+      setTargetType("");
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
@@ -607,6 +615,11 @@ export default function StockTransactionsPage() {
           onClose={() => {
             setIsCreateModalOpen(false);
             reset(); // Reset the form fields
+            setSearchTerm("");
+            setSelectedProductName("");
+            setShowProductDropdown(false);
+            setSourceType("");
+            setTargetType("");
           }}
           title="Create Transaction"
           size="lg"
@@ -639,62 +652,146 @@ export default function StockTransactionsPage() {
             </div>
 
             {(transactionType === "add" || transactionType === "remove") && (
-              <div className="space-y-4">
-                <label
-                  htmlFor="sourceId"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Source
-                </label>
-                <select
-                  id="sourceId"
-                  {...register("sourceId", {
-                    required: "Source is required",
-                  })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-                  disabled={!!userWarehouseId || !!userShopId} // auto-filled if role
-                >
-                  <option value="">Select a Source</option>
-
-                  {/* Warehouses */}
-                  {(!userWarehouseId && !userShopId) || !isShopRole
-                    ? warehouses.map((warehouse) => (
-                        <option
-                          key={warehouse.id}
-                          value={`warehouse:${warehouse.id}`}
-                        >
-                          Warehouse: {warehouse.name}
-                        </option>
-                      ))
-                    : null}
-
-                  {/* Shops */}
-                  {(!userWarehouseId && !userShopId) || !isWarehouseRole
-                    ? shops.map((shop) => (
-                        <option key={shop.id} value={`shop:${shop.id}`}>
-                          Shop: {shop.name}
-                        </option>
-                      ))
-                    : null}
-                </select>
-                {errors.sourceId && (
-                  <p className="text-red-500 text-sm">
-                    {errors.sourceId.message?.toString()}
-                  </p>
+              <>
+                {/* Show source type selector only for users with neither role */}
+                {!isWarehouseRole && !isShopRole && (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label
+                        htmlFor="sourceId"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Source (Warehouse / Shop)
+                      </label>
+                    </div>
+                    <div>
+                      <select
+                        value={sourceType}
+                        onChange={(e) => setSourceType(e.target.value)}
+                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                      >
+                        <option value="">Select Source Type</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="shop">Shop</option>
+                        <option value="All">All</option>
+                      </select>
+                    </div>
+                  </div>
                 )}
-              </div>
+
+                <div className="space-y-4">
+                  {(isWarehouseRole || isShopRole) && (
+                    <label
+                      htmlFor="sourceId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Source
+                    </label>
+                  )}
+                  <select
+                    id="sourceId"
+                    {...register("sourceId", {
+                      required: "Source is required",
+                    })}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                    disabled={!!userWarehouseId || !!userShopId} // auto-filled if role
+                  >
+                    <option value="">Select Source</option>
+
+                    {/* For users with neither role - filter based on sourceType */}
+                    {!isWarehouseRole && !isShopRole && (
+                      <>
+                        {sourceType === "warehouse" &&
+                          warehouses.map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              {w.name}
+                            </option>
+                          ))}
+                        {sourceType === "shop" &&
+                          shops.map((s) => (
+                            <option key={s.id} value={`shop:${s.id}`}>
+                              {s.name}
+                            </option>
+                          ))}
+                        {sourceType === "All" &&
+                          warehouses.map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              Warehouse: {w.name}
+                            </option>
+                          ))}
+                        {sourceType === "All" &&
+                          shops.map((s) => (
+                            <option key={s.id} value={`shop:${s.id}`}>
+                              Shop: {s.name}
+                            </option>
+                          ))}
+                      </>
+                    )}
+
+                    {/* For warehouse role users */}
+                    {isWarehouseRole && !isShopRole &&
+                      warehouses.map((w) => (
+                        <option key={w.id} value={`warehouse:${w.id}`}>
+                          Warehouse: {w.name}
+                        </option>
+                      ))}
+
+                    {/* For shop role users */}
+                    {isShopRole && !isWarehouseRole &&
+                      shops.map((s) => (
+                        <option key={s.id} value={`shop:${s.id}`}>
+                          Shop: {s.name}
+                        </option>
+                      ))}
+                  </select>
+                  {errors.sourceId && (
+                    <p className="text-red-500 text-sm">
+                      {errors.sourceId.message?.toString()}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             {transactionType === "transfer" && (
               <>
                 {/* Source Select */}
+                {/* Show source type selector only for users with neither role */}
+                {!isWarehouseRole && !isShopRole && (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label
+                        htmlFor="sourceId"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Source (Warehouse / Shop)
+                      </label>
+                    </div>
+                    <div>
+                      <select
+                        value={sourceType}
+                        onChange={(e) => setSourceType(e.target.value)}
+                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                      >
+                        <option value="">Select Source Type</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="shop">Shop</option>
+                        <option value="All">All</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Source Select dropdown - modified for role-based display */}
                 <div className="space-y-4">
-                  <label
-                    htmlFor="sourceId"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Source
-                  </label>
+                  {(isWarehouseRole || isShopRole) && (
+                    <label
+                      htmlFor="sourceId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Source
+                    </label>
+                  )}
                   <select
                     id="sourceId"
                     {...register("sourceId", {
@@ -703,25 +800,53 @@ export default function StockTransactionsPage() {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                     disabled={isWarehouseRole || isShopRole}
                   >
-                    <option value="">Select a Source</option>
+                    <option value="">Select Source</option>
 
-                    {/* Show warehouses if role is neither or not a shop */}
-                    {(!isWarehouseRole && !isShopRole) || !isShopRole
-                      ? warehouses.map((w) => (
-                          <option key={w.id} value={`warehouse:${w.id}`}>
-                            Warehouse: {w.name}
-                          </option>
-                        ))
-                      : null}
+                    {/* For users with neither role - filter based on sourceType */}
+                    {!isWarehouseRole && !isShopRole && (
+                      <>
+                        {sourceType === "warehouse" &&
+                          warehouses.map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              {w.name}
+                            </option>
+                          ))}
+                        {sourceType === "shop" &&
+                          shops.map((s) => (
+                            <option key={s.id} value={`shop:${s.id}`}>
+                              {s.name}
+                            </option>
+                          ))}
+                        {sourceType === "All" &&
+                          warehouses.map((w) => (
+                            <option key={w.id} value={`warehouse:${w.id}`}>
+                              Warehouse: {w.name}
+                            </option>
+                          ))}
+                        {sourceType === "All" &&
+                          shops.map((s) => (
+                            <option key={s.id} value={`shop:${s.id}`}>
+                              Shop: {s.name}
+                            </option>
+                          ))}
+                      </>
+                    )}
 
-                    {/* Show shops if role is neither or not a warehouse */}
-                    {(!isWarehouseRole && !isShopRole) || !isWarehouseRole
-                      ? shops.map((s) => (
-                          <option key={s.id} value={`shop:${s.id}`}>
-                            Shop: {s.name}
-                          </option>
-                        ))
-                      : null}
+                    {/* For warehouse role users */}
+                    {isWarehouseRole && !isShopRole &&
+                      warehouses.map((w) => (
+                        <option key={w.id} value={`warehouse:${w.id}`}>
+                          Warehouse: {w.name}
+                        </option>
+                      ))}
+
+                    {/* For shop role users */}
+                    {isShopRole && !isWarehouseRole &&
+                      shops.map((s) => (
+                        <option key={s.id} value={`shop:${s.id}`}>
+                          Shop: {s.name}
+                        </option>
+                      ))}
                   </select>
                   {errors.sourceId && (
                     <p className="text-red-500 text-sm">
@@ -860,54 +985,78 @@ export default function StockTransactionsPage() {
               error={errors.quantity?.message?.toString()}
             />
 
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <div>
-                  <select
-                    id="productId"
-                    {...register("productId", {
-                      required: "Product is required",
-                    })}
-                    className=" px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
-                  >
-                    <option value="">Select a Product</option>
+            <div className="space-y-2">
+              <label
+                htmlFor="productSearch"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Product
+              </label>
+              <div className="relative">
+                <Input
+                  id="productSearch"
+                  type="text"
+                  placeholder="Type to search or click to select..."
+                  value={selectedProductName || searchTerm}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchTerm(value);
+                    setSelectedProductName("");
+                    setValue("productId", ""); // Clear the productId
+                    setShowProductDropdown(true);
+                  }}
+                  onFocus={() => setShowProductDropdown(true)}
+                  onBlur={() => {
+                    // Delay to allow click on dropdown items
+                    setTimeout(() => setShowProductDropdown(false), 200);
+                  }}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                />
+                
+                {/* Hidden input for productId */}
+                <input
+                  type="hidden"
+                  {...register("productId", {
+                    required: "Please select a product from the list",
+                  })}
+                />
+
+                {/* Dropdown list - positioned above */}
+                {showProductDropdown && filteredProducts.length > 0 && (
+                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredProducts.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                      </option>
+                      <div
+                        key={product.id}
+                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm font-medium text-gray-700 border-b border-gray-100 last:border-0"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevent input blur
+                          setValue("productId", product.id);
+                          setSelectedProductName(product.name);
+                          setSearchTerm("");
+                          setShowProductDropdown(false);
+                        }}
+                      >
+                        <div className="font-semibold">{product.name}</div>
+                        {product.sku && (
+                          <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                        )}
+                      </div>
                     ))}
-                  </select>
-                  {errors.productId && (
-                    <p className="text-red-500 text-sm">
-                      {errors.productId.message?.toString()}
-                    </p>
-                  )}
-                  {/*<label*/}
-                  {/*  htmlFor="productId"*/}
-                  {/*  className="block text-sm font-medium text-gray-700"*/}
-                  {/*>*/}
-                  {/*  Product*/}
-                  {/*</label>*/}
-                  {/* Search Input */}
-                  {/*<Input*/}
-                  {/*  type="text"*/}
-                  {/*  placeholder="Search Products"*/}
-                  {/*  value={searchTerm}*/}
-                  {/*  onChange={(e) => setSearchTerm(e.target.value)}*/}
-                  {/*  className=" px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out mb-2"*/}
-                  {/*/>*/}
-                </div>
-                {/* Product Dropdown */}
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="Search Products"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className=" px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out mb-2"
-                  />
-                </div>
+                  </div>
+                )}
+
+                {/* No results message - positioned above */}
+                {showProductDropdown && searchTerm && filteredProducts.length === 0 && (
+                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+                    <p className="text-sm text-gray-500">No products found matching "{searchTerm}"</p>
+                  </div>
+                )}
               </div>
+              {errors.productId && (
+                <p className="text-red-500 text-sm">
+                  {errors.productId.message?.toString()}
+                </p>
+              )}
             </div>
 
             <div className="flex justify-end gap-4">
@@ -916,6 +1065,11 @@ export default function StockTransactionsPage() {
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   reset();
+                  setSearchTerm("");
+                  setSelectedProductName("");
+                  setShowProductDropdown(false);
+                  setSourceType("");
+                  setTargetType("");
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
