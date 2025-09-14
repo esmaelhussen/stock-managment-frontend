@@ -23,6 +23,28 @@ export interface UpdateCategoryInput {
   parentCategory?: Category; // Added parentCategory field
   subcategories?: Category[]; // Added subcategories field
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  address: string;
+  phoneNumber: string;
+}
+
+export interface UpdateCustomerInput {
+  name?: string;
+  address?: string;
+  phoneNumber?: string;
+}
+
 export interface User {
   id: string;
   firstName: string;
@@ -281,6 +303,8 @@ export interface SalesTransaction {
   items: SalesTransactionItem[];
   status: "unpayed" | "payed";
   transactedBy?: User;
+  customer?: Customer; // Add customer field
+  // Add walk-in customer name field
 }
 
 export interface CreateSalesTransactionItemInput {
@@ -295,6 +319,8 @@ export interface CreateSalesTransactionInput {
   creditorName?: string;
   items: CreateSalesTransactionItemInput[];
   transactedById?: string; // Added userId to include the user ID in the payload
+  customerType: "Walk-In" | "Regular";
+  customerId?: string;
 }
 
 export interface Brand {
@@ -309,3 +335,24 @@ export interface CreateBrandInput {
 export interface UpdateBrandInput {
   name?: string;
 }
+
+// export interface Customer {
+//   id: string;
+//   name: string;
+//   address: string;
+//   phoneNumber: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
+// export interface CreateCustomerInput {
+//   name: string;
+//   address: string;
+//   phoneNumber: string;
+// }
+
+// export interface UpdateCustomerInput {
+//   name?: string;
+//   address?: string;
+//   phoneNumber?: string;
+// }

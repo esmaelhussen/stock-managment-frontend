@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import type { SalesTransaction } from "@/types";
+import type { SalesTransaction, Customer } from "@/types";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
@@ -13,6 +13,7 @@ import jsPDF from "jspdf";
 import withPermission from "@/hoc/withPermission";
 import { warehouseService } from "@/services/warehouse.service";
 import { shopService } from "@/services/shop.service";
+import { customerService } from "@/services/customer.service";
 
 const PAYMENT_METHODS = [
   { value: "telebirr", label: "Telebirr" },
@@ -27,6 +28,7 @@ function SalesTransactionsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [shops, setShops] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -55,6 +57,13 @@ function SalesTransactionsPage() {
   const [productSearch, setProductSearch] = useState("");
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    address: "",
+    phoneNumber: "",
+  });
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
 
   const dropdownRef = useRef(null);
 
@@ -101,8 +110,18 @@ function SalesTransactionsPage() {
       }
     };
 
+    const fetchCustomers = async () => {
+      try {
+        const data = await customerService.getAll();
+        setCustomers(data);
+      } catch (error) {
+        toast.error("Failed to fetch customers");
+      }
+    };
+
     fetchWarehouses();
     fetchShops();
+    fetchCustomers();
   }, []);
 
   const fetchTransactions = async () => {
@@ -274,6 +293,8 @@ function SalesTransactionsPage() {
           form.paymentMethod === "credit" ? form.creditorName : undefined,
         items: formItems,
         transactedById: userId, // Include userId in the payload
+        customerType: selectedCustomerId ? "Regular" : "Walk-In",
+        customerId: selectedCustomerId || undefined,
       });
       toast.success("Sales transaction created");
       setIsCreateModalOpen(false);
@@ -292,6 +313,18 @@ function SalesTransactionsPage() {
       toast.error(
         error?.response?.data?.message || "Failed to create transaction"
       );
+    }
+  };
+
+  const handleCreateCustomer = async () => {
+    try {
+      const createdCustomer = await customerService.create(newCustomer);
+      setCustomers((prev) => [...prev, createdCustomer]);
+      setSelectedCustomerId(createdCustomer.id);
+      setIsCustomerModalOpen(false);
+      toast.success("Customer created successfully");
+    } catch (error) {
+      toast.error("Failed to create customer");
     }
   };
 
@@ -515,6 +548,9 @@ function SalesTransactionsPage() {
                 Payment Method
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Customer Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Products
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -551,6 +587,9 @@ function SalesTransactionsPage() {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.paymentMethod}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800">
+                  {tx.customer ? tx.customer?.name : "Walk-in Customer"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   {tx.items.map((item, idx) => {
@@ -815,6 +854,37 @@ function SalesTransactionsPage() {
                 </div>
               </>
             )}
+            {/* Customer Selection and Creation */}
+            <div className="space-y-4">
+              <label
+                htmlFor="customer"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Customer
+              </label>
+              <div className="flex gap-2">
+                <select
+                  id="customer"
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                >
+                  <option value="">Select a customer</option>
+                  {customers.map((customer) => (
+                    <option key={customer.id} value={customer.id}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  onClick={() => setIsCustomerModalOpen(true)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                >
+                  Add Customer
+                </Button>
+              </div>
+            </div>
+
             {/* Replace the product search input with a select dropdown */}
 
             <div className="space-y-4">
@@ -1067,6 +1137,85 @@ function SalesTransactionsPage() {
             >
               Confirm
             </Button>
+          </div>
+        </Modal>
+      )}
+      {/* Customer Modal */}
+      {isCustomerModalOpen && (
+        <Modal
+          isOpen={isCustomerModalOpen}
+          onClose={() => setIsCustomerModalOpen(false)}
+          title="Add New Customer"
+        >
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="customerName"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Name
+              </label>
+              <input
+                type="text"
+                id="customerName"
+                value={newCustomer.name}
+                onChange={(e) =>
+                  setNewCustomer({ ...newCustomer, name: e.target.value })
+                }
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="customerAddress"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Address
+              </label>
+              <input
+                type="text"
+                id="customerAddress"
+                value={newCustomer.address}
+                onChange={(e) =>
+                  setNewCustomer({ ...newCustomer, address: e.target.value })
+                }
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="customerPhoneNumber"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Phone Number
+              </label>
+              <input
+                type="text"
+                id="customerPhoneNumber"
+                value={newCustomer.phoneNumber}
+                onChange={(e) =>
+                  setNewCustomer({
+                    ...newCustomer,
+                    phoneNumber: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsCustomerModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={handleCreateCustomer}>
+                Create
+              </Button>
+            </div>
           </div>
         </Modal>
       )}

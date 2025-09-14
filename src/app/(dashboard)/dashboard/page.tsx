@@ -16,6 +16,7 @@ import {
   ShoppingBagIcon,
   ShoppingCartIcon,
   GiftIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
 import withPermission from "@/hoc/withPermission";
 
@@ -59,6 +60,12 @@ function DashboardPage() {
       color: "bg-orange-500",
     },
     {
+      name: "Customers",
+      value: "-",
+      icon: UsersIcon,
+      color: "bg-cyan-500",
+    },
+    {
       name: "Shops",
       value: "-",
       icon: ShoppingCartIcon,
@@ -81,6 +88,7 @@ function DashboardPage() {
       categories: number;
       units: number;
       products: number;
+      customers: number;
       shops: number;
       brands: number;
     };
@@ -129,6 +137,12 @@ function DashboardPage() {
           color: "bg-orange-500",
         },
         {
+          name: "Customers",
+          value: String(data.customers),
+          icon: UsersIcon,
+          color: "bg-cyan-500",
+        },
+        {
           name: "Shops",
           value: String(data.shops),
           icon: ShoppingCartIcon,
@@ -159,6 +173,7 @@ function DashboardPage() {
           "#ec4899", // pink for categories
           "#14b8a6", // teal for units// yellow
           "#f97316",
+          "#06b6d4",
           "#ef4444",
           "#eab308",
           // orange for products

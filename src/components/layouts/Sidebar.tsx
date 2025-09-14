@@ -19,6 +19,7 @@ import {
   DocumentTextIcon,
   BellIcon,
   GiftIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
 import { cn } from "@/utils/cn";
@@ -43,6 +44,7 @@ const Sidebar: React.FC = () => {
     },
     { name: "Brands", href: "/brands", icon: GiftIcon },
     { name: "Products", href: "/products", icon: ShoppingBagIcon },
+    { name: "Customers", href: "/customers", icon: UsersIcon },
     {
       name: "Stock Transactions",
       href: "/stock-transactions",
@@ -315,6 +317,11 @@ const Sidebar: React.FC = () => {
           if (item.name === "Units" && !permission.includes("units.read"))
             return null;
           if (item.name === "Products" && !permission.includes("products.read"))
+            return null;
+          if (
+            item.name === "Customers" &&
+            !permission.includes("customers.read")
+          )
             return null;
           if (item.name === "Stock" && !permission.includes("stock.read"))
             return null;
