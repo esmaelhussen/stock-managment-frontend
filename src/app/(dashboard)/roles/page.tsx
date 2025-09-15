@@ -169,14 +169,14 @@ function RolesPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Roles
           </h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="">
             <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
@@ -187,7 +187,7 @@ function RolesPage() {
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-bold"
                 >
                   {size} per page
                 </option>
@@ -218,12 +218,12 @@ function RolesPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-md">
         {/* Product Filter */}
         <div className="flex flex-col">
           <label
             htmlFor="nameFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Name
           </label>
@@ -232,20 +232,20 @@ function RolesPage() {
             value={filters.name}
             onChange={(e) => handleFilterChange("name", e.target.value)}
             placeholder="Search by role name"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginated.map((role) => (
-          <div key={role.id} className="bg-white rounded-lg shadow-md p-6">
+          <div key={role.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {role.name}
                 </h3>
-                <p className="text-sm text-gray-500">{role.description}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{role.description}</p>
               </div>
               <div className="flex space-x-2">
                 {permission.includes("roles.update") && (
@@ -287,7 +287,7 @@ function RolesPage() {
                   title="Delete Role"
                 >
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Are you sure you want to delete this role? This action
                       cannot be undone.
                     </p>
@@ -476,7 +476,7 @@ function RolesPage() {
             >
               Cancel
             </Button>
-            <Button onClick={isEditModalOpen ? handleUpdate : handleCreate}>
+            <Button variant="primary" onClick={isEditModalOpen ? handleUpdate : handleCreate}>
               {isEditModalOpen ? "Update" : "Create"}
             </Button>
           </div>

@@ -123,12 +123,12 @@ export default function ProductForm({
 
       // Filter out parent categories and attach subcategories
       const parentCategories = categoriesData.filter(
-        (category) => !category.parentCategoryId
+        (category) => !category.parentCategoryId,
       );
 
       parentCategories.forEach((parent) => {
         parent.subcategories = categoriesData.filter(
-          (category) => category.parentCategoryId === parent.id
+          (category) => category.parentCategoryId === parent.id,
         );
       });
 
@@ -241,9 +241,7 @@ export default function ProductForm({
             className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
             style={{ color: "#000" }}
           >
-            <option value="" disabled style={{ color: "#9CA3AF" }}>
-              Select a unit
-            </option>
+            <option value="">Select a unit</option>
             {units.map((unit) => (
               <option key={unit.id} value={unit.id} style={{ color: "#000" }}>
                 {unit.name}
@@ -348,9 +346,7 @@ export default function ProductForm({
             className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm hover:bg-blue-50 hover:border-blue-400"
             style={{ color: "#000" }}
           >
-            <option value="" disabled style={{ color: "#9CA3AF" }}>
-              Select a brand
-            </option>
+            <option value="">Select a brand</option>
             {brands.map((brand) => (
               <option key={brand.id} value={brand.id} style={{ color: "#000" }}>
                 {brand.name}
@@ -377,7 +373,7 @@ export default function ProductForm({
         >
           Cancel
         </Button>
-        <Button type="submit" className="cursor-pointer">
+        <Button type="submit" variant="primary" className="cursor-pointer">
           {isEdit ? "Update" : "Create"}
         </Button>
       </div>

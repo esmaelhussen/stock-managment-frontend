@@ -58,7 +58,7 @@ function SalesReportPage() {
       const res = await saleService.getSalesReport(
         params.locationId || "",
         params.type as "shop" | "warehouse", // Ensure type safety
-        selectedPeriod
+        selectedPeriod,
       );
       console.log("Full API Response:", res); // Log the full response for debugging
 
@@ -134,10 +134,10 @@ function SalesReportPage() {
     if (chartsData) {
       const productsSoldCanvas = document.querySelector(chartsData[0].selector);
       const paymentMethodsCanvas = document.querySelector(
-        chartsData[1].selector
+        chartsData[1].selector,
       );
       const paymentStatusCanvas = document.querySelector(
-        chartsData[2].selector
+        chartsData[2].selector,
       );
 
       let currentY = 80;
@@ -199,12 +199,14 @@ function SalesReportPage() {
   };
 
   return (
-    <div className="p-6 rounded-lg shadow-lg">
+    <div className="p-6 rounded-lg shadow-lg bg-white dark:bg-gray-800">
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
-        <h1 className="text-3xl font-bold text-black">Sales Report</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          Sales Report
+        </h1>
         <select
-          className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow"
+          className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow"
           value={period}
           onChange={(e) => setPeriod(e.target.value as Period)}
         >
@@ -222,7 +224,7 @@ function SalesReportPage() {
 
       {/* No Data */}
       {!loading && !reportData && (
-        <div className="text-center text-gray-500 italic mb-8">
+        <div className="text-center text-gray-500 dark:text-gray-400 italic mb-8">
           No report found for this period
         </div>
       )}
@@ -230,53 +232,55 @@ function SalesReportPage() {
       {/* Summary Section */}
       {!loading && summary && (
         <div className="overflow-x-auto mb-8">
-          <table className="min-w-full bg-white shadow rounded-lg">
-            <thead className="sticky top-0 bg-gray-100 border-b">
+          <table className="min-w-full bg-white dark:bg-gray-800 shadow rounded-lg">
+            <thead className="sticky top-0 bg-gray-100 dark:bg-gray-900 border-b dark:border-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Metric
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Value
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   Total Transactions
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {summary.totals?.totalTransactions || 0}
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   Total Quantity
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {summary.totals?.totalQuantity || 0}
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-800">Total Price</td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                  Total Price
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {summary.totals?.totalPrice || 0} Birr
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   Most Used Payment Method
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {summary.mostUsedPaymentMethod || "-"}
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   Unpayed Transactions
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {summary.paymentStatus.unpayed || "-"}
                 </td>
               </tr>
@@ -289,19 +293,19 @@ function SalesReportPage() {
       {!loading && summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {/* Product Sales */}
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-4 text-black">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
               Products Sold
             </h2>
             <Pie
               data={{
                 labels: Object.values(summary.productSales || {}).map(
-                  (p: any) => p.name
+                  (p: any) => p.name,
                 ),
                 datasets: [
                   {
                     data: Object.values(summary.productSales || {}).map(
-                      (p: any) => p.quantity
+                      (p: any) => p.quantity,
                     ),
                     backgroundColor: [
                       "#FF6384",
@@ -334,8 +338,8 @@ function SalesReportPage() {
           </div>
 
           {/* Payment Methods */}
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-4 text-black">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
               Payment Methods
             </h2>
             <Pie
@@ -399,11 +403,11 @@ function SalesReportPage() {
       {/* Drilldown for weekly/monthly/yearly */}
       {!loading && period !== "daily" && grouped && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold mb-4 text-black">
+          <h2 className="text-xl font-bold mb-4 text-black dark:text-white">
             Drilldown by Date
           </h2>
           <select
-            className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow mb-6"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow mb-6 dark:text-gray-300  dark:bg-gray-800"
             value={selectedDate || ""}
             onChange={(e) => setSelectedDate(e.target.value || null)}
           >
@@ -416,62 +420,62 @@ function SalesReportPage() {
           </select>
 
           {selectedDate && (
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
               <h3 className="text-lg font-bold mb-4 text-black">
                 Report for {selectedDate}
               </h3>
 
               {/* Summary Section */}
               <div className="overflow-x-auto mb-8">
-                <table className="min-w-full bg-white shadow rounded-lg">
-                  <thead className="sticky top-0 bg-gray-100 border-b">
+                <table className="min-w-full bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <thead className="sticky top-0 bg-gray-100 dark:bg-gray-900 border-b dark:border-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Metric
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Value
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         Total Transactions
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         {grouped[selectedDate]?.totals?.totalTransactions || 0}
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         Total Quantity
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         {grouped[selectedDate]?.totals?.totalQuantity || 0}
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         Total Price
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         {grouped[selectedDate]?.totals?.totalPrice || 0}
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         Most Used Payment Method
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         {grouped[selectedDate]?.mostUsedPaymentMethod || ""}
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         Unpayed Transactions
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         {grouped[selectedDate]?.paymentStatus.unpayed || 0}
                       </td>
                     </tr>
@@ -482,19 +486,19 @@ function SalesReportPage() {
               {/* Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {/* Product Sales */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h2 className="text-2xl font-bold mb-4 text-black">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
                     Products Sold
                   </h2>
                   <Pie
                     data={{
                       labels: Object.values(
-                        grouped[selectedDate]?.productSales || {}
+                        grouped[selectedDate]?.productSales || {},
                       ).map((p: any) => p.name),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.productSales || {}
+                            grouped[selectedDate]?.productSales || {},
                           ).map((p: any) => p.quantity),
                           backgroundColor: [
                             "#FF6384",
@@ -516,19 +520,19 @@ function SalesReportPage() {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h2 className="text-2xl font-bold mb-4 text-black">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
                     Payment Methods
                   </h2>
                   <Pie
                     data={{
                       labels: Object.keys(
-                        grouped[selectedDate]?.paymentMethods || {}
+                        grouped[selectedDate]?.paymentMethods || {},
                       ),
                       datasets: [
                         {
                           data: Object.values(
-                            grouped[selectedDate]?.paymentMethods || {}
+                            grouped[selectedDate]?.paymentMethods || {},
                           ),
                           backgroundColor: [
                             "#FF6384",
@@ -550,8 +554,8 @@ function SalesReportPage() {
                 </div>
 
                 {/* Payment Status */}
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                  <h2 className="text-2xl font-bold mb-4 text-black">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 ">
                     Payment Status
                   </h2>
                   <Bar

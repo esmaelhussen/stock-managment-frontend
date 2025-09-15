@@ -38,7 +38,7 @@ function SalesTransactionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null
+    null,
   );
   const [formItems, setFormItems] = useState([{ productId: "", quantity: 1 }]);
   const [form, setForm] = useState({
@@ -177,7 +177,7 @@ function SalesTransactionsPage() {
       15,
       {
         align: "center",
-      }
+      },
     );
 
     // Reset text color for the content
@@ -190,7 +190,7 @@ function SalesTransactionsPage() {
     doc.text(
       `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
       10,
-      40
+      40,
     );
     doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
     if (transaction.paymentMethod === "credit") {
@@ -225,7 +225,7 @@ function SalesTransactionsPage() {
         `${product ? item.quantity * product.price : "N/A"}`,
         165,
         yPosition,
-        { align: "right" }
+        { align: "right" },
       );
     });
 
@@ -311,7 +311,7 @@ function SalesTransactionsPage() {
       generatePDF(createdTransaction);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.message || "Failed to create transaction"
+        error?.response?.data?.message || "Failed to create transaction",
       );
     }
   };
@@ -348,7 +348,7 @@ function SalesTransactionsPage() {
       ? tx.items.some((item) =>
           item.product.name
             .toLowerCase()
-            .includes(filters.product.toLowerCase())
+            .includes(filters.product.toLowerCase()),
         )
       : true;
     const matchesStatus = filters.status ? tx.status === filters.status : true;
@@ -358,7 +358,7 @@ function SalesTransactionsPage() {
   });
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   console.log("Paginated Transactions:", paginated); // Debugging log
@@ -393,21 +393,21 @@ function SalesTransactionsPage() {
 
   // Filter products based on the search term
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase())
+    product.name.toLowerCase().includes(productSearch.toLowerCase()),
   );
 
   return (
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Sales Transactions
           </h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="">
             <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
@@ -418,7 +418,7 @@ function SalesTransactionsPage() {
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-bold"
                 >
                   {size} per page
                 </option>
@@ -449,19 +449,19 @@ function SalesTransactionsPage() {
         </div>
       </div>
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-md">
         {/* Date Filter */}
         <div className="flex flex-col">
           <label
             htmlFor="dateFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Date
           </label>
           <input
             type="date"
             id="dateFilter"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, date: e.target.value }))
             }
@@ -472,13 +472,13 @@ function SalesTransactionsPage() {
         <div className="flex flex-col">
           <label
             htmlFor="paymentMethodFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Payment Method
           </label>
           <select
             id="paymentMethodFilter"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, paymentMethod: e.target.value }))
             }
@@ -496,7 +496,7 @@ function SalesTransactionsPage() {
         <div className="flex flex-col">
           <label
             htmlFor="productFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Product
           </label>
@@ -504,7 +504,7 @@ function SalesTransactionsPage() {
             type="text"
             id="productFilter"
             placeholder="Search product"
-            className="w-64 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100"
+            className="w-64 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100 dark:text-gray-300  dark:bg-gray-800"
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, product: e.target.value }))
             }
@@ -515,13 +515,13 @@ function SalesTransactionsPage() {
         <div className="flex flex-col">
           <label
             htmlFor="statusFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Status
           </label>
           <select
             id="statusFilter"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-gray-100 dark:text-gray-300  dark:bg-gray-800"
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, status: e.target.value }))
             }
@@ -535,71 +535,75 @@ function SalesTransactionsPage() {
 
       {/* Enhanced Transactions Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow rounded-lg">
-          <thead className=" top-0 bg-gray-100 border-b">
+        <table className="min-w-full bg-white dark:bg-gray-800 shadow rounded-lg">
+          <thead className=" top-0 bg-gray-100 dark:bg-gray-900 border-b dark:border-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Transaction ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Payment Method
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Customer Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Products
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Total
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Creditor Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Transacted Stock Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Transacted By
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {paginated.map((tx, index) => (
               <tr
                 key={tx.id}
                 className={`${
-                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                } hover:bg-gray-100 transition-colors duration-200`}
+                  index % 2 === 0
+                    ? "bg-gray-50 dark:bg-gray-800"
+                    : "bg-white dark:bg-gray-900"
+                } hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200`}
               >
-                <td className="px-6 py-4 text-sm text-gray-800">{tx.id}</td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                  {tx.id}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {new Date(tx.createdAt).toLocaleString()}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.paymentMethod}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.customer ? tx.customer?.name : "Walk-in Customer"}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.items.map((item, idx) => {
                     const product = products.find(
-                      (p) => p.id === item.product.id
+                      (p) => p.id === item.product.id,
                     );
                     return (
                       <div key={idx} className="mb-2">
                         <p>{item.product.name}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Qty: {item.quantity} | Price:{" "}
                           {product ? product.price : "N/A"}
                         </p>
@@ -607,21 +611,21 @@ function SalesTransactionsPage() {
                     );
                   })}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {calculateTotalPrice(tx.items)}
                 </td>
 
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.creditorName}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.status === "unpayed" && tx.paymentMethod === "credit" ? (
                     <button
                       onClick={() => {
                         setSelectedTransactionId(tx.id);
                         setIsConfirmModalOpen(true);
                       }}
-                      className="px-4 py-2 bg-green-500 text-white text-xs rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
                     >
                       Mark as Payed
                     </button>
@@ -629,7 +633,7 @@ function SalesTransactionsPage() {
                     tx.status
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   <td>
                     {tx.transactedBy?.shop?.name
                       ? `Shop: ${tx.transactedBy.shop.name}`
@@ -638,13 +642,13 @@ function SalesTransactionsPage() {
                         : "N/A"}
                   </td>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.transactedBy?.firstName || "N/A"}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800">
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   <button
                     onClick={() => generatePDF(tx)}
-                    className="px-4 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                   >
                     Print PDF
                   </button>
@@ -657,7 +661,7 @@ function SalesTransactionsPage() {
       {/* Pagination */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -669,7 +673,7 @@ function SalesTransactionsPage() {
             className={`px-2 py-1 rounded font-semibold ${
               page === i + 1
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             onClick={() => setPage(i + 1)}
           >
@@ -677,7 +681,7 @@ function SalesTransactionsPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold "
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -805,10 +809,10 @@ function SalesTransactionsPage() {
                       } else if (stockType === "All") {
                         const selectedId = e.target.value;
                         const isShop = shops.some(
-                          (shop) => shop.id === selectedId
+                          (shop) => shop.id === selectedId,
                         );
                         const isWarehouse = warehouses.some(
-                          (warehouse) => warehouse.id === selectedId
+                          (warehouse) => warehouse.id === selectedId,
                         );
 
                         if (isShop) {
@@ -909,7 +913,7 @@ function SalesTransactionsPage() {
                         className="flex justify-between items-center p-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                           const existingItem = formItems.find(
-                            (item) => item.productId === product.id
+                            (item) => item.productId === product.id,
                           );
                           if (!existingItem) {
                             setFormItems((prev) => [
@@ -945,25 +949,25 @@ function SalesTransactionsPage() {
                 <table className="min-w-full bg-white shadow rounded-lg">
                   <thead className="bg-gray-100 border-b">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         No
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Quantity
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Unit Price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Unit
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Sub Total price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -971,17 +975,17 @@ function SalesTransactionsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {formItems.map((item, idx) => {
                       const product = products.find(
-                        (p) => p.id === item.productId
+                        (p) => p.id === item.productId,
                       );
                       const price = product ? product.price : 0;
                       const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
                       const total = item.quantity * price;
                       return (
                         <tr key={idx}>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {idx + 1}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <input
                               type="text"
                               placeholder="Search or select product"
@@ -994,14 +998,14 @@ function SalesTransactionsPage() {
                               onChange={(e) => {
                                 const typedValue = e.target.value;
                                 const selectedProduct = products.find(
-                                  (p) => p.name === typedValue
+                                  (p) => p.name === typedValue,
                                 );
                                 handleItemChange(
                                   idx,
                                   "productId",
                                   selectedProduct
                                     ? selectedProduct.id
-                                    : typedValue
+                                    : typedValue,
                                 ); // Update productId or keep the typed value
                               }}
                             />
@@ -1011,7 +1015,7 @@ function SalesTransactionsPage() {
                               ))}
                             </datalist>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <input
                               type="number"
                               min={1}
@@ -1021,22 +1025,22 @@ function SalesTransactionsPage() {
                                 handleItemChange(
                                   idx,
                                   "quantity",
-                                  Number(e.target.value)
+                                  Number(e.target.value),
                                 )
                               }
                               required
                             />
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {price}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {unit}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {total}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-800">
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <button
                               type="button"
                               onClick={() => removeItem(idx)}
@@ -1049,7 +1053,7 @@ function SalesTransactionsPage() {
                       );
                     })}
                     <tr>
-                      <td className="px-6 py-4 text-sm text-gray-800">
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                         <button
                           type="button"
                           onClick={addItem}
@@ -1067,7 +1071,7 @@ function SalesTransactionsPage() {
                       <td className="px-6 py-4 text-sm text-gray-800 font-bold">
                         {formItems.reduce((sum, item) => {
                           const product = products.find(
-                            (p) => p.id === item.productId
+                            (p) => p.id === item.productId,
                           );
                           const price = product ? product.price : 0;
                           return sum + item.quantity * price;

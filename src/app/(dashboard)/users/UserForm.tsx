@@ -395,7 +395,7 @@ export default function UserForm({
         >
           Cancel
         </Button>
-        <Button type="submit" loading={loading} className="cursor-pointer">
+        <Button type="submit" variant="primary" loading={loading} className="cursor-pointer">
           {isEdit ? "Update" : "Create"}
         </Button>
       </div>

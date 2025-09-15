@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Permission, UpdatePermissionInput } from "@/types";
+import Button from "@/components/ui/Button";
 
 interface PermissionFormProps {
   initial?: Permission;
@@ -154,19 +155,19 @@ const PermissionForm: React.FC<PermissionFormProps> = ({
         <label className="text-sm text-gray-700">Active</label>
       </div>
       <div className="flex justify-end gap-2 mt-4">
-        <button
+        <Button
           type="button"
-          className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300"
+          variant="secondary"
           onClick={onCancel}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
-          className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700"
+          variant="primary"
         >
           Save
-        </button>
+        </Button>
       </div>
     </form>
   );

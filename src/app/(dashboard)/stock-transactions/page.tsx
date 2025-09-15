@@ -25,7 +25,7 @@ import { shopService } from "@/services/shop.service";
 
 export default function StockTransactionsPage() {
   const [allTransactions, setAllTransactions] = useState<StockTransaction[]>(
-    []
+    [],
   );
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export default function StockTransactionsPage() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
-    null
+    null,
   );
   const [userWarehouseId, setUserWarehouseId] = useState<string | null>(null);
   const [userShopId, setUserShopId] = useState<string | null>(null);
@@ -279,7 +279,7 @@ export default function StockTransactionsPage() {
       fetchTransactions(); // Refresh the transactions list
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to create transaction"
+        error.response?.data?.message || "Failed to create transaction",
       );
     }
   };
@@ -353,12 +353,12 @@ export default function StockTransactionsPage() {
 
   const paginated = filteredTransactions.slice(
     (page - 1) * pageSize,
-    page * pageSize
+    page * pageSize,
   );
 
   // Filtered products based on the search term
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (loading) {
@@ -371,14 +371,14 @@ export default function StockTransactionsPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Stock Transactions
           </h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
@@ -389,7 +389,7 @@ export default function StockTransactionsPage() {
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-bold"
                 >
                   {size} per page
                 </option>
@@ -422,12 +422,12 @@ export default function StockTransactionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg shadow-md">
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-md">
         {/* Product Filter */}
         <div className="flex flex-col">
           <label
             htmlFor="productFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
           >
             Product
           </label>
@@ -436,7 +436,7 @@ export default function StockTransactionsPage() {
             value={filters.product}
             onChange={(e) => handleFilterChange("product", e.target.value)}
             placeholder="Search by product name"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300  dark:bg-gray-800"
           />
         </div>
 
@@ -444,7 +444,7 @@ export default function StockTransactionsPage() {
         <div className="flex flex-col">
           <label
             htmlFor="typeFilter"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-gray-700 mb-1 dark:text-white"
           >
             Type
           </label>
@@ -452,7 +452,7 @@ export default function StockTransactionsPage() {
             id="typeFilter"
             value={filters.type}
             onChange={(e) => handleFilterChange("type", e.target.value)}
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300  dark:bg-gray-800"
           >
             <option value="">All Types</option>
             <option value="add">Add</option>
@@ -465,7 +465,7 @@ export default function StockTransactionsPage() {
         <div className="flex flex-col">
           <label
             htmlFor="transactedByFilter"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-700 dark:text-white"
           >
             Transacted Person
           </label>
@@ -474,58 +474,58 @@ export default function StockTransactionsPage() {
             value={filters.transactedBy}
             onChange={(e) => handleFilterChange("transactedBy", e.target.value)}
             placeholder="Search by Transactor"
-            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300  dark:bg-gray-800"
           />
         </div>
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Product
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Quantity
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Price
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Type
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Source Stock Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Target Stock Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Timestamp
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Transacted By
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {paginated.map((tx, index) => (
               <tr key={tx.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                   {tx.product.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {tx.quantity}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {tx.price}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {tx.type}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {isShopRole
                     ? `${
                         tx.sourceShop?.name
@@ -546,7 +546,7 @@ export default function StockTransactionsPage() {
                           ? `SHOP: ${tx.sourceShop.name}`
                           : "N/A"}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {isShopRole
                     ? tx.targetShop?.name
                       ? `SHOP ${tx.targetShop.name}`
@@ -561,10 +561,10 @@ export default function StockTransactionsPage() {
                           ? `SHOP ${tx.targetShop.name}`
                           : "not required for this transaction"}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {new Date(tx.timestamp).toLocaleString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   <span className="font-bold">
                     {tx.transactedBy?.firstName} {tx.transactedBy?.middleName}
                     {": "}
@@ -580,7 +580,7 @@ export default function StockTransactionsPage() {
       {/* Pagination */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold disabled:opacity-50"
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -592,7 +592,7 @@ export default function StockTransactionsPage() {
             className={`px-2 py-1 rounded font-semibold ${
               page === i + 1
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             onClick={() => setPage(i + 1)}
           >
@@ -600,7 +600,7 @@ export default function StockTransactionsPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold disabled:opacity-50"
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -628,7 +628,7 @@ export default function StockTransactionsPage() {
             <div className="space-y-4">
               <label
                 htmlFor="type"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Transaction Type
               </label>
@@ -637,7 +637,7 @@ export default function StockTransactionsPage() {
                 {...register("type", {
                   required: "Transaction type is required",
                 })}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               >
                 <option value="">Select a Type</option>
                 <option value="add">Add</option>
@@ -659,7 +659,7 @@ export default function StockTransactionsPage() {
                     <div>
                       <label
                         htmlFor="sourceId"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
                         Source (Warehouse / Shop)
                       </label>
@@ -668,7 +668,7 @@ export default function StockTransactionsPage() {
                       <select
                         value={sourceType}
                         onChange={(e) => setSourceType(e.target.value)}
-                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                       >
                         <option value="">Select Source Type</option>
                         <option value="warehouse">Warehouse</option>
@@ -683,7 +683,7 @@ export default function StockTransactionsPage() {
                   {(isWarehouseRole || isShopRole) && (
                     <label
                       htmlFor="sourceId"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       Source
                     </label>
@@ -693,7 +693,7 @@ export default function StockTransactionsPage() {
                     {...register("sourceId", {
                       required: "Source is required",
                     })}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                     disabled={!!userWarehouseId || !!userShopId} // auto-filled if role
                   >
                     <option value="">Select Source</option>
@@ -764,7 +764,7 @@ export default function StockTransactionsPage() {
                     <div>
                       <label
                         htmlFor="sourceId"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
                         Source (Warehouse / Shop)
                       </label>
@@ -773,7 +773,7 @@ export default function StockTransactionsPage() {
                       <select
                         value={sourceType}
                         onChange={(e) => setSourceType(e.target.value)}
-                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                        className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                       >
                         <option value="">Select Source Type</option>
                         <option value="warehouse">Warehouse</option>
@@ -789,7 +789,7 @@ export default function StockTransactionsPage() {
                   {(isWarehouseRole || isShopRole) && (
                     <label
                       htmlFor="sourceId"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       Source
                     </label>
@@ -799,7 +799,7 @@ export default function StockTransactionsPage() {
                     {...register("sourceId", {
                       required: "Source is required",
                     })}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                     disabled={isWarehouseRole || isShopRole}
                   >
                     <option value="">Select Source</option>
@@ -864,7 +864,7 @@ export default function StockTransactionsPage() {
                   <div>
                     <label
                       htmlFor="targetId"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       Target (Warehouse / Shop)
                     </label>
@@ -888,7 +888,7 @@ export default function StockTransactionsPage() {
                     {...register("targetId", {
                       required: "Target is required",
                     })}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                   >
                     <option value="">Select Target</option>
                     {/* Role: neither warehouse nor shop */}
@@ -898,7 +898,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || "")
+                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -909,7 +909,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || "")
+                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -920,7 +920,7 @@ export default function StockTransactionsPage() {
                         warehouses
                           .filter(
                             (w) =>
-                              w.id !== (watch("sourceId")?.split(":")[1] || "")
+                              w.id !== (watch("sourceId")?.split(":")[1] || ""),
                           )
                           .map((w) => (
                             <option key={w.id} value={`warehouse:${w.id}`}>
@@ -931,7 +931,7 @@ export default function StockTransactionsPage() {
                         shops
                           .filter(
                             (s) =>
-                              s.id !== (watch("sourceId")?.split(":")[1] || "")
+                              s.id !== (watch("sourceId")?.split(":")[1] || ""),
                           )
                           .map((s) => (
                             <option key={s.id} value={`shop:${s.id}`}>
@@ -992,7 +992,7 @@ export default function StockTransactionsPage() {
             <div className="space-y-2">
               <label
                 htmlFor="productSearch"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Product
               </label>
@@ -1014,7 +1014,7 @@ export default function StockTransactionsPage() {
                     // Delay to allow click on dropdown items
                     setTimeout(() => setShowProductDropdown(false), 200);
                   }}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
                 />
 
                 {/* Hidden input for productId */}
@@ -1027,11 +1027,11 @@ export default function StockTransactionsPage() {
 
                 {/* Dropdown list - positioned above */}
                 {showProductDropdown && filteredProducts.length > 0 && (
-                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {filteredProducts.map((product) => (
                       <div
                         key={product.id}
-                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm font-medium text-gray-700 border-b border-gray-100 last:border-0"
+                        className="px-4 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 last:border-0"
                         onMouseDown={(e) => {
                           e.preventDefault(); // Prevent input blur
                           setValue("productId", product.id);
@@ -1042,7 +1042,7 @@ export default function StockTransactionsPage() {
                       >
                         <div className="font-semibold">{product.name}</div>
                         {product.sku && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             SKU: {product.sku}
                           </div>
                         )}
@@ -1055,8 +1055,8 @@ export default function StockTransactionsPage() {
                 {showProductDropdown &&
                   searchTerm &&
                   filteredProducts.length === 0 && (
-                    <div className="absolute z-10 w-full bottom-full mb-1 bg-white border border-gray-300 rounded-lg shadow-lg p-4">
-                      <p className="text-sm text-gray-500">
+                    <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         No products found matching "{searchTerm}"
                       </p>
                     </div>
@@ -1087,6 +1087,7 @@ export default function StockTransactionsPage() {
               </Button>
               <Button
                 type="submit"
+                variant="primary"
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Create
