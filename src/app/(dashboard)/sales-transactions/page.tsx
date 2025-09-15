@@ -873,7 +873,9 @@ function SalesTransactionsPage() {
                   onChange={(e) => setSelectedCustomerId(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
                 >
-                  <option value="">Select a customer</option>
+                  <option value="">
+                    Select a customer (If not select saved as walk-in customer)
+                  </option>
                   {customers.map((customer) => (
                     <option key={customer.id} value={customer.id}>
                       {customer.name}
