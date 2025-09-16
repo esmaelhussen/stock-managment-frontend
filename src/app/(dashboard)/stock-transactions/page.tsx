@@ -33,6 +33,8 @@ export default function StockTransactionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [products, setProducts] = useState<Product[]>([]);
+  const [allStock, setAllStock] = useState<any[]>([]);
+  const [filteredStock, setFilteredStock] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
@@ -72,8 +74,9 @@ export default function StockTransactionsPage() {
   const isWarehouseRole = roles.includes("warehouse");
   const isShopRole = roles.includes("shop");
 
-  // Watch the sourceId reactively
+  // Watch the sourceId and transaction type reactively
   const sourceId = watch("sourceId");
+  const transactionType = watch("type");
 
   // useEffect(() => {
   //   const fetchShopsForSource = async () => {
@@ -115,11 +118,42 @@ export default function StockTransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
+    fetchStock();
     const warehouseId = authService.getWarehouseId();
     const shopId = authService.getShopId();
     setUserWarehouseId(warehouseId);
     setUserShopId(shopId);
   }, []);
+
+  const fetchStock = async () => {
+    try {
+      const data = await stockTransactionService.getAllStock();
+      setAllStock(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error("Failed to fetch stock data");
+    }
+  };
+
+  // Filter stock based on selected source for remove/transfer operations
+  useEffect(() => {
+    if ((transactionType === "remove" || transactionType === "transfer") && sourceId) {
+      const [sourceType, sourceValue] = sourceId.split(":");
+      let filtered = allStock;
+
+      if (sourceType === "warehouse") {
+        filtered = allStock.filter((stock) => stock.warehouse?.id === sourceValue);
+      } else if (sourceType === "shop") {
+        filtered = allStock.filter((stock) => stock.shop?.id === sourceValue);
+      }
+
+      setFilteredStock(filtered);
+    } else if (transactionType === "add") {
+      // For add operations, show all stock to see where to add
+      setFilteredStock(allStock);
+    } else {
+      setFilteredStock([]);
+    }
+  }, [sourceId, transactionType, allStock]);
 
   // useEffect(() => {
   //   const start = (page - 1) * pageSize;
@@ -263,6 +297,16 @@ export default function StockTransactionsPage() {
       }
     }
 
+    // Stock validation for remove and transfer operations
+    if (data.type === "remove" || data.type === "transfer") {
+      const stockItem = filteredStock.find(
+        (stock) => stock.product.id === data.productId
+      );
+      if (stockItem && data.quantity > stockItem.quantity) {
+        errors.quantity = `Quantity exceeds available stock (${stockItem.quantity})`;
+      }
+    }
+
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
 
@@ -283,8 +327,6 @@ export default function StockTransactionsPage() {
       );
     }
   };
-
-  const transactionType = watch("type");
 
   const onSubmit = (data: any) => {
     const transformedData: CreateStockTransactionInput = {
@@ -356,10 +398,14 @@ export default function StockTransactionsPage() {
     page * pageSize,
   );
 
-  // Filtered products based on the search term
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Filtered products based on the search term and stock availability
+  const filteredProducts = (transactionType === "remove" || transactionType === "transfer")
+    ? filteredStock.filter((stock) =>
+        stock.product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : products.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
 
   if (loading) {
     return (
@@ -979,15 +1025,58 @@ export default function StockTransactionsPage() {
               </>
             )}
 
-            <Input
-              label="Quantity"
-              type="number"
-              {...register("quantity", {
-                required: "Quantity is required",
-                min: { value: 1, message: "Quantity must be at least 1" },
-              })}
-              error={errors.quantity?.message?.toString()}
-            />
+            <div className="space-y-2">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Quantity
+                {(transactionType === "remove" || transactionType === "transfer") && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Available stock will be shown after selecting product)
+                  </span>
+                )}
+              </label>
+              <div className="relative">
+                <Input
+                  id="quantity"
+                  type="number"
+                  {...register("quantity", {
+                    required: "Quantity is required",
+                    min: { value: 1, message: "Quantity must be at least 1" },
+                    validate: (value) => {
+                      if ((transactionType === "remove" || transactionType === "transfer") && watch("productId")) {
+                        const stockItem = filteredStock.find(
+                          (stock) => stock.product.id === watch("productId")
+                        );
+                        if (stockItem && value > stockItem.quantity) {
+                          return `Quantity exceeds available stock (${stockItem.quantity})`;
+                        }
+                      }
+                      return true;
+                    }
+                  })}
+                  error={errors.quantity?.message?.toString()}
+                />
+                {(transactionType === "remove" || transactionType === "transfer") && watch("productId") && (
+                  <>
+                    {(() => {
+                      const stockItem = filteredStock.find(
+                        (stock) => stock.product.id === watch("productId")
+                      );
+                      if (stockItem) {
+                        const currentQuantity = watch("quantity");
+                        const isExceeding = currentQuantity && currentQuantity > stockItem.quantity;
+                        return (
+                          <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-bold ${isExceeding ? 'text-red-600' : 'text-green-600'}`}>
+                            Available: {stockItem.quantity}
+                            {stockItem.quantity <= (stockItem.product.alertQuantity || 0) && ' ⚠'}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-2">
               <label
@@ -1028,39 +1117,57 @@ export default function StockTransactionsPage() {
                 {/* Dropdown list - positioned above */}
                 {showProductDropdown && filteredProducts.length > 0 && (
                   <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        className="px-4 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // Prevent input blur
-                          setValue("productId", product.id);
-                          setSelectedProductName(product.name);
-                          setSearchTerm("");
-                          setShowProductDropdown(false);
-                        }}
-                      >
-                        <div className="font-semibold">{product.name}</div>
-                        {product.sku && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            SKU: {product.sku}
+                    {filteredProducts.map((item) => {
+                      // Handle both stock items and regular products
+                      const product = item.product || item;
+                      const stockQuantity = item.quantity || null;
+                      const isLowStock = stockQuantity && stockQuantity <= (product.alertQuantity || 0);
+
+                      return (
+                        <div
+                          key={product.id}
+                          className="px-4 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                          onMouseDown={(e) => {
+                            e.preventDefault(); // Prevent input blur
+                            setValue("productId", product.id);
+                            setSelectedProductName(product.name);
+                            setSearchTerm("");
+                            setShowProductDropdown(false);
+                          }}
+                        >
+                          <div className="font-semibold">{product.name}</div>
+                          <div className="flex justify-between items-center mt-1">
+                            {product.sku && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                SKU: {product.sku}
+                              </div>
+                            )}
+                            {stockQuantity !== null && (
+                              <div className={`text-xs font-bold ${isLowStock ? 'text-red-600' : 'text-green-600'}`}>
+                                Stock: {stockQuantity}
+                                {isLowStock && ' ⚠'}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* No results message - positioned above */}
-                {showProductDropdown &&
-                  searchTerm &&
-                  filteredProducts.length === 0 && (
-                    <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        No products found matching "{searchTerm}"
-                      </p>
-                    </div>
-                  )}
+                {showProductDropdown && filteredProducts.length === 0 && (
+                  <div className="absolute z-10 w-full bottom-full mb-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {searchTerm
+                        ? `No products found matching "${searchTerm}"`
+                        : (transactionType === "remove" || transactionType === "transfer")
+                          ? "No products available in selected stock location"
+                          : "No products available"
+                      }
+                    </p>
+                  </div>
+                )}
               </div>
               {errors.productId && (
                 <p className="text-red-500 text-sm">
