@@ -14,6 +14,7 @@ import withPermission from "@/hoc/withPermission";
 import { warehouseService } from "@/services/warehouse.service";
 import { shopService } from "@/services/shop.service";
 import { customerService } from "@/services/customer.service";
+import { stockTransactionService } from "@/services/stockTransaction.service";
 import { number } from "yup";
 
 const PAYMENT_METHODS = [
@@ -27,6 +28,8 @@ const PAYMENT_METHODS = [
 function SalesTransactionsPage() {
   const [transactions, setTransactions] = useState<SalesTransaction[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [allStock, setAllStock] = useState<any[]>([]);
+  const [filteredStock, setFilteredStock] = useState<any[]>([]);
   const [shops, setShops] = useState<any[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -91,6 +94,7 @@ function SalesTransactionsPage() {
 
   useEffect(() => {
     fetchProducts();
+    fetchStock();
     fetchTransactions();
   }, []);
 
@@ -101,6 +105,51 @@ function SalesTransactionsPage() {
     } catch (error) {
       toast.error("Failed to fetch products");
     }
+  };
+
+  const fetchStock = async () => {
+    try {
+      const data = await stockTransactionService.getAllStock();
+      setAllStock(Array.isArray(data) ? data : []);
+      // Initially filter based on user role
+      filterStockByRole(data);
+    } catch (error) {
+      toast.error("Failed to fetch stock data");
+    }
+  };
+
+  const filterStockByRole = (stockData: any[]) => {
+    let filtered;
+    if (isShopRole && shop) {
+      filtered = stockData.filter(
+        (stock) => stock.shop?.id?.toLowerCase() === shop?.id?.toLowerCase(),
+      );
+    } else if (isWarehouseRole && warehouseId) {
+      filtered = stockData.filter(
+        (stock) =>
+          stock.warehouse?.id?.toLowerCase() === warehouseId?.toLowerCase(),
+      );
+    } else {
+      filtered = stockData;
+    }
+    setFilteredStock(filtered);
+  };
+
+  const filterStockBySelection = (
+    selectedShopId: string,
+    selectedWarehouseId: string,
+  ) => {
+    let filtered = allStock;
+
+    if (selectedShopId) {
+      filtered = allStock.filter((stock) => stock.shop?.id === selectedShopId);
+    } else if (selectedWarehouseId) {
+      filtered = allStock.filter(
+        (stock) => stock.warehouse?.id === selectedWarehouseId,
+      );
+    }
+
+    setFilteredStock(filtered);
   };
 
   useEffect(() => {
@@ -158,7 +207,19 @@ function SalesTransactionsPage() {
   };
 
   const handleFormChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      const newForm = { ...prev, [field]: value };
+
+      // When shop or warehouse is selected, filter stock accordingly
+      if (field === "selectedShopId" || field === "selectedWarehouseId") {
+        filterStockBySelection(
+          field === "selectedShopId" ? value : newForm.selectedShopId,
+          field === "selectedWarehouseId" ? value : newForm.selectedWarehouseId,
+        );
+      }
+
+      return newForm;
+    });
   };
 
   const handleItemChange = (idx, field, value) => {
@@ -374,11 +435,22 @@ function SalesTransactionsPage() {
     if (!form.paymentMethod) errors.paymentMethod = "Payment method required";
     if (form.paymentMethod === "credit" && !form.creditorName)
       errors.creditorName = "Creditor name required";
+
     formItems.forEach((item, idx) => {
       if (!item.productId) errors[`product_${idx}`] = "Product required";
       if (!item.quantity || item.quantity < 1)
         errors[`quantity_${idx}`] = "Quantity must be at least 1";
+
+      // Check stock availability
+      const stockItem = filteredStock.find(
+        (s) => s.product.id === item.productId,
+      );
+      if (stockItem && item.quantity > stockItem.quantity) {
+        errors[`quantity_${idx}`] =
+          `Quantity exceeds available stock (${stockItem.quantity})`;
+      }
     });
+
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
 
@@ -534,9 +606,9 @@ function SalesTransactionsPage() {
       <div className="flex justify-center items-center h-64">Loading...</div>
     );
 
-  // Filter products based on the search term
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase()),
+  // Filter stock products based on the search term
+  const filteredProducts = filteredStock.filter((stock) =>
+    stock.product.name.toLowerCase().includes(productSearch.toLowerCase()),
   );
 
   return (
@@ -811,13 +883,11 @@ function SalesTransactionsPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  <td>
-                    {tx.transactedBy?.shop?.name
-                      ? `Shop: ${tx.transactedBy.shop.name}`
-                      : tx.transactedBy?.warehouse?.name
-                        ? `Warehouse: ${tx.transactedBy.warehouse.name}`
-                        : "N/A"}
-                  </td>
+                  {tx.transactedBy?.shop?.name
+                    ? `Shop: ${tx.transactedBy.shop.name}`
+                    : tx.transactedBy?.warehouse?.name
+                      ? `Warehouse: ${tx.transactedBy.warehouse.name}`
+                      : "N/A"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.transactedBy?.firstName || "N/A"}
@@ -1097,19 +1167,19 @@ function SalesTransactionsPage() {
                 />
                 {showProductDropdown && (
                   <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-md max-h-60 overflow-y-auto">
-                    {filteredProducts.map((product) => (
+                    {filteredProducts.map((stock) => (
                       <div
-                        key={product.id}
+                        key={stock.id}
                         className="flex justify-between items-center p-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
                           const existingItem = formItems.find(
-                            (item) => item.productId === product.id,
+                            (item) => item.productId === stock.product.id,
                           );
                           if (!existingItem) {
                             setFormItems((prev) => [
                               ...prev,
                               {
-                                productId: product.id,
+                                productId: stock.product.id,
                                 quantity: 1,
                                 discountType: "none",
                                 discountAmount: 0,
@@ -1117,21 +1187,33 @@ function SalesTransactionsPage() {
                               },
                             ]);
                           }
-                          setProductSearch(product.name);
+                          setProductSearch(stock.product.name);
                           setShowProductDropdown(false);
                         }}
                       >
-                        <span className="text-sm text-gray-500">
-                          {product.name}
+                        <span className="text-sm text-gray-700 font-medium">
+                          {stock.product.name}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          {product.unit.name}
+                        <span className="text-xs text-gray-500">
+                          {stock.product.unit.name}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          {product.price}
+                        <span className="text-xs text-gray-500">
+                          {stock.product.price} birr
+                        </span>
+                        <span
+                          className={`text-xs font-bold ${stock.quantity <= stock.product.alertQuantity ? "text-red-600" : "text-green-600"}`}
+                        >
+                          Stock: {stock.quantity}
+                          {stock.quantity <= stock.product.alertQuantity &&
+                            " ⚠"}
                         </span>
                       </div>
                     ))}
+                    {filteredProducts.length === 0 && (
+                      <div className="p-2 text-sm text-gray-500 text-center">
+                        No products available in selected stock
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1161,6 +1243,9 @@ function SalesTransactionsPage() {
                         Unit
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Available Stock
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Discount
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -1173,11 +1258,15 @@ function SalesTransactionsPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {formItems.map((item, idx) => {
-                      const product = products.find(
-                        (p) => p.id === item.productId,
+                      const stockItem = filteredStock.find(
+                        (s) => s.product.id === item.productId,
                       );
+                      const product =
+                        stockItem?.product ||
+                        products.find((p) => p.id === item.productId);
                       const price = product ? product.price : 0;
                       const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
+                      const availableStock = stockItem ? stockItem.quantity : 0;
                       const total = item.quantity * price;
 
                       // Calculate discount for this item
@@ -1211,50 +1300,79 @@ function SalesTransactionsPage() {
                               className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
                               list={`product-list-${idx}`}
                               value={
+                                filteredStock.find(
+                                  (s) => s.product.id === item.productId,
+                                )?.product.name ||
                                 products.find((p) => p.id === item.productId)
-                                  ?.name || item.productId
+                                  ?.name ||
+                                item.productId
                               } // Ensure the input reflects the product name or typed value
                               onChange={(e) => {
                                 const typedValue = e.target.value;
-                                const selectedProduct = products.find(
-                                  (p) => p.name === typedValue,
+                                const selectedStock = filteredStock.find(
+                                  (s) => s.product.name === typedValue,
                                 );
                                 handleItemChange(
                                   idx,
                                   "productId",
-                                  selectedProduct
-                                    ? selectedProduct.id
+                                  selectedStock
+                                    ? selectedStock.product.id
                                     : typedValue,
                                 ); // Update productId or keep the typed value
                               }}
                             />
                             <datalist id={`product-list-${idx}`}>
-                              {products.map((p) => (
-                                <option key={p.id} value={p.name} />
+                              {filteredStock.map((stock) => (
+                                <option
+                                  key={stock.product.id}
+                                  value={stock.product.name}
+                                />
                               ))}
                             </datalist>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                            <input
-                              type="number"
-                              min={1}
-                              className="w-full px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  idx,
-                                  "quantity",
-                                  Number(e.target.value),
-                                )
-                              }
-                              required
-                            />
+                            <div className="flex flex-col">
+                              <input
+                                type="number"
+                                min={1}
+                                max={availableStock}
+                                className={`w-full px-4 py-2 rounded-lg border text-sm bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out hover:bg-white ${
+                                  item.quantity > availableStock
+                                    ? "border-red-500 text-red-600"
+                                    : "border-gray-300 text-gray-700"
+                                }`}
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    idx,
+                                    "quantity",
+                                    Number(e.target.value),
+                                  )
+                                }
+                                required
+                              />
+                              {item.quantity > availableStock && (
+                                <span className="text-xs text-red-500 mt-1">
+                                  Exceeds available stock ({availableStock})
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {price}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             {unit}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                            <span
+                              className={`font-bold ${availableStock <= (stockItem?.product?.alertQuantity || 0) ? "text-red-600" : "text-green-600"}`}
+                            >
+                              {availableStock}
+                              {availableStock <=
+                                (stockItem?.product?.alertQuantity || 0) &&
+                                " ⚠"}
+                            </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <div className="flex flex-col gap-1">
