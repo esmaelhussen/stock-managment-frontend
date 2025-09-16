@@ -14,6 +14,7 @@ import withPermission from "@/hoc/withPermission";
 import { warehouseService } from "@/services/warehouse.service";
 import { shopService } from "@/services/shop.service";
 import { customerService } from "@/services/customer.service";
+import { number } from "yup";
 
 const PAYMENT_METHODS = [
   { value: "telebirr", label: "Telebirr" },
@@ -40,12 +41,23 @@ function SalesTransactionsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
     null,
   );
-  const [formItems, setFormItems] = useState([{ productId: "", quantity: 1 }]);
+  const [formItems, setFormItems] = useState([
+    {
+      productId: "",
+      quantity: 1,
+      discountType: "none" as "fixed" | "percent" | "none",
+      discountAmount: 0,
+      discountPercent: 0,
+    },
+  ]);
   const [form, setForm] = useState({
     paymentMethod: "",
     creditorName: "",
     selectedShopId: "",
     selectedWarehouseId: "",
+    discountType: "none" as "fixed" | "percent" | "none",
+    discountAmount: 0,
+    discountPercent: 0,
   });
   const [stockType, setStockType] = useState("");
   const [filters, setFilters] = useState({
@@ -158,7 +170,16 @@ function SalesTransactionsPage() {
   };
 
   const addItem = () =>
-    setFormItems((prev) => [...prev, { productId: "", quantity: 1 }]);
+    setFormItems((prev) => [
+      ...prev,
+      {
+        productId: "",
+        quantity: 1,
+        discountType: "none" as "fixed" | "percent" | "none",
+        discountAmount: 0,
+        discountPercent: 0,
+      },
+    ]);
   const removeItem = (idx) =>
     setFormItems((prev) => prev.filter((_, i) => i !== idx));
 
@@ -291,7 +312,15 @@ function SalesTransactionsPage() {
           | "credit",
         creditorName:
           form.paymentMethod === "credit" ? form.creditorName : undefined,
-        items: formItems,
+        items: formItems.map((item) => ({
+          ...item,
+          discountType: item.discountType || "none",
+          discountAmount: item.discountAmount || 0,
+          discountPercent: item.discountPercent || 0,
+        })),
+        discountType: form.discountType || "none",
+        discountAmount: form.discountAmount || 0,
+        discountPercent: form.discountPercent || 0,
         transactedById: userId, // Include userId in the payload
         customerType: selectedCustomerId ? "Regular" : "Walk-In",
         customerId: selectedCustomerId || undefined,
@@ -303,8 +332,19 @@ function SalesTransactionsPage() {
         creditorName: "",
         selectedShopId: "",
         selectedWarehouseId: "",
+        discountType: "none",
+        discountAmount: 0,
+        discountPercent: 0,
       });
-      setFormItems([{ productId: "", quantity: 1 }]);
+      setFormItems([
+        {
+          productId: "",
+          quantity: 1,
+          discountType: "none",
+          discountAmount: 0,
+          discountPercent: 0,
+        },
+      ]);
       fetchTransactions();
 
       // Generate PDF for the created transaction
@@ -332,7 +372,17 @@ function SalesTransactionsPage() {
     return items.reduce((sum, item) => {
       const product = products.find((p) => p.id === item.product.id);
       const price = product ? product.price : 0;
-      return sum + item.quantity * price;
+      const itemTotal = item.quantity * price;
+
+      // Apply item discount if exists
+      let discountAmount = 0;
+      if (item.discountType === "percent" && item.discountPercent) {
+        discountAmount = (itemTotal * item.discountPercent) / 100;
+      } else if (item.discountType === "fixed" && item.discountAmount) {
+        discountAmount = Math.min(item.discountAmount, itemTotal);
+      }
+
+      return sum + (itemTotal - discountAmount);
     }, 0);
   };
 
@@ -554,7 +604,16 @@ function SalesTransactionsPage() {
                 Products
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Total
+                Subtotal
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Discount type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Discount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Final Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Creditor Name
@@ -604,15 +663,40 @@ function SalesTransactionsPage() {
                       <div key={idx} className="mb-2">
                         <p>{item.product.name}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Qty: {item.quantity} | Price:{" "}
-                          {product ? product.price : "N/A"}
+                          Qty: {item.quantity}
+                          <br /> Price: {product ? product.price : "N/A"}
+                          <br />
+                          Dis.Type:{item.discountType}
+                          <br />
+                          Dis.Amount:{item.discountAmount}
+                          <br />
+                          {item.discountType === "percent" &&
+                            `Dis.Perc.: ${item.discountPercent}%`}
                         </p>
                       </div>
                     );
                   })}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {calculateTotalPrice(tx.items)}
+                  {tx.totalPrice || calculateTotalPrice(tx.items)}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                  {tx.discountType}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                  {(() => {
+                    const discount = Number(tx.discountAmount) || 0;
+                    const discountPercent = Number(tx.discountPercent) || 0;
+                    if (tx.discountType === "percent" && discountPercent > 0) {
+                      return `${discountPercent}%`;
+                    } else if (tx.discountType === "fixed" && discount > 0) {
+                      return Number(discount).toFixed(2);
+                    }
+                    return "-";
+                  })()}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-semibold">
+                  {tx.finalPrice || calculateTotalPrice(tx.items)}
                 </td>
 
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
@@ -699,8 +783,19 @@ function SalesTransactionsPage() {
               creditorName: "",
               selectedShopId: "",
               selectedWarehouseId: "",
+              discountPercent: 0,
+              discountAmount: 0,
+              discountType: "none",
             });
-            setFormItems([{ productId: "", quantity: 1 }]);
+            setFormItems([
+              {
+                productId: "",
+                quantity: 1,
+                discountType: "none",
+                discountAmount: 0,
+                discountPercent: 0,
+              },
+            ]);
           }}
           title="Create Sales Transaction"
           size="xl" // Increased the width of the modal
@@ -920,7 +1015,13 @@ function SalesTransactionsPage() {
                           if (!existingItem) {
                             setFormItems((prev) => [
                               ...prev,
-                              { productId: product.id, quantity: 1 },
+                              {
+                                productId: product.id,
+                                quantity: 1,
+                                discountType: "none",
+                                discountAmount: 0,
+                                discountPercent: 0,
+                              },
                             ]);
                           }
                           setProductSearch(product.name);
@@ -967,7 +1068,10 @@ function SalesTransactionsPage() {
                         Unit
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Sub Total price
+                        Discount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Final Price
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Actions
@@ -982,6 +1086,26 @@ function SalesTransactionsPage() {
                       const price = product ? product.price : 0;
                       const unit = product ? product.unit.name : "N/A"; // Autofill unit from product
                       const total = item.quantity * price;
+
+                      // Calculate discount for this item
+                      let itemDiscountAmount = 0;
+                      if (
+                        item.discountType === "percent" &&
+                        item.discountPercent
+                      ) {
+                        itemDiscountAmount =
+                          (total * item.discountPercent) / 100;
+                      } else if (
+                        item.discountType === "fixed" &&
+                        item.discountAmount
+                      ) {
+                        itemDiscountAmount = Math.min(
+                          item.discountAmount,
+                          total,
+                        );
+                      }
+                      const finalPrice = total - itemDiscountAmount;
+
                       return (
                         <tr key={idx}>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
@@ -1040,7 +1164,59 @@ function SalesTransactionsPage() {
                             {unit}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                            {total}
+                            <div className="flex flex-col gap-1">
+                              <select
+                                className="px-2 py-1 rounded border border-gray-300 text-xs"
+                                value={item.discountType}
+                                onChange={(e) =>
+                                  handleItemChange(
+                                    idx,
+                                    "discountType",
+                                    e.target.value,
+                                  )
+                                }
+                              >
+                                <option value="none">None</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="percent">Percent</option>
+                              </select>
+                              {item.discountType === "fixed" && (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  placeholder="Amount"
+                                  className="px-2 py-1 rounded border border-gray-300 text-xs"
+                                  value={item.discountAmount}
+                                  onChange={(e) =>
+                                    handleItemChange(
+                                      idx,
+                                      "discountAmount",
+                                      Number(e.target.value),
+                                    )
+                                  }
+                                />
+                              )}
+                              {item.discountType === "percent" && (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  placeholder="%"
+                                  className="px-2 py-1 rounded border border-gray-300 text-xs"
+                                  value={item.discountPercent}
+                                  onChange={(e) =>
+                                    handleItemChange(
+                                      idx,
+                                      "discountPercent",
+                                      Number(e.target.value),
+                                    )
+                                  }
+                                />
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-semibold">
+                            {finalPrice.toFixed(2)}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <button
@@ -1065,23 +1241,138 @@ function SalesTransactionsPage() {
                         </button>
                       </td>
                       <td
-                        colSpan={3}
+                        colSpan={4}
                         className="px-6 py-4 text-right font-bold text-gray-800"
                       >
-                        Total:
+                        Subtotal:
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-800 font-bold">
-                        {formItems.reduce((sum, item) => {
-                          const product = products.find(
-                            (p) => p.id === item.productId,
-                          );
-                          const price = product ? product.price : 0;
-                          return sum + item.quantity * price;
-                        }, 0)}
+                        {formItems
+                          .reduce((sum, item) => {
+                            const product = products.find(
+                              (p) => p.id === item.productId,
+                            );
+                            const price = product ? product.price : 0;
+                            const total = item.quantity * price;
+
+                            let discountAmount = 0;
+                            if (
+                              item.discountType === "percent" &&
+                              item.discountPercent
+                            ) {
+                              discountAmount =
+                                (total * item.discountPercent) / 100;
+                            } else if (
+                              item.discountType === "fixed" &&
+                              item.discountAmount
+                            ) {
+                              discountAmount = Math.min(
+                                item.discountAmount,
+                                total,
+                              );
+                            }
+
+                            return sum + (total - discountAmount);
+                          }, 0)
+                          .toFixed(2)}
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* Transaction-level discount */}
+            <div className="space-y-4 border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Transaction Discount (Applied to Total)
+              </label>
+              <div className="flex gap-4 items-center">
+                <select
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                  value={form.discountType}
+                  onChange={(e) =>
+                    handleFormChange("discountType", e.target.value)
+                  }
+                >
+                  <option value="none">No Discount</option>
+                  <option value="fixed">Fixed Amount</option>
+                  <option value="percent">Percentage</option>
+                </select>
+                {form.discountType === "fixed" && (
+                  <input
+                    type="number"
+                    min={0}
+                    placeholder="Discount Amount"
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                    value={form.discountAmount}
+                    onChange={(e) =>
+                      handleFormChange("discountAmount", Number(e.target.value))
+                    }
+                  />
+                )}
+                {form.discountType === "percent" && (
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    placeholder="Discount %"
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm"
+                    value={form.discountPercent}
+                    onChange={(e) =>
+                      handleFormChange(
+                        "discountPercent",
+                        Number(e.target.value),
+                      )
+                    }
+                  />
+                )}
+              </div>
+              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                <span className="text-lg font-semibold">Final Total:</span>
+                <span className="text-xl font-bold text-green-600">
+                  {(() => {
+                    const subtotal = formItems.reduce((sum, item) => {
+                      const product = products.find(
+                        (p) => p.id === item.productId,
+                      );
+                      const price = product ? product.price : 0;
+                      const total = item.quantity * price;
+                      let discountAmount = 0;
+                      if (
+                        item.discountType === "percent" &&
+                        item.discountPercent
+                      ) {
+                        discountAmount = (total * item.discountPercent) / 100;
+                      } else if (
+                        item.discountType === "fixed" &&
+                        item.discountAmount
+                      ) {
+                        discountAmount = Math.min(item.discountAmount, total);
+                      }
+                      return sum + (total - discountAmount);
+                    }, 0);
+
+                    let transactionDiscount = 0;
+                    if (
+                      form.discountType === "percent" &&
+                      form.discountPercent
+                    ) {
+                      transactionDiscount =
+                        (subtotal * form.discountPercent) / 100;
+                    } else if (
+                      form.discountType === "fixed" &&
+                      form.discountAmount
+                    ) {
+                      transactionDiscount = Math.min(
+                        form.discountAmount,
+                        subtotal,
+                      );
+                    }
+
+                    return (subtotal - transactionDiscount).toFixed(2);
+                  })()}
+                </span>
               </div>
             </div>
 
@@ -1097,8 +1388,19 @@ function SalesTransactionsPage() {
                     creditorName: "",
                     selectedShopId: "",
                     selectedWarehouseId: "",
+                    discountType: "none",
+                    discountAmount: 0,
+                    discountPercent: 0,
                   });
-                  setFormItems([{ productId: "", quantity: 1 }]);
+                  setFormItems([
+                    {
+                      productId: "",
+                      quantity: 1,
+                      discountType: "none",
+                      discountAmount: 0,
+                      discountPercent: 0,
+                    },
+                  ]);
                 }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
