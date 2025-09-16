@@ -214,61 +214,154 @@ function SalesTransactionsPage() {
       40,
     );
     doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
+
+    let yOffset = 60;
     if (transaction.paymentMethod === "credit") {
-      doc.text(`Creditor Name: ${transaction.creditorName || "-"}`, 10, 60);
+      doc.text(
+        `Creditor Name: ${transaction.creditorName || "-"}`,
+        10,
+        yOffset,
+      );
+      yOffset += 10;
+    }
+
+    // Add customer information
+    if (transaction.customer) {
+      doc.text(`Customer: ${transaction.customer.name}`, 10, yOffset);
+      yOffset += 10;
+    } else {
+      doc.text(`Customer: Walk-in Customer`, 10, yOffset);
+      yOffset += 10;
     }
 
     // Add a table header for products with a background color
     doc.setFillColor(230, 230, 230); // Light gray background
-    doc.rect(10, 70, 190, 10, "F");
+    doc.rect(10, yOffset, 190, 10, "F");
     doc.setFont("helvetica", "bold");
-    doc.text("No", 10, 77);
-    doc.text("Products", 22, 77);
-    doc.text("Quantity", 80, 77);
-    doc.text("Price", 120, 77);
-    doc.text("Total", 160, 77);
+    doc.text("No", 12, yOffset + 7);
+    doc.text("Product", 22, yOffset + 7);
+    doc.text("Qty", 70, yOffset + 7);
+    doc.text("Price", 85, yOffset + 7);
+    doc.text("Discount", 105, yOffset + 7);
+    doc.text("Item Total", 135, yOffset + 7);
+    doc.text("Final", 165, yOffset + 7);
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
-    doc.line(10, 80, 200, 80);
+    doc.line(10, yOffset + 10, 200, yOffset + 10);
 
     // Add product details in rows with aligned columns
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    let currentY = yOffset + 15;
+
     transaction.items.forEach((item, index) => {
       const product = products.find((p) => p.id === item.product.id);
-      const yPosition = 85 + index * 10;
-      doc.text(`${index + 1}`, 10, yPosition);
-      doc.text(item.product.name, 22, yPosition);
-      doc.text(`${item.quantity}`, 83, yPosition, { align: "right" });
-      doc.text(`${product ? product.price : "N/A"}`, 130, yPosition, {
+      const price = item.price || (product ? product.price : 0);
+      const itemTotal = item.quantity * price;
+
+      // Calculate item discount
+      let itemDiscountText = "-";
+      let itemFinalPrice = itemTotal;
+
+      if (item.discountType === "percent" && item.discountPercent > 0) {
+        itemDiscountText = `${item.discountPercent}%`;
+        itemFinalPrice =
+          item.finalPrice ||
+          itemTotal - (itemTotal * item.discountPercent) / 100;
+      } else if (item.discountType === "fixed" && item.discountAmount > 0) {
+        itemDiscountText = `${item.discountAmount} birr`;
+        itemFinalPrice = item.finalPrice || itemTotal - item.discountAmount;
+      }
+
+      doc.text(`${index + 1}`, 12, currentY);
+      doc.text(item.product.name.substring(0, 20), 22, currentY);
+      doc.text(`${item.quantity}`, 72, currentY, { align: "right" });
+      doc.text(`${price.toFixed(2)}`, 95, currentY, { align: "right" });
+      doc.text(itemDiscountText, 120, currentY, { align: "right" });
+      doc.text(`${itemTotal.toFixed(2)}`, 150, currentY, { align: "right" });
+      doc.text(`${itemFinalPrice.toFixed(2)}`, 180, currentY, {
         align: "right",
       });
-      doc.text(
-        `${product ? item.quantity * product.price : "N/A"}`,
-        165,
-        yPosition,
-        { align: "right" },
-      );
+
+      currentY += 8;
     });
 
-    // Add total price at the bottom with a highlighted background
-    const totalPrice = calculateTotalPrice(transaction.items);
-    const totalYPosition = 85 + transaction.items.length * 10 + 10;
-    doc.setFillColor(241, 196, 15); // Yellow background
-    doc.rect(10, totalYPosition - 5, 190, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.text("Total Price:", 130, totalYPosition, { align: "right" });
-    doc.text(`${totalPrice}`, 165, totalYPosition, { align: "right" });
-
-    // Add transaction status at the bottom with a highlighted background
-    const statusYPosition = totalYPosition + 15;
-    doc.setFillColor(52, 152, 219); // Blue background
-    doc.rect(10, statusYPosition - 5, 190, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255); // White text
-    doc.text("Status:", 130, statusYPosition, { align: "right" });
-    doc.text(transaction.status.toUpperCase(), 165, statusYPosition, {
+    // Add subtotal
+    currentY += 5;
+    doc.setFont("helvetica", "normal");
+    doc.text("Subtotal:", 130, currentY, { align: "right" });
+    doc.text(`${transaction.totalPrice || "0.00"}`, 180, currentY, {
       align: "right",
     });
+
+    // Add transaction-level discount if exists
+    if (transaction.discountType !== "none" && transaction.discountType) {
+      currentY += 8;
+      doc.text("Transaction Discount:", 130, currentY, { align: "right" });
+
+      let discountText = "";
+      if (
+        transaction.discountType === "percent" &&
+        transaction.discountPercent > 0
+      ) {
+        discountText = `${transaction.discountPercent}% (-${transaction.discountAmount || "0.00"}) birr`;
+      } else if (
+        transaction.discountType === "fixed" &&
+        transaction.discountAmount > 0
+      ) {
+        discountText = `-${transaction.discountAmount} birr`;
+      }
+      doc.text(discountText, 180, currentY, { align: "right" });
+    }
+
+    // Add final total with a highlighted background
+    currentY += 10;
+    doc.setFillColor(241, 196, 15); // Yellow background
+    doc.rect(10, currentY - 5, 190, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Final Total:", 130, currentY, { align: "right" });
+    doc.text(
+      `${transaction.finalPrice || transaction.totalPrice || "0.00"} birr`,
+      180,
+      currentY,
+      { align: "right" },
+    );
+
+    // Add transaction status at the bottom with a highlighted background
+    currentY += 15;
+    doc.setFillColor(52, 152, 219); // Blue background
+    doc.rect(10, currentY - 5, 190, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255); // White text
+    doc.text("Status:", 130, currentY, { align: "right" });
+    doc.text(transaction.status.toUpperCase(), 180, currentY, {
+      align: "right",
+    });
+
+    // Add shop/warehouse information
+    doc.setTextColor(0, 0, 0); // Reset to black text
+    currentY += 15;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    if (transaction.shop) {
+      doc.text(`Shop: ${transaction.shop.name || "N/A"}`, 10, currentY);
+    } else if (transaction.warehouse) {
+      doc.text(
+        `Warehouse: ${transaction.warehouse.name || "N/A"}`,
+        10,
+        currentY,
+      );
+    }
+
+    if (transaction.transactedBy) {
+      currentY += 7;
+      doc.text(
+        `Transacted By: ${transaction.transactedBy.firstName || "N/A"}`,
+        10,
+        currentY,
+      );
+    }
 
     // Save the PDF
     doc.save(`transaction_${transaction.id}.pdf`);
