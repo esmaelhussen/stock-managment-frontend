@@ -291,6 +291,10 @@ export interface SalesTransactionItem {
   quantity: number;
   price: number;
   totalPrice: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
+  finalPrice?: number;
 }
 
 export interface SalesTransaction {
@@ -305,11 +309,18 @@ export interface SalesTransaction {
   transactedBy?: User;
   customer?: Customer; // Add customer field
   // Add walk-in customer name field
+  finalPrice: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
 }
 
 export interface CreateSalesTransactionItemInput {
   productId: string;
   quantity: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
 }
 
 export interface CreateSalesTransactionInput {
@@ -321,6 +332,9 @@ export interface CreateSalesTransactionInput {
   transactedById?: string; // Added userId to include the user ID in the payload
   customerType: "Walk-In" | "Regular";
   customerId?: string;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
 }
 
 export interface Brand {
