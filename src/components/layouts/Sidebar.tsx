@@ -49,8 +49,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [productsMenuOpen, setProductsMenuOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(isCollapsed);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const productsDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close account dropdown when clicking outside
   // useEffect(() => {
@@ -89,30 +91,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       permission: "shops.read",
     },
     {
-      name: "Categories",
-      href: "/categories",
-      icon: TagIcon,
-      permission: "categories.read",
-    },
-    {
-      name: "Units",
-      href: "/units",
-      icon: ScaleIcon,
-      permission: "units.read",
-    },
-    {
-      name: "Brands",
-      href: "/brands",
-      icon: GiftIcon,
-      permission: "brands.read",
-    },
-    {
-      name: "Products",
-      href: "/products",
-      icon: ShoppingBagIcon,
-      permission: "products.read",
-    },
-    {
       name: "Customers",
       href: "/customers",
       icon: UsersIcon,
@@ -136,6 +114,33 @@ const Sidebar: React.FC<SidebarProps> = ({
       href: "/sales-report",
       icon: DocumentTextIcon,
       permission: "sales.read",
+    },
+  ];
+
+  const productsLinks = [
+    {
+      name: "Categories",
+      href: "/categories",
+      icon: TagIcon,
+      permission: "categories.read",
+    },
+    {
+      name: "Units",
+      href: "/units",
+      icon: ScaleIcon,
+      permission: "units.read",
+    },
+    {
+      name: "Brands",
+      href: "/brands",
+      icon: GiftIcon,
+      permission: "brands.read",
+    },
+    {
+      name: "Products",
+      href: "/products",
+      icon: ShoppingBagIcon,
+      permission: "products.read",
     },
   ];
 
@@ -165,6 +170,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const filteredNavigation = navigation.filter(
+    (item) => !item.permission || permission?.includes(item.permission),
+  );
+
+  const filteredProductsLinks = productsLinks.filter(
     (item) => !item.permission || permission?.includes(item.permission),
   );
 
@@ -295,7 +304,65 @@ const Sidebar: React.FC<SidebarProps> = ({
                   );
                 })}
 
-              {/* Account Dropdown - Second */}
+              {/* Products Dropdown - Second */}
+              {filteredProductsLinks.length > 0 && (
+                <div className="relative" ref={productsDropdownRef}>
+                  <button
+                    onClick={() => setProductsMenuOpen(!productsMenuOpen)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
+                      productsMenuOpen && "bg-accent",
+                      desktopCollapsed && "md:justify-center md:px-2",
+                    )}
+                    title={desktopCollapsed ? "Products" : ""}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ShoppingBagIcon className="h-5 w-5" />
+                      {!desktopCollapsed && <span>Products</span>}
+                    </div>
+                    {!desktopCollapsed &&
+                      (productsMenuOpen ? (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronRightIcon className="h-4 w-4" />
+                      ))}
+                  </button>
+                  {productsMenuOpen && (
+                    <div
+                      className={cn(
+                        desktopCollapsed
+                          ? "md:absolute md:left-full md:top-0 md:ml-2 md:w-48 md:bg-white md:dark:bg-gray-900 md:border md:border-gray-200 md:dark:border-gray-700 md:rounded-lg md:shadow-lg md:p-2 ml-8 mt-1 space-y-1"
+                          : "ml-8 mt-1 space-y-1",
+                      )}
+                    >
+                      {filteredProductsLinks.map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                            }}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                              isActive
+                                ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
+                            )}
+                          >
+                            <link.icon className="h-4 w-4" />
+                            <span>{link.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Account Dropdown - Third */}
               {filteredAccountLinks.length > 0 && (
                 <div className="relative" ref={accountDropdownRef}>
                   <button
@@ -335,7 +402,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                             href={link.href}
                             onClick={() => {
                               setMobileMenuOpen(false);
-                              setAccountMenuOpen(false);
                             }}
                             className={cn(
                               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
