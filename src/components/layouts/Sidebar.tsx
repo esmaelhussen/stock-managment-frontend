@@ -38,7 +38,10 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed = false,
+  onToggleCollapse,
+}) => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
   const permission = JSON.parse(Cookies.get("permission"));
@@ -50,21 +53,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close account dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false);
-      }
-    };
-
-    if (accountMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [accountMenuOpen]);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+  //       setAccountMenuOpen(false);
+  //     }
+  //   };
+  //
+  //   if (accountMenuOpen) {
+  //     document.addEventListener("mousedown", handleClickOutside);
+  //   }
+  //
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, [accountMenuOpen]);
 
   const navigation = [
     {
@@ -280,12 +283,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                         isActive
                           ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
-                        desktopCollapsed && "md:justify-center md:px-2"
+                        desktopCollapsed && "md:justify-center md:px-2",
                       )}
                       title={desktopCollapsed ? item.name : ""}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span className={cn(desktopCollapsed && "md:hidden")}>{item.name}</span>
+                      <span className={cn(desktopCollapsed && "md:hidden")}>
+                        {item.name}
+                      </span>
                     </Link>
                   );
                 })}
@@ -299,7 +304,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                       "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
                       accountMenuOpen && "bg-accent",
-                      desktopCollapsed && "md:justify-center md:px-2"
+                      desktopCollapsed && "md:justify-center md:px-2",
                     )}
                     title={desktopCollapsed ? "Account" : ""}
                   >
@@ -307,20 +312,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                       <UserGroupIcon className="h-5 w-5" />
                       {!desktopCollapsed && <span>Account</span>}
                     </div>
-                    {!desktopCollapsed && (
-                      accountMenuOpen ? (
+                    {!desktopCollapsed &&
+                      (accountMenuOpen ? (
                         <ChevronDownIcon className="h-4 w-4" />
                       ) : (
                         <ChevronRightIcon className="h-4 w-4" />
-                      )
-                    )}
+                      ))}
                   </button>
                   {accountMenuOpen && (
-                    <div className={cn(
-                      desktopCollapsed
-                        ? "md:absolute md:left-full md:top-0 md:ml-2 md:w-48 md:bg-white md:dark:bg-gray-900 md:border md:border-gray-200 md:dark:border-gray-700 md:rounded-lg md:shadow-lg md:p-2 ml-8 mt-1 space-y-1"
-                        : "ml-8 mt-1 space-y-1"
-                    )}>
+                    <div
+                      className={cn(
+                        desktopCollapsed
+                          ? "md:absolute md:left-full md:top-0 md:ml-2 md:w-48 md:bg-white md:dark:bg-gray-900 md:border md:border-gray-200 md:dark:border-gray-700 md:rounded-lg md:shadow-lg md:p-2 ml-8 mt-1 space-y-1"
+                          : "ml-8 mt-1 space-y-1",
+                      )}
+                    >
                       {filteredAccountLinks.map((link) => {
                         const isActive = pathname === link.href;
                         return (
@@ -363,12 +369,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
                         isActive
                           ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
-                        desktopCollapsed && "md:justify-center md:px-2"
+                        desktopCollapsed && "md:justify-center md:px-2",
                       )}
                       title={desktopCollapsed ? item.name : ""}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
-                      <span className={cn(desktopCollapsed && "md:hidden")}>{item.name}</span>
+                      <span className={cn(desktopCollapsed && "md:hidden")}>
+                        {item.name}
+                      </span>
                     </Link>
                   );
                 })}
@@ -377,10 +385,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
 
           {/* User Info & Logout */}
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className={cn(
-              "flex items-center",
-              desktopCollapsed ? "md:justify-center" : "justify-between"
-            )}>
+            <div
+              className={cn(
+                "flex items-center",
+                desktopCollapsed ? "md:justify-center" : "justify-between",
+              )}
+            >
               {!desktopCollapsed ? (
                 <>
                   <div className="flex items-center gap-3">
@@ -425,10 +435,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggleCollapse
       </aside>
 
       {/* Content Spacer for Desktop */}
-      <div className={cn(
-        "hidden md:block flex-shrink-0 transition-all duration-300",
-        desktopCollapsed ? "w-20" : "w-72"
-      )} />
+      <div
+        className={cn(
+          "hidden md:block flex-shrink-0 transition-all duration-300",
+          desktopCollapsed ? "w-20" : "w-72",
+        )}
+      />
     </>
   );
 };
