@@ -300,7 +300,9 @@ export interface SalesTransactionItem {
 export interface SalesTransaction {
   id: string;
   shop: Shop;
+  warehouse?: Warehouse;
   paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
+  creditOverdue?: boolean;
   creditorName?: string;
   totalPrice: number;
   createdAt: string;
@@ -313,6 +315,12 @@ export interface SalesTransaction {
   discountAmount?: number;
   discountPercent?: number;
   discountType?: "fixed" | "percent" | "none";
+  creditPaidAmount?: number;
+  creditNextDueDate?: string;
+  creditDuration?: number;
+  creditFrequency?: "weekly" | "monthly" | "yearly";
+  creditStartDate?: string;
+  creditInstallmentAmount?: number;
 }
 
 export interface CreateSalesTransactionItemInput {
@@ -335,6 +343,12 @@ export interface CreateSalesTransactionInput {
   discountAmount?: number;
   discountPercent?: number;
   discountType?: "fixed" | "percent" | "none";
+  creditPaidAmount?: number;
+  creditNextDueDate?: string;
+  creditDuration?: number;
+  creditFrequency?: "weekly" | "monthly" | "yearly";
+  creditStartDate?: string;
+  creditInstallmentAmount?: number;
 }
 
 export interface Brand {

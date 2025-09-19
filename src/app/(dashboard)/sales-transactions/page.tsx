@@ -44,6 +44,7 @@ function SalesTransactionsPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string> | null>(
     null,
   );
+  // const roles = JSON.parse(Cookies.get("roles") || "[]");
   const [formItems, setFormItems] = useState([
     {
       productId: "",
@@ -61,6 +62,9 @@ function SalesTransactionsPage() {
     discountType: "none" as "fixed" | "percent" | "none",
     discountAmount: 0,
     discountPercent: 0,
+    creditDuration: 1,
+    creditFrequency: "monthly" as "weekly" | "monthly" | "yearly",
+    creditStartDate: new Date().toISOString().split("T")[0],
   });
   const [stockType, setStockType] = useState("");
   const [filters, setFilters] = useState({
@@ -79,6 +83,11 @@ function SalesTransactionsPage() {
     phoneNumber: "",
   });
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [isCreditPaymentModalOpen, setIsCreditPaymentModalOpen] =
+    useState(false);
+  const [creditPaymentAmount, setCreditPaymentAmount] = useState("");
+  const [selectedCreditTransaction, setSelectedCreditTransaction] =
+    useState<any>(null);
 
   const dropdownRef = useRef(null);
 
@@ -96,7 +105,16 @@ function SalesTransactionsPage() {
     fetchProducts();
     fetchStock();
     fetchTransactions();
+    checkOverdueCredits();
   }, []);
+
+  const checkOverdueCredits = async () => {
+    try {
+      await saleService.checkOverdueCredits();
+    } catch (error) {
+      console.error("Failed to check overdue credits");
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -206,7 +224,7 @@ function SalesTransactionsPage() {
     }
   };
 
-  const handleFormChange = (field, value) => {
+  const handleFormChange = (field: string, value: any) => {
     setForm((prev) => {
       const newForm = { ...prev, [field]: value };
 
@@ -222,7 +240,7 @@ function SalesTransactionsPage() {
     });
   };
 
-  const handleItemChange = (idx, field, value) => {
+  const handleItemChange = (idx: number, field: string, value: any) => {
     setFormItems((prev) => {
       const items = [...prev];
       items[idx][field] = value;
@@ -241,191 +259,259 @@ function SalesTransactionsPage() {
         discountPercent: 0,
       },
     ]);
-  const removeItem = (idx) =>
+  const removeItem = (idx: number) =>
     setFormItems((prev) => prev.filter((_, i) => i !== idx));
 
-  const generatePDF = (transaction) => {
-    const doc = new jsPDF();
+  const handleCreditPayment = (transactionId: string) => {
+    const transaction = transactions.find((tx) => tx.id === transactionId);
+    setSelectedCreditTransaction(transaction);
+    setCreditPaymentAmount("");
+    setIsCreditPaymentModalOpen(true);
+  };
 
-    // Add a colorful title with a background
-    doc.setFillColor(41, 128, 185); // Blue background
-    doc.rect(0, 0, doc.internal.pageSize.getWidth(), 20, "F");
-    doc.setFontSize(18);
-    doc.setTextColor(255, 255, 255); // White text
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      "Sales Transaction Receipt",
-      doc.internal.pageSize.getWidth() / 2,
-      15,
-      {
-        align: "center",
-      },
+  const getRemainingAmount = (transaction: any) => {
+    return (
+      (transaction.finalPrice || transaction.totalPrice) -
+      (transaction.creditPaidAmount || 0)
     );
+  };
 
-    // Reset text color for the content
-    doc.setTextColor(0, 0, 0);
+  const processCreditPayment = async () => {
+    if (!selectedCreditTransaction || !creditPaymentAmount) return;
 
-    // Add transaction details with a clean layout
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Transaction ID: ${transaction.id}`, 10, 30);
-    doc.text(
-      `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
-      10,
-      40,
-    );
-    doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
-
-    let yOffset = 60;
-    if (transaction.paymentMethod === "credit") {
-      doc.text(
-        `Creditor Name: ${transaction.creditorName || "-"}`,
-        10,
-        yOffset,
+    try {
+      const response = await saleService.makeCreditPayment(
+        selectedCreditTransaction.id,
+        parseFloat(creditPaymentAmount),
       );
-      yOffset += 10;
+
+      toast.success(
+        `Payment of ${response.paidAmount} birr successful. Remaining: ${response.remainingAmount} birr`,
+      );
+
+      setIsCreditPaymentModalOpen(false);
+      setCreditPaymentAmount("");
+      setSelectedCreditTransaction(null);
+      fetchTransactions();
+    } catch (error) {
+      toast.error("Payment failed");
     }
+  };
 
-    // Add customer information
-    if (transaction.customer) {
-      doc.text(`Customer: ${transaction.customer.name}`, 10, yOffset);
-      yOffset += 10;
-    } else {
-      doc.text(`Customer: Walk-in Customer`, 10, yOffset);
-      yOffset += 10;
-    }
+  const generatePDF = (transaction: any) => {
+    try {
+      console.log("Starting PDF generation for transaction:", transaction);
+      console.log("Transaction items:", transaction.items);
+      console.log("Products available:", products);
 
-    // Add a table header for products with a background color
-    doc.setFillColor(230, 230, 230); // Light gray background
-    doc.rect(10, yOffset, 190, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.text("No", 12, yOffset + 7);
-    doc.text("Product", 22, yOffset + 7);
-    doc.text("Qty", 70, yOffset + 7);
-    doc.text("Price", 85, yOffset + 7);
-    doc.text("Discount", 105, yOffset + 7);
-    doc.text("Item Total", 135, yOffset + 7);
-    doc.text("Final", 165, yOffset + 7);
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.5);
-    doc.line(10, yOffset + 10, 200, yOffset + 10);
-
-    // Add product details in rows with aligned columns
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    let currentY = yOffset + 15;
-
-    transaction.items.forEach((item, index) => {
-      const product = products.find((p) => p.id === item.product.id);
-      const price = item.price || (product ? product.price : 0);
-      const itemTotal = item.quantity * price;
-
-      // Calculate item discount
-      let itemDiscountText = "-";
-      let itemFinalPrice = itemTotal;
-
-      if (item.discountType === "percent" && item.discountPercent > 0) {
-        itemDiscountText = `${item.discountPercent}%`;
-        itemFinalPrice =
-          item.finalPrice ||
-          itemTotal - (itemTotal * item.discountPercent) / 100;
-      } else if (item.discountType === "fixed" && item.discountAmount > 0) {
-        itemDiscountText = `${item.discountAmount} birr`;
-        itemFinalPrice = item.finalPrice || itemTotal - item.discountAmount;
+      // Validate transaction data
+      if (!transaction) {
+        throw new Error("No transaction data provided");
       }
 
-      doc.text(`${index + 1}`, 12, currentY);
-      doc.text(item.product.name.substring(0, 20), 22, currentY);
-      doc.text(`${item.quantity}`, 72, currentY, { align: "right" });
-      doc.text(`${price.toFixed(2)}`, 95, currentY, { align: "right" });
-      doc.text(itemDiscountText, 120, currentY, { align: "right" });
-      doc.text(`${itemTotal.toFixed(2)}`, 150, currentY, { align: "right" });
-      doc.text(`${itemFinalPrice.toFixed(2)}`, 180, currentY, {
-        align: "right",
-      });
-
-      currentY += 8;
-    });
-
-    // Add subtotal
-    currentY += 5;
-    doc.setFont("helvetica", "normal");
-    doc.text("Subtotal:", 130, currentY, { align: "right" });
-    doc.text(`${transaction.totalPrice || "0.00"}`, 180, currentY, {
-      align: "right",
-    });
-
-    // Add transaction-level discount if exists
-    if (transaction.discountType !== "none" && transaction.discountType) {
-      currentY += 8;
-      doc.text("Transaction Discount:", 130, currentY, { align: "right" });
-
-      let discountText = "";
       if (
-        transaction.discountType === "percent" &&
-        transaction.discountPercent > 0
+        !transaction.items ||
+        !Array.isArray(transaction.items) ||
+        transaction.items.length === 0
       ) {
-        discountText = `${transaction.discountPercent}% (-${transaction.discountAmount || "0.00"}) birr`;
-      } else if (
-        transaction.discountType === "fixed" &&
-        transaction.discountAmount > 0
-      ) {
-        discountText = `-${transaction.discountAmount} birr`;
+        throw new Error("Transaction has no items");
       }
-      doc.text(discountText, 180, currentY, { align: "right" });
-    }
 
-    // Add final total with a highlighted background
-    currentY += 10;
-    doc.setFillColor(241, 196, 15); // Yellow background
-    doc.rect(10, currentY - 5, 190, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Final Total:", 130, currentY, { align: "right" });
-    doc.text(
-      `${transaction.finalPrice || transaction.totalPrice || "0.00"} birr`,
-      180,
-      currentY,
-      { align: "right" },
-    );
+      // Import jsPDF properly
+      const doc = new jsPDF();
+      console.log("jsPDF instance created successfully");
 
-    // Add transaction status at the bottom with a highlighted background
-    currentY += 15;
-    doc.setFillColor(52, 152, 219); // Blue background
-    doc.rect(10, currentY - 5, 190, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255); // White text
-    doc.text("Status:", 130, currentY, { align: "right" });
-    doc.text(transaction.status.toUpperCase(), 180, currentY, {
-      align: "right",
-    });
+      // Add a colorful title with a background
+      doc.setFillColor(41, 128, 185); // Blue background
+      doc.rect(0, 0, doc.internal.pageSize.getWidth(), 20, "F");
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255); // White text
+      doc.setFont("helvetica", "bold");
+      // Center the title manually
+      const title = "Sales Transaction Receipt";
+      const titleWidth = doc.getTextWidth(title);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.text(title, (pageWidth - titleWidth) / 2, 15);
 
-    // Add shop/warehouse information
-    doc.setTextColor(0, 0, 0); // Reset to black text
-    currentY += 15;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    if (transaction.shop) {
-      doc.text(`Shop: ${transaction.shop.name || "N/A"}`, 10, currentY);
-    } else if (transaction.warehouse) {
+      // Reset text color for the content
+      doc.setTextColor(0, 0, 0);
+
+      // Add transaction details with a clean layout
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Transaction ID: ${transaction.id}`, 10, 30);
       doc.text(
-        `Warehouse: ${transaction.warehouse.name || "N/A"}`,
+        `Date: ${new Date(transaction.createdAt).toLocaleString()}`,
         10,
-        currentY,
+        40,
+      );
+      doc.text(`Payment Method: ${transaction.paymentMethod}`, 10, 50);
+
+      let yOffset = 60;
+      if (transaction.paymentMethod === "credit") {
+        doc.text(
+          `Creditor Name: ${transaction.creditorName || "-"}`,
+          10,
+          yOffset,
+        );
+        yOffset += 10;
+      }
+
+      // Add customer information
+      if (transaction.customer) {
+        doc.text(`Customer: ${transaction.customer.name}`, 10, yOffset);
+        yOffset += 10;
+      } else {
+        doc.text(`Customer: Walk-in Customer`, 10, yOffset);
+        yOffset += 10;
+      }
+
+      // Add a table header for products with a background color
+      doc.setFillColor(230, 230, 230); // Light gray background
+      doc.rect(10, yOffset, 190, 10, "F");
+      doc.setFont("helvetica", "bold");
+      doc.text("No", 12, yOffset + 7);
+      doc.text("Product", 22, yOffset + 7);
+      doc.text("Qty", 70, yOffset + 7);
+      doc.text("Price", 85, yOffset + 7);
+      doc.text("Discount", 105, yOffset + 7);
+      doc.text("Item Total", 135, yOffset + 7);
+      doc.text("Final", 165, yOffset + 7);
+      doc.setDrawColor(0);
+      doc.setLineWidth(0.5);
+      doc.line(10, yOffset + 10, 200, yOffset + 10);
+
+      // Add product details in rows with aligned columns
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      let currentY = yOffset + 15;
+
+      if (transaction.items && Array.isArray(transaction.items)) {
+        transaction.items.forEach((item: any, index: number) => {
+          console.log("Processing item:", item);
+          const product = products.find((p) => p.id === item.product?.id);
+          const price = Number(item.price || (product ? product.price : 0));
+          const quantity = Number(item.quantity || 0);
+          const itemTotal = quantity * price;
+
+          // Calculate item discount
+          let itemDiscountText = "-";
+          let itemFinalPrice = itemTotal;
+
+          if (item.discountType === "percent" && item.discountPercent > 0) {
+            const discountPercent = Number(item.discountPercent);
+            itemDiscountText = `${discountPercent}%`;
+            itemFinalPrice =
+              Number(item.finalPrice) ||
+              itemTotal - (itemTotal * discountPercent) / 100;
+          } else if (item.discountType === "fixed" && item.discountAmount > 0) {
+            const discountAmount = Number(item.discountAmount);
+            itemDiscountText = `${discountAmount} birr`;
+            itemFinalPrice =
+              Number(item.finalPrice) || itemTotal - discountAmount;
+          }
+
+          doc.text(`${index + 1}`, 12, currentY);
+          doc.text(
+            (item.product?.name || "Unknown Product").substring(0, 20),
+            22,
+            currentY,
+          );
+          doc.text(`${quantity}`, 72, currentY);
+          doc.text(`${price.toFixed(2)}`, 95, currentY);
+          doc.text(itemDiscountText, 120, currentY);
+          doc.text(`${itemTotal.toFixed(2)}`, 150, currentY);
+          doc.text(`${itemFinalPrice.toFixed(2)}`, 180, currentY);
+
+          currentY += 8;
+        });
+      }
+
+      // Add subtotal
+      currentY += 5;
+      doc.setFont("helvetica", "normal");
+      doc.text("Subtotal:", 130, currentY);
+      const subtotalValue = Number(transaction.totalPrice || 0);
+      doc.text(`${subtotalValue.toFixed(2)} birr`, 180, currentY);
+
+      // Add transaction-level discount if exists
+      if (transaction.discountType !== "none" && transaction.discountType) {
+        currentY += 8;
+        doc.text("Transaction Discount:", 130, currentY);
+
+        let discountText = "";
+        if (
+          transaction.discountType === "percent" &&
+          transaction.discountPercent > 0
+        ) {
+          const discountPercent = Number(transaction.discountPercent);
+          const discountAmount = Number(transaction.discountAmount || 0);
+          discountText = `${discountPercent}% (-${discountAmount.toFixed(2)} birr)`;
+        } else if (
+          transaction.discountType === "fixed" &&
+          transaction.discountAmount > 0
+        ) {
+          const discountAmount = Number(transaction.discountAmount);
+          discountText = `-${discountAmount.toFixed(2)} birr`;
+        }
+        doc.text(discountText, 180, currentY);
+      }
+
+      // Add final total with a highlighted background
+      currentY += 10;
+      doc.setFillColor(241, 196, 15); // Yellow background
+      doc.rect(10, currentY - 5, 190, 10, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Final Total:", 130, currentY);
+      const finalTotal = Number(
+        transaction.finalPrice || transaction.totalPrice || 0,
+      );
+      doc.text(`${finalTotal.toFixed(2)} birr`, 180, currentY);
+
+      // Add transaction status at the bottom with a highlighted background
+      currentY += 15;
+      doc.setFillColor(52, 152, 219); // Blue background
+      doc.rect(10, currentY - 5, 190, 10, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255); // White text
+      doc.text("Status:", 130, currentY);
+      doc.text(transaction.status.toUpperCase(), 180, currentY);
+
+      // Add shop/warehouse information
+      doc.setTextColor(0, 0, 0); // Reset to black text
+      currentY += 15;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      if (transaction.shop) {
+        doc.text(`Shop: ${transaction.shop.name || "N/A"}`, 10, currentY);
+      } else if (transaction.warehouse) {
+        doc.text(
+          `Warehouse: ${transaction.warehouse.name || "N/A"}`,
+          10,
+          currentY,
+        );
+      }
+
+      if (transaction.transactedBy) {
+        currentY += 7;
+        doc.text(
+          `Transacted By: ${transaction.transactedBy.firstName || "N/A"}`,
+          10,
+          currentY,
+        );
+      }
+
+      // Save the PDF
+      doc.save(`transaction_${transaction.id}.pdf`);
+    } catch (error: any) {
+      console.error("Error generating PDF:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      toast.error(
+        `Failed to generate PDF: ${error.message || "Unknown error"}`,
       );
     }
-
-    if (transaction.transactedBy) {
-      currentY += 7;
-      doc.text(
-        `Transacted By: ${transaction.transactedBy.firstName || "N/A"}`,
-        10,
-        currentY,
-      );
-    }
-
-    // Save the PDF
-    doc.save(`transaction_${transaction.id}.pdf`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -464,7 +550,7 @@ function SalesTransactionsPage() {
     }
 
     try {
-      const createdTransaction = await saleService.createSalesTransaction({
+      const transactionData: any = {
         shopId: isShopRole ? shopId : selectedShopId,
         warehouseId: roles.includes("warehouse")
           ? warehouseId
@@ -489,7 +575,17 @@ function SalesTransactionsPage() {
         transactedById: userId, // Include userId in the payload
         customerType: selectedCustomerId ? "Regular" : "Walk-In",
         customerId: selectedCustomerId || undefined,
-      });
+      };
+
+      // Add credit fields if payment method is credit
+      if (form.paymentMethod === "credit") {
+        transactionData.creditDuration = form.creditDuration;
+        transactionData.creditFrequency = form.creditFrequency;
+        transactionData.creditStartDate = form.creditStartDate;
+      }
+
+      const createdTransaction =
+        await saleService.createSalesTransaction(transactionData);
       toast.success("Sales transaction created");
       setIsCreateModalOpen(false);
       setForm({
@@ -500,6 +596,9 @@ function SalesTransactionsPage() {
         discountType: "none",
         discountAmount: 0,
         discountPercent: 0,
+        creditDuration: 1,
+        creditFrequency: "monthly",
+        creditStartDate: new Date().toISOString().split("T")[0],
       });
       setFormItems([
         {
@@ -533,7 +632,7 @@ function SalesTransactionsPage() {
     }
   };
 
-  const calculateTotalPrice = (items) => {
+  const calculateTotalPrice = (items: any[]) => {
     return items.reduce((sum, item) => {
       const product = products.find((p) => p.id === item.product.id);
       const price = product ? product.price : 0;
@@ -578,8 +677,12 @@ function SalesTransactionsPage() {
 
   console.log("Paginated Transactions:", paginated); // Debugging log
 
-  const updateTransactionStatus = async (transactionId, newStatus) => {
+  const updateTransactionStatus = async (
+    transactionId: string | null,
+    newStatus: "payed" | "unpayed",
+  ) => {
     try {
+      if (!transactionId) return;
       await saleService.updateTransactionStatus(transactionId, newStatus); // Ensure backend supports this
       toast.success("Transaction status updated");
       fetchTransactions();
@@ -589,7 +692,7 @@ function SalesTransactionsPage() {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowProductDropdown(false);
       }
@@ -611,8 +714,57 @@ function SalesTransactionsPage() {
     stock.product.name.toLowerCase().includes(productSearch.toLowerCase()),
   );
 
+  const overdueCredits = transactions.filter(
+    (tx) => tx.paymentMethod === "credit" && tx.creditOverdue,
+  );
+
   return (
     <div>
+      {/* Overdue Credits Alert */}
+      {overdueCredits.length > 0 && (
+        <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                {overdueCredits.length} Credit Payment
+                {overdueCredits.length > 1 ? "s" : ""} Overdue
+              </h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                <p>The following customers have overdue credit payments:</p>
+                <ul className="list-disc list-inside mt-1">
+                  {overdueCredits.slice(0, 3).map((tx) => (
+                    <li key={tx.id}>
+                      {tx.creditorName}: $
+                      {(tx.finalPrice || tx.totalPrice) -
+                        (tx.creditPaidAmount || 0)}{" "}
+                      remaining
+                      {tx.creditNextDueDate &&
+                        ` (Due: ${new Date(tx.creditNextDueDate).toLocaleDateString()})`}
+                    </li>
+                  ))}
+                  {overdueCredits.length > 3 && (
+                    <li>...and {overdueCredits.length - 3} more</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -787,8 +939,13 @@ function SalesTransactionsPage() {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Transacted Stock Name
+                Credit Info
               </th>
+              {!isShopRole && !roles.includes("warehouse") && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Transacted Stock Name
+                </th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Transacted By
               </th>
@@ -843,7 +1000,7 @@ function SalesTransactionsPage() {
                   })}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {tx.totalPrice || calculateTotalPrice(tx.items)}
+                  {tx.totalPrice || calculateTotalPrice(tx.items)} birr
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.discountType}
@@ -861,44 +1018,101 @@ function SalesTransactionsPage() {
                   })()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-semibold">
-                  {tx.finalPrice || calculateTotalPrice(tx.items)}
+                  {tx.finalPrice || calculateTotalPrice(tx.items)} birr
                 </td>
 
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.creditorName}
                 </td>
+                <td
+                  className={`px-6 py-4 text-sm text-gray-800 dark:text-gray-200 ${tx.status === "payed" ? "text-green-600 " : "text-red-600 "}`}
+                >
+                  {tx.status}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {tx.status === "unpayed" && tx.paymentMethod === "credit" ? (
-                    <button
-                      onClick={() => {
-                        setSelectedTransactionId(tx.id);
-                        setIsConfirmModalOpen(true);
-                      }}
-                      className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
-                    >
-                      Mark as Payed
-                    </button>
+                  {tx.paymentMethod === "credit" ? (
+                    <div className="space-y-1">
+                      {tx.creditOverdue && (
+                        <span className="text-red-600 font-semibold">
+                          OVERDUE!
+                        </span>
+                      )}
+                      <div className="text-xs">
+                        <p>Paid: {tx.creditPaidAmount || 0} birr </p>
+                        <p>
+                          Remaining:
+                          {(tx.finalPrice || tx.totalPrice) -
+                            (tx.creditPaidAmount || 0)}{" "}
+                          birr
+                        </p>
+                        {tx.creditNextDueDate && (
+                          <p>
+                            Next Due:{" "}
+                            {new Date(
+                              tx.creditNextDueDate,
+                            ).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   ) : (
-                    tx.status
+                    "-"
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  {tx.transactedBy?.shop?.name
-                    ? `Shop: ${tx.transactedBy.shop.name}`
-                    : tx.transactedBy?.warehouse?.name
-                      ? `Warehouse: ${tx.transactedBy.warehouse.name}`
-                      : "N/A"}
-                </td>
+                {!isShopRole && !isWarehouseRole && (
+                  <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                    {(() => {
+                      // For users who are neither shop nor warehouse role
+                      if (!isShopRole && !isWarehouseRole) {
+                        if (tx.shop) {
+                          return `Shop: ${tx.shop.name}`;
+                        } else if (tx.warehouse) {
+                          return `Warehouse: ${tx.warehouse.name}`;
+                        }
+                      }
+
+                      // For shop role users
+                      if (isShopRole && tx.transactedBy?.shop) {
+                        return `Shop: ${tx.transactedBy.shop.name}`;
+                      }
+
+                      // For warehouse role users
+                      if (isWarehouseRole && tx.transactedBy?.warehouse) {
+                        return `Warehouse: ${tx.transactedBy.warehouse.name}`;
+                      }
+
+                      // Fallback: try to get from transaction directly
+                      if (tx.shop) {
+                        return `Shop: ${tx.shop.name}`;
+                      } else if (tx.warehouse) {
+                        return `Warehouse: ${tx.warehouse.name}`;
+                      }
+
+                      return "N/A";
+                    })()}
+                  </td>
+                )}
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                   {tx.transactedBy?.firstName || "N/A"}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
-                  <button
-                    onClick={() => generatePDF(tx)}
-                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                  >
-                    Print PDF
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => generatePDF(tx)}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    >
+                      Print PDF
+                    </button>
+                    {tx.paymentMethod === "credit" &&
+                      tx.status === "unpayed" && (
+                        <button
+                          onClick={() => handleCreditPayment(tx.id)}
+                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-xs rounded focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                        >
+                          Pay Credit
+                        </button>
+                      )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -949,6 +1163,9 @@ function SalesTransactionsPage() {
               discountPercent: 0,
               discountAmount: 0,
               discountType: "none",
+              creditDuration: 10,
+              creditFrequency: "monthly",
+              creditStartDate: new Date().toISOString().split("T")[0],
             });
             setFormItems([
               {
@@ -994,29 +1211,99 @@ function SalesTransactionsPage() {
               )}
             </div>
             {form.paymentMethod === "credit" && (
-              <div className="space-y-4">
-                <label
-                  htmlFor="creditorName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Creditor Name
-                </label>
-                <input
-                  type="text"
-                  id="creditorName"
-                  value={form.creditorName}
-                  onChange={(e) =>
-                    handleFormChange("creditorName", e.target.value)
-                  }
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
-                  required={form.paymentMethod === "credit"}
-                />
-                {formErrors && formErrors.creditorName && (
-                  <p className="text-red-500 text-sm">
-                    {formErrors.creditorName}
-                  </p>
-                )}
-              </div>
+              <>
+                <div className="space-y-4">
+                  <label
+                    htmlFor="creditorName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Creditor Name
+                  </label>
+                  <input
+                    type="text"
+                    id="creditorName"
+                    value={form.creditorName}
+                    onChange={(e) =>
+                      handleFormChange("creditorName", e.target.value)
+                    }
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 text-sm text-gray-700 bg-gray-50 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+                    required={form.paymentMethod === "credit"}
+                  />
+                  {formErrors && formErrors.creditorName && (
+                    <p className="text-red-500 text-sm">
+                      {formErrors.creditorName}
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg space-y-4">
+                  <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                    Credit Payment Terms
+                  </h3>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Amount
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        value={form.creditDuration}
+                        onChange={(e) =>
+                          handleFormChange(
+                            "creditDuration",
+                            parseInt(e.target.value) || 1,
+                          )
+                        }
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Frequency
+                      </label>
+                      <select
+                        value={form.creditFrequency}
+                        onChange={(e) =>
+                          handleFormChange("creditFrequency", e.target.value)
+                        }
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm"
+                      >
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={form.creditStartDate}
+                        onChange={(e) =>
+                          handleFormChange("creditStartDate", e.target.value)
+                        }
+                        min={new Date().toISOString().split("T")[0]}
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-gray-800 p-3 rounded">
+                    <p className="text-sm">
+                      Customer will pay <strong>{form.creditDuration}</strong>{" "}
+                      birr <strong>{form.creditFrequency}</strong> starting from{" "}
+                      <strong>
+                        {new Date(form.creditStartDate).toLocaleDateString()}
+                      </strong>
+                    </p>
+                  </div>
+                </div>
+              </>
             )}
             {!isShopRole && !roles.includes("warehouse") && (
               <>
@@ -1602,6 +1889,9 @@ function SalesTransactionsPage() {
                     discountType: "none",
                     discountAmount: 0,
                     discountPercent: 0,
+                    creditDuration: 1,
+                    creditFrequency: "monthly",
+                    creditStartDate: new Date().toISOString().split("T")[0],
                   });
                   setFormItems([
                     {
@@ -1733,6 +2023,142 @@ function SalesTransactionsPage() {
               </Button>
               <Button variant="primary" onClick={handleCreateCustomer}>
                 Create
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Credit Payment Modal */}
+      {isCreditPaymentModalOpen && selectedCreditTransaction && (
+        <Modal
+          isOpen={isCreditPaymentModalOpen}
+          onClose={() => {
+            setIsCreditPaymentModalOpen(false);
+            setCreditPaymentAmount("");
+            setSelectedCreditTransaction(null);
+          }}
+          title="Make Credit Payment"
+        >
+          <div className="space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded">
+              <h3 className="font-semibold mb-2">Credit Details</h3>
+              <div className="space-y-1 text-sm">
+                <p>Customer: {selectedCreditTransaction.creditorName}</p>
+                <p>
+                  Total Amount:
+                  {selectedCreditTransaction.finalPrice ||
+                    selectedCreditTransaction.totalPrice}{" "}
+                  birr
+                </p>
+                <p>
+                  Paid Amount:
+                  {selectedCreditTransaction.creditPaidAmount || 0} birr
+                </p>
+                <p className="font-semibold text-lg">
+                  Remaining:
+                  {(selectedCreditTransaction.finalPrice ||
+                    selectedCreditTransaction.totalPrice) -
+                    (selectedCreditTransaction.creditPaidAmount || 0)}{" "}
+                  birr
+                </p>
+                {selectedCreditTransaction.creditInstallmentAmount && (
+                  <p>
+                    Minimum pay Amount:
+                    {selectedCreditTransaction.creditDuration} birr
+                  </p>
+                )}
+                {selectedCreditTransaction.creditNextDueDate && (
+                  <p>
+                    Next Due Date:{" "}
+                    {new Date(
+                      selectedCreditTransaction.creditNextDueDate,
+                    ).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Payment Amount
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={creditPaymentAmount}
+                onChange={(e) => setCreditPaymentAmount(e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  parseFloat(creditPaymentAmount) >
+                  getRemainingAmount(selectedCreditTransaction)
+                    ? "border-yellow-500 bg-yellow-50"
+                    : "border-gray-300 bg-gray-50"
+                } text-sm text-gray-700 shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none`}
+                placeholder="Enter payment amount"
+              />
+              {parseFloat(creditPaymentAmount) >
+              getRemainingAmount(selectedCreditTransaction) ? (
+                <div className="mt-1 p-2 bg-yellow-50 border border-yellow-300 rounded">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    ⚠️ Warning: Amount exceeds remaining credit amount!
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Remaining credit amount:
+                    {getRemainingAmount(selectedCreditTransaction).toFixed(
+                      2,
+                    )}{" "}
+                    birr
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  Remaining credit amount:
+                  {getRemainingAmount(selectedCreditTransaction).toFixed(
+                    2,
+                  )}{" "}
+                  birr
+                </p>
+              )}
+
+              {parseFloat(creditPaymentAmount) <
+                selectedCreditTransaction.creditDuration &&
+              selectedCreditTransaction.creditDuration <
+                getRemainingAmount(selectedCreditTransaction) ? (
+                <div className="mt-1 p-2 bg-yellow-50 border border-yellow-300 rounded">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    ⚠️ Warning: Amount below your minimum pay!
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    minimum pay amount:
+                    {selectedCreditTransaction.creditDuration.toFixed(2)} birr
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  minimum pay amount:{selectedCreditTransaction.creditDuration}{" "}
+                  birr
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={() => setIsCreditPaymentModalOpen(false)}
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={processCreditPayment}
+                disabled={
+                  !creditPaymentAmount ||
+                  parseFloat(creditPaymentAmount) <= 0 ||
+                  parseFloat(creditPaymentAmount) >
+                    getRemainingAmount(selectedCreditTransaction)
+                }
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Make Payment
               </Button>
             </div>
           </div>
