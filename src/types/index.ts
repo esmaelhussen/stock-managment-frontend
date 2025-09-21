@@ -1,3 +1,50 @@
+export interface Category {
+  id: string;
+  name: string;
+  identifier?: string;
+  subcategories?: Category[]; // Added subcategories field
+  parentCategoryId?: string | null; // Updated to string or null
+  parentCategory?: Category | null; // Added parentCategory field
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateCategoryInput {
+  name: string;
+  identifier?: string;
+  subcategories?: string[];
+  parentCategoryId?: string;
+}
+
+export interface UpdateCategoryInput {
+  name?: string;
+  identifier?: string;
+  parentCategoryId?: string;
+  parentCategory?: Category; // Added parentCategory field
+  subcategories?: Category[]; // Added subcategories field
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  address: string;
+  phoneNumber: string;
+}
+
+export interface UpdateCustomerInput {
+  name?: string;
+  address?: string;
+  phoneNumber?: string;
+}
+
 export interface User {
   id: string;
   firstName: string;
@@ -8,6 +55,10 @@ export interface User {
   address?: string;
   isActive: boolean;
   userRoles: UserRole[];
+  warehouseId?: string;
+  warehouse?: Warehouse;
+  shopId?: string;
+  shop?: Shop;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +114,10 @@ export interface AuthResponse {
     lastName: string;
     roles: string[];
     permissions: string[];
+    warehouseId?: string;
+    warehouse?: Warehouse;
+    shopId?: string;
+    shop?: Shop;
   };
 }
 
@@ -75,6 +130,7 @@ export interface CreateUserInput {
   address?: string;
   password: string;
   roleIds?: string[];
+  warehouseId?: string;
 }
 
 export interface UpdateUserInput {
@@ -114,3 +170,217 @@ export interface UpdatePermissionInput {
   action?: string;
   isActive?: boolean;
 }
+
+export interface Warehouse {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface CreateWarehouseInput {
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface UpdateWarehouseInput {
+  name?: string;
+  address?: string;
+  description?: string;
+}
+
+export interface Unit {
+  id: string;
+  name: string;
+}
+
+export interface CreateUnitInput {
+  name: string;
+}
+
+export interface UpdateUnitInput {
+  name?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  sku: string;
+  price: number;
+  category: Category;
+  unit: Unit;
+  brand: Brand;
+  image?: string; // Added image field
+  alertQuantity: number; // Added alert quantity field
+}
+
+export interface CreateProductInput {
+  name: string;
+  description?: string;
+  sku: string;
+  price: number;
+  categoryId: string;
+  unitId: string;
+  brandId: string;
+  image?: string | File;
+  // Added image field
+  alertQuantity?: number;
+}
+
+export interface UpdateProductInput extends Partial<CreateProductInput> {}
+
+export interface StockTransaction {
+  id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  type: "add" | "remove" | "transfer";
+  sourceWarehouse?: Warehouse;
+  targetWarehouse?: Warehouse;
+  sourceShop?: Shop;
+  targetShop?: Shop;
+  timestamp: string;
+  transactedBy?: User; // Added field to represent the user who performed the transaction
+}
+
+export interface CreateStockTransactionInput {
+  productId: string;
+  quantity: number;
+  type: "add" | "remove" | "transfer";
+  sourceWarehouseId?: string;
+  targetWarehouseId?: string;
+  sourceShopId?: string;
+  targetShopId?: string;
+  transactedById?: string; // Added field to represent the user who performs the transaction
+}
+
+export interface Stock {
+  id: string;
+  product: Product;
+  warehouse: Warehouse;
+  shop?: Shop; // Added relationship to link stock to a shop
+  quantity: number;
+  price: number;
+  timestamp: string;
+}
+
+export interface Shop {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface CreateShopInput {
+  name: string;
+  address: string;
+  description?: string;
+}
+
+export interface UpdateShopInput {
+  name?: string;
+  address?: string;
+  description?: string;
+}
+
+export interface SalesTransactionItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  price: number;
+  totalPrice: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
+  finalPrice?: number;
+}
+
+export interface SalesTransaction {
+  id: string;
+  shop: Shop;
+  warehouse?: Warehouse;
+  paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
+  creditOverdue?: boolean;
+  creditorName?: string;
+  totalPrice: number;
+  createdAt: string;
+  items: SalesTransactionItem[];
+  status: "unpayed" | "payed";
+  transactedBy?: User;
+  customer?: Customer; // Add customer field
+  // Add walk-in customer name field
+  finalPrice: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
+  creditPaidAmount?: number;
+  creditNextDueDate?: string;
+  creditDuration?: number;
+  creditFrequency?: "weekly" | "monthly" | "yearly";
+  creditStartDate?: string;
+  creditInstallmentAmount?: number;
+}
+
+export interface CreateSalesTransactionItemInput {
+  productId: string;
+  quantity: number;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
+}
+
+export interface CreateSalesTransactionInput {
+  shopId?: string;
+  warehouseId?: string;
+  paymentMethod: "telebirr" | "cbe" | "awash" | "e-birr" | "credit";
+  creditorName?: string;
+  items: CreateSalesTransactionItemInput[];
+  transactedById?: string; // Added userId to include the user ID in the payload
+  customerType: "Walk-In" | "Regular";
+  customerId?: string;
+  discountAmount?: number;
+  discountPercent?: number;
+  discountType?: "fixed" | "percent" | "none";
+  creditPaidAmount?: number;
+  creditNextDueDate?: string;
+  creditDuration?: number;
+  creditFrequency?: "weekly" | "monthly" | "yearly";
+  creditStartDate?: string;
+  creditInstallmentAmount?: number;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+}
+
+export interface CreateBrandInput {
+  name: string;
+}
+
+export interface UpdateBrandInput {
+  name?: string;
+}
+
+// export interface Customer {
+//   id: string;
+//   name: string;
+//   address: string;
+//   phoneNumber: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
+// export interface CreateCustomerInput {
+//   name: string;
+//   address: string;
+//   phoneNumber: string;
+// }
+
+// export interface UpdateCustomerInput {
+//   name?: string;
+//   address?: string;
+//   phoneNumber?: string;
+// }

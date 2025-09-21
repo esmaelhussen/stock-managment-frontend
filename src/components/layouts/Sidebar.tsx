@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,128 +9,505 @@ import {
   ShieldCheckIcon,
   KeyIcon,
   ArrowLeftOnRectangleIcon,
+  ArchiveBoxIcon,
+  TagIcon,
   CubeIcon,
+  ScaleIcon,
+  ShoppingBagIcon,
+  ShoppingCartIcon,
+  CreditCardIcon,
+  DocumentTextIcon,
+  GiftIcon,
+  UsersIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  Bars3Icon,
+  XMarkIcon,
+  SunIcon,
+  MoonIcon,
 } from "@heroicons/react/24/outline";
 import { authService } from "@/services/auth.service";
-import { cn } from "@/utils/cn";
+import { cn } from "@/lib/utils";
+import Cookies from "js-cookie";
+import { Button } from "@/components/ui/Button";
+import { useTheme } from "@/contexts/ThemeContext";
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed = false,
+  onToggleCollapse,
+}) => {
   const pathname = usePathname();
   const user = authService.getCurrentUser();
+  const permission = JSON.parse(Cookies.get("permission"));
+  const { theme, toggleTheme } = useTheme();
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [productsMenuOpen, setProductsMenuOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(isCollapsed);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const productsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close account dropdown when clicking outside
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+  //       setAccountMenuOpen(false);
+  //     }
+  //   };
+  //
+  //   if (accountMenuOpen) {
+  //     document.addEventListener("mousedown", handleClickOutside);
+  //   }
+  //
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, [accountMenuOpen]);
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
-    { name: "Users", href: "/users", icon: UserGroupIcon },
-    { name: "Roles", href: "/roles", icon: ShieldCheckIcon },
-    { name: "Permissions", href: "/permissions", icon: KeyIcon },
-    { name: "Stock", href: "/stock", icon: CubeIcon },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: HomeIcon,
+      permission: "dashboards.read",
+    },
+    {
+      name: "Warehouses",
+      href: "/warehouses",
+      icon: ArchiveBoxIcon,
+      permission: "warehouses.read",
+    },
+    {
+      name: "Shops",
+      href: "/shops",
+      icon: ShoppingCartIcon,
+      permission: "shops.read",
+    },
+    {
+      name: "Customers",
+      href: "/customers",
+      icon: UsersIcon,
+      permission: "customers.read",
+    },
+    {
+      name: "Stock Transactions",
+      href: "/stock-transactions",
+      icon: ArchiveBoxIcon,
+      permission: "stock.read",
+    },
+    { name: "Stock", href: "/stock", icon: CubeIcon, permission: "stock.read" },
+    {
+      name: "Sales Transactions",
+      href: "/sales-transactions",
+      icon: CreditCardIcon,
+      permission: "sales.read",
+    },
+    {
+      name: "Sales Report",
+      href: "/sales-report",
+      icon: DocumentTextIcon,
+      permission: "sales.read",
+    },
+  ];
+
+  const productsLinks = [
+    {
+      name: "Categories",
+      href: "/categories",
+      icon: TagIcon,
+      permission: "categories.read",
+    },
+    {
+      name: "Units",
+      href: "/units",
+      icon: ScaleIcon,
+      permission: "units.read",
+    },
+    {
+      name: "Brands",
+      href: "/brands",
+      icon: GiftIcon,
+      permission: "brands.read",
+    },
+    {
+      name: "Products",
+      href: "/products",
+      icon: ShoppingBagIcon,
+      permission: "products.read",
+    },
+  ];
+
+  const accountLinks = [
+    {
+      name: "Users",
+      href: "/users",
+      icon: UserGroupIcon,
+      permission: "users.read",
+    },
+    {
+      name: "Roles",
+      href: "/roles",
+      icon: ShieldCheckIcon,
+      permission: "roles.read",
+    },
+    {
+      name: "Permissions",
+      href: "/permissions",
+      icon: KeyIcon,
+      permission: "permissions.read",
+    },
   ];
 
   const handleLogout = () => {
     authService.logout();
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const filteredNavigation = navigation.filter(
+    (item) => !item.permission || permission?.includes(item.permission),
+  );
 
-  // Listen for custom event from header hamburger
-  React.useEffect(() => {
-    const handler = (e) => {
-      setMenuOpen(e.detail ? true : false);
-    };
-    window.addEventListener('openSidebarMenu', handler);
-    return () => window.removeEventListener('openSidebarMenu', handler);
-  }, []);
+  const filteredProductsLinks = productsLinks.filter(
+    (item) => !item.permission || permission?.includes(item.permission),
+  );
 
-  // Sync hamburger icon in header when sidebar closes
-  React.useEffect(() => {
-    if (!menuOpen) {
-      window.dispatchEvent(new CustomEvent("openSidebarMenu", { detail: false }));
-    }
-  }, [menuOpen]);
+  const filteredAccountLinks = accountLinks.filter(
+    (item) => !item.permission || permission?.includes(item.permission),
+  );
 
   return (
-    <aside className="w-full md:w-96 flex-shrink-0 bg-white flex flex-row md:flex-col md:h-auto h-16 relative">
-      {/* Hamburger removed from sidebar for mobile. Only header hamburger is shown. */}
+    <>
+      {/* Mobile Menu Button */}
+      <div className="fixed top-4 left-4 z-50 md:hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="bg-white shadow-md hover:shadow-lg"
+        >
+          {mobileMenuOpen ? (
+            <XMarkIcon className="h-6 w-6" />
+          ) : (
+            <Bars3Icon className="h-6 w-6" />
+          )}
+        </Button>
+      </div>
 
-      {/* Mobile menu */}
-      <nav
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
         className={cn(
-          "absolute top-16 left-0 w-full bg-white z-20 flex flex-col md:hidden shadow-2xl rounded-b-2xl border-t border-gray-200 transition-all duration-300",
-          menuOpen
-            ? "max-h-96 opacity-100 scale-100"
-            : "max-h-0 opacity-0 scale-95 overflow-hidden"
+          "fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out",
+          desktopCollapsed ? "md:w-20" : "md:w-72",
+          "w-72",
+          "md:translate-x-0",
+          mobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0",
         )}
       >
-        {navigation.map((item, idx) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "group flex items-center px-6 py-4 text-lg font-semibold rounded-xl transition-all duration-200 mb-2 mx-2",
-                isActive
-                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-gray-700 hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
+        <div className="flex h-full flex-col">
+          {/* Logo/Header */}
+          <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
+            {!desktopCollapsed ? (
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Stock Management
+              </h2>
+            ) : (
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                SM
+              </h2>
+            )}
+            <div className="flex items-center gap-1">
+              {!desktopCollapsed && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                  title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                >
+                  {theme === "light" ? (
+                    <MoonIcon className="h-5 w-5" />
+                  ) : (
+                    <SunIcon className="h-5 w-5" />
+                  )}
+                </Button>
               )}
-              onClick={() => setMenuOpen(false)}
-            >
-              {/* Only show icon once at top, not in each menu item */}
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Desktop sidebar */}
-      <nav className="hidden md:flex flex-1 flex-col space-y-1 px-2 py-4 overflow-y-auto bg-white">
-        {navigation.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200",
-                isActive
-                  ? "bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 text-white shadow-lg scale-105"
-                  : "text-black hover:bg-indigo-100 hover:text-indigo-700 hover:scale-105 hover:shadow-md"
-              )}
-            >
-              <item.icon
-                className={cn(
-                  "mr-3 h-6 w-6 flex-shrink-0",
-                  isActive
-                    ? "text-white drop-shadow"
-                    : "text-gray-400 group-hover:text-indigo-700 group-hover:scale-110"
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setDesktopCollapsed(!desktopCollapsed);
+                  onToggleCollapse?.();
+                }}
+                className="hidden md:flex hover:bg-gray-100 dark:hover:bg-gray-800"
+                title={desktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {desktopCollapsed ? (
+                  <ChevronRightIcon className="h-5 w-5" />
+                ) : (
+                  <ChevronLeftIcon className="h-5 w-5" />
                 )}
-              />
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User info and logout for desktop */}
-      <div className="hidden md:block border-t border-gray-700 p-4 mt-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="ml-3">
-              <p className="text-md font-bold text-black capitalize">
-                {user?.firstName}
-              </p>
-              <p className="text-sm text-black">{user?.email}</p>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(false)}
+                className="md:hidden"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </Button>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-gray-600 hover:text-black transition-colors hover:cursor-pointer"
-          >
-            <ArrowLeftOnRectangleIcon className="h-8 w-9 " title="Logout" />
-          </button>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="space-y-1">
+              {/* Dashboard Link - First */}
+              {filteredNavigation
+                .filter((item) => item.name === "Dashboard")
+                .map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                        isActive
+                          ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
+                        desktopCollapsed && "md:justify-center md:px-2",
+                      )}
+                      title={desktopCollapsed ? item.name : ""}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className={cn(desktopCollapsed && "md:hidden")}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+
+              {/* Products Dropdown - Second */}
+              {filteredProductsLinks.length > 0 && (
+                <div className="relative" ref={productsDropdownRef}>
+                  <button
+                    onClick={() => setProductsMenuOpen(!productsMenuOpen)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
+                      productsMenuOpen && "bg-accent",
+                      desktopCollapsed && "md:justify-center md:px-2",
+                    )}
+                    title={desktopCollapsed ? "Products" : ""}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ShoppingBagIcon className="h-5 w-5" />
+                      {!desktopCollapsed && <span>Products</span>}
+                    </div>
+                    {!desktopCollapsed &&
+                      (productsMenuOpen ? (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronRightIcon className="h-4 w-4" />
+                      ))}
+                  </button>
+                  {productsMenuOpen && (
+                    <div
+                      className={cn(
+                        desktopCollapsed
+                          ? "md:absolute md:left-full md:top-0 md:ml-2 md:w-48 md:bg-white md:dark:bg-gray-900 md:border md:border-gray-200 md:dark:border-gray-700 md:rounded-lg md:shadow-lg md:p-2 ml-8 mt-1 space-y-1"
+                          : "ml-8 mt-1 space-y-1",
+                      )}
+                    >
+                      {filteredProductsLinks.map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                            }}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                              isActive
+                                ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
+                            )}
+                          >
+                            <link.icon className="h-4 w-4" />
+                            <span>{link.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Account Dropdown - Third */}
+              {filteredAccountLinks.length > 0 && (
+                <div className="relative" ref={accountDropdownRef}>
+                  <button
+                    onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100",
+                      accountMenuOpen && "bg-accent",
+                      desktopCollapsed && "md:justify-center md:px-2",
+                    )}
+                    title={desktopCollapsed ? "Account" : ""}
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserGroupIcon className="h-5 w-5" />
+                      {!desktopCollapsed && <span>Account</span>}
+                    </div>
+                    {!desktopCollapsed &&
+                      (accountMenuOpen ? (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronRightIcon className="h-4 w-4" />
+                      ))}
+                  </button>
+                  {accountMenuOpen && (
+                    <div
+                      className={cn(
+                        desktopCollapsed
+                          ? "md:absolute md:left-full md:top-0 md:ml-2 md:w-48 md:bg-white md:dark:bg-gray-900 md:border md:border-gray-200 md:dark:border-gray-700 md:rounded-lg md:shadow-lg md:p-2 ml-8 mt-1 space-y-1"
+                          : "ml-8 mt-1 space-y-1",
+                      )}
+                    >
+                      {filteredAccountLinks.map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                            }}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                              isActive
+                                ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
+                            )}
+                          >
+                            <link.icon className="h-4 w-4" />
+                            <span>{link.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Rest of Main Navigation */}
+              {filteredNavigation
+                .filter((item) => item.name !== "Dashboard")
+                .map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                        isActive
+                          ? "bg-gray-100 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 border-l-4 border-transparent",
+                        desktopCollapsed && "md:justify-center md:px-2",
+                      )}
+                      title={desktopCollapsed ? item.name : ""}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <span className={cn(desktopCollapsed && "md:hidden")}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+            </div>
+          </nav>
+
+          {/* User Info & Logout */}
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+            <div
+              className={cn(
+                "flex items-center",
+                desktopCollapsed ? "md:justify-center" : "justify-between",
+              )}
+            >
+              {!desktopCollapsed ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                        {user?.firstName?.[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate capitalize text-gray-900 dark:text-gray-100">
+                        {user?.firstName}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="hover:bg-destructive/10 hover:text-destructive"
+                    title="Logout"
+                  >
+                    <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                  title="Logout"
+                >
+                  <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Content Spacer for Desktop */}
+      <div
+        className={cn(
+          "hidden md:block flex-shrink-0 transition-all duration-300",
+          desktopCollapsed ? "w-20" : "w-72",
+        )}
+      />
+    </>
   );
 };
 

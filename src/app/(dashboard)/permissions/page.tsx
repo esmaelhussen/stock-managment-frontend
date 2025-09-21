@@ -14,8 +14,12 @@ import Modal from "@/components/ui/Modal";
 import PermissionForm from "./PermissionForm";
 import { permissionService } from "@/services/permission.service";
 import { Permission } from "@/types";
+import Cookies from "js-cookie";
+import Input from "@/components/ui/Input";
+import withPermission from "@/hoc/withPermission";
+import { stat } from "fs";
 
-export default function PermissionsPage() {
+function PermissionsPage() {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,18 +29,24 @@ export default function PermissionsPage() {
   const [selectedPermission, setSelectedPermission] =
     useState<Permission | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(12); // State for resource filter
   const total = allPermissions.length;
+  const rolePermission = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    resource: "",
+    action: "",
+    status: "",
+  });
 
   useEffect(() => {
     fetchPermissions();
   }, []);
 
-  useEffect(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    setPermissions(allPermissions.slice(start, end));
-  }, [allPermissions, page, pageSize]);
+  // useEffect(() => {
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setPermissions(allPermissions.slice(start, end));
+  // }, [allPermissions, page, pageSize]);
 
   const fetchPermissions = async () => {
     try {
@@ -58,7 +68,7 @@ export default function PermissionsPage() {
       fetchPermissions();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to update permission"
+        error.response?.data?.message || "Failed to update permission",
       );
     }
   };
@@ -72,10 +82,41 @@ export default function PermissionsPage() {
       fetchPermissions();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to delete permission"
+        error.response?.data?.message || "Failed to delete permission",
       );
     }
   };
+
+  // useEffect(() => {
+  //   const filtered = allPermissions.filter((permission) =>
+  //     permission.resource.toLowerCase().includes(resourceFilter.toLowerCase())
+  //   );
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   setPermissions(filtered.slice(start, end));
+  // }, [allPermissions, resourceFilter, page, pageSize]);
+
+  const filteredPermissions = allPermissions.filter((permission) => {
+    const matchesResource = permission.resource
+      .toLowerCase()
+      .includes(filters.resource.toLowerCase().trim());
+    const matchesAction = permission.action
+      .toLowerCase()
+      .includes(filters.action.toLowerCase().trim());
+    const matchesStatus = filters.status
+      ? permission.isActive === (filters.status === "active")
+      : true;
+
+    return matchesResource && matchesAction && matchesStatus;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+  const paginated = filteredPermissions.slice(
+    (page - 1) * pageSize,
+    page * pageSize,
+  );
 
   if (loading) {
     return (
@@ -87,25 +128,34 @@ export default function PermissionsPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Permissions
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <select
+          {/* <div className="relative">
+            <Input
+              type="text"
+              placeholder="Filter by resource..."
+              value={resourceFilter}
+              onChange={(e) => setResourceFilter(e.target.value)}
               className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+            />
+          </div> */}
+          <div className="">
+            <select
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[6, 12, 20].map((size) => (
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-bold"
                 >
                   {size} per page
                 </option>
@@ -127,81 +177,143 @@ export default function PermissionsPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Permission
-          </Button>
+
+          {rolePermission.includes("permissions.create") && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Permission
+            </Button>
+          )}
         </div>
       </div>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="resourceFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Resource
+          </label>
+          <Input
+            id="resourceFilter"
+            value={filters.resource}
+            onChange={(e) => handleFilterChange("resource", e.target.value)}
+            placeholder="Search by resource"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700  shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300 bg-white dark:bg-gray-800"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="actionFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Action
+          </label>
+          <Input
+            id="actionFilter"
+            value={filters.action}
+            onChange={(e) => handleFilterChange("action", e.target.value)}
+            placeholder="Search by action"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300  dark:bg-gray-800"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="statusFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300   bg-white dark:bg-gray-800"
+          >
+            Status
+          </label>
+          <select
+            id="statusFilter"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out dark:text-gray-300  dark:bg-gray-800"
+          >
+            <option value="">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Description
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Resource
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Action
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(rolePermission.includes("permissions.update") ||
+                rolePermission.includes("permissions.delete")) && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {permissions.map((permission) => (
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginated.map((permission) => (
               <tr key={permission.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                   {permission.name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {permission.description}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {permission.resource}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {permission.action}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {permission.isActive ? (
-                    <span className="px-2 py-1 rounded bg-green-100 text-green-800">
+                    <span className="px-2 py-1 rounded bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-400">
                       Active
                     </span>
                   ) : (
-                    <span className="px-2 py-1 rounded bg-red-100 text-red-800">
+                    <span className="px-2 py-1 rounded bg-red-100 dark:bg-red-800/30 text-red-800 dark:text-red-400">
                       Inactive
                     </span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2">
-                  <button
-                    className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsEditModalOpen(true);
-                    }}
-                  >
-                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
-                  <button
-                    className="text-red-600 hover:text-red-900 cursor-pointer"
-                    onClick={() => {
-                      setSelectedPermission(permission);
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                  </button>
+                  {rolePermission.includes("permissions.update") && (
+                    <button
+                      className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPermission(permission);
+                        setIsEditModalOpen(true);
+                      }}
+                    >
+                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                    </button>
+                  )}
+                  {rolePermission.includes("permissions.delete") && (
+                    <button
+                      className="text-red-600 hover:text-red-900 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPermission(permission);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -211,7 +323,7 @@ export default function PermissionsPage() {
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -223,7 +335,7 @@ export default function PermissionsPage() {
             className={`px-2 py-1 rounded font-semibold ${
               page === i + 1
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             onClick={() => setPage(i + 1)}
           >
@@ -231,7 +343,7 @@ export default function PermissionsPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold "
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -305,3 +417,5 @@ export default function PermissionsPage() {
     </div>
   );
 }
+
+export default withPermission(PermissionsPage, "permissions.read");

@@ -9,9 +9,15 @@ import Input from "@/components/ui/Input";
 import { roleService } from "@/services/role.service";
 import { permissionService } from "@/services/permission.service";
 import { Role, Permission, CreateRoleInput, UpdateRoleInput } from "@/types";
+import Cookies from "js-cookie";
+import withPermission from "@/hoc/withPermission";
 
-export default function RolesPage() {
-  const [formErrors, setFormErrors] = useState<{ name?: string; description?: string; permissionIds?: string } | null>(null);
+function RolesPage() {
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    description?: string;
+    permissionIds?: string;
+  } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
@@ -28,6 +34,11 @@ export default function RolesPage() {
     name: "",
     description: "",
     permissionIds: [],
+  });
+  const [permissionSearch, setPermissionSearch] = useState(""); // State for search query
+  const permission = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
   });
 
   useEffect(() => {
@@ -63,10 +74,16 @@ export default function RolesPage() {
 
   const handleCreate = async () => {
     // Validation
-    const errors: { name?: string; description?: string; permissionIds?: string } = {};
+    const errors: {
+      name?: string;
+      description?: string;
+      permissionIds?: string;
+    } = {};
     if (!formData.name.trim()) errors.name = "Role name is required";
-    if (!formData.description.trim()) errors.description = "Description is required";
-    if (!formData.permissionIds || formData.permissionIds.length === 0) errors.permissionIds = "At least one permission must be selected";
+    if (!formData.description.trim())
+      errors.description = "Description is required";
+    if (!formData.permissionIds || formData.permissionIds.length === 0)
+      errors.permissionIds = "At least one permission must be selected";
     setFormErrors(Object.keys(errors).length ? errors : null);
     if (Object.keys(errors).length) return;
     try {
@@ -113,7 +130,10 @@ export default function RolesPage() {
       // Show error if none selected
       setFormErrors((errors) => {
         if (updated.length === 0) {
-          return { ...errors, permissionIds: "At least one permission must be selected" };
+          return {
+            ...errors,
+            permissionIds: "At least one permission must be selected",
+          };
         } else {
           return { ...errors, permissionIds: undefined };
         }
@@ -121,6 +141,23 @@ export default function RolesPage() {
       return { ...prev, permissionIds: updated };
     });
   };
+
+  const filteredPermissions = permissions.filter((permission) =>
+    permission.name.toLowerCase().includes(permissionSearch.toLowerCase()),
+  );
+
+  const filteredRoles = allRoles.filter((role) => {
+    const matchesName = role.name
+      .toLowerCase()
+      .includes(filters.name.toLowerCase());
+    return matchesName;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredRoles.slice((page - 1) * pageSize, page * pageSize);
 
   if (loading) {
     return (
@@ -132,14 +169,14 @@ export default function RolesPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Roles
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="">
             <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
@@ -150,7 +187,7 @@ export default function RolesPage() {
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-bold"
                 >
                   {size} per page
                 </option>
@@ -172,49 +209,75 @@ export default function RolesPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add Role
-          </Button>
+          {permission.includes("roles.create") && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add Role
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-md">
+        {/* Product Filter */}
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by role name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out"
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {roles.map((role) => (
-          <div key={role.id} className="bg-white rounded-lg shadow-md p-6">
+        {paginated.map((role) => (
+          <div key={role.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {role.name}
                 </h3>
-                <p className="text-sm text-gray-500">{role.description}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{role.description}</p>
               </div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => {
-                    setSelectedRole(role);
-                    setFormData({
-                      name: role.name,
-                      description: role.description || "",
-                      permissionIds:
-                        role.rolePermissions?.map((rp) => rp.permissionId) ||
-                        [],
-                    });
-                    setIsEditModalOpen(true);
-                  }}
-                  className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                >
-                  <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
-                <button
-                  onClick={() => {
-                    setRoleToDelete(role);
-                    setIsDeleteModalOpen(true);
-                  }}
-                  className="text-red-600 hover:text-red-900 cursor-pointer"
-                >
-                  <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
-                </button>
+                {permission.includes("roles.update") && (
+                  <button
+                    onClick={() => {
+                      setSelectedRole(role);
+                      setFormData({
+                        name: role.name,
+                        description: role.description || "",
+                        permissionIds:
+                          role.rolePermissions?.map((rp) => rp.permissionId) ||
+                          [],
+                      });
+                      setIsEditModalOpen(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                  >
+                    <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                  </button>
+                )}
+
+                {permission.includes("roles.delete") && (
+                  <button
+                    onClick={() => {
+                      setRoleToDelete(role);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="text-red-600 hover:text-red-900 cursor-pointer"
+                  >
+                    <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-110 transition-transform duration-150" />
+                  </button>
+                )}
                 <Modal
                   isOpen={isDeleteModalOpen}
                   onClose={() => {
@@ -224,7 +287,7 @@ export default function RolesPage() {
                   title="Delete Role"
                 >
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Are you sure you want to delete this role? This action
                       cannot be undone.
                     </p>
@@ -277,7 +340,7 @@ export default function RolesPage() {
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold "
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -297,7 +360,7 @@ export default function RolesPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold"
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -353,30 +416,55 @@ export default function RolesPage() {
               Permissions
             </label>
             <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {permissions.map((permission) => (
-                <div key={permission.id} className="flex items-center py-1">
-                  <input
-                    type="checkbox"
-                    id={`perm-${permission.id}`}
-                    checked={formData.permissionIds?.includes(permission.id)}
-                    onChange={() => handlePermissionToggle(permission.id)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor={`perm-${permission.id}`}
-                    className="ml-2 text-sm text-gray-700"
+              <div className="relative mb-4">
+                <Input
+                  type="text"
+                  placeholder="Search permissions..."
+                  value={permissionSearch}
+                  onChange={(e) => setPermissionSearch(e.target.value)}
+                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
                   >
-                    {permission.name} -{" "}
-                    <span className="text-gray-500">
-                      {permission.description}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPermissions.map((permission) => (
+                  <label
+                    key={permission.id}
+                    className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 p-2 rounded-lg shadow-md transition duration-150 ease-in-out"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.permissionIds.includes(permission.id)}
+                      onChange={() => handlePermissionToggle(permission.id)}
+                      className="form-checkbox h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {permission.name}
                     </span>
                   </label>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           {formErrors?.permissionIds && (
-            <div className="text-red-500 text-sm mt-2">{formErrors.permissionIds}</div>
+            <div className="text-red-500 text-sm mt-2">
+              {formErrors.permissionIds}
+            </div>
           )}
           <div className="flex justify-end space-x-2">
             <Button
@@ -388,7 +476,7 @@ export default function RolesPage() {
             >
               Cancel
             </Button>
-            <Button onClick={isEditModalOpen ? handleUpdate : handleCreate}>
+            <Button variant="primary" onClick={isEditModalOpen ? handleUpdate : handleCreate}>
               {isEditModalOpen ? "Update" : "Create"}
             </Button>
           </div>
@@ -397,3 +485,5 @@ export default function RolesPage() {
     </div>
   );
 }
+
+export default withPermission(RolesPage, "roles.read");

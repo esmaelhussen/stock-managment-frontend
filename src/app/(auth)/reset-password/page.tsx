@@ -31,7 +31,9 @@ function ResetPasswordContent() {
     setError("");
     setSuccess("");
     if (!token || typeof token !== "string" || token.trim() === "") {
-      setError("Invalid or missing reset token. Please use the link from your email.");
+      setError(
+        "Invalid or missing reset token. Please use the link from your email."
+      );
       return;
     }
     if (!newPassword || !confirmPassword) {

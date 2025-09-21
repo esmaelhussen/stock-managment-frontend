@@ -7,29 +7,54 @@ import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import UserForm from "./UserForm";
 import { userService } from "@/services/user.service";
+import { roleService } from "@/services/role.service";
 import { User, CreateUserInput, UpdateUserInput } from "@/types";
+import Cookies from "js-cookie";
+import withPermission from "@/hoc/withPermission";
+import { stat } from "fs";
+import Input from "@/components/ui/Input";
 
-export default function UsersPage() {
+function UsersPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(11);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
   const total = allUsers.length;
+  const permissions = JSON.parse(Cookies.get("permission") || "[]");
+  const [filters, setFilters] = useState({
+    name: "",
+    role: "",
+    status: "",
+  });
 
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   useEffect(() => {
+    const filteredUsers = allUsers.filter((user) => {
+      const fullName = `${user.firstName} ${user.middleName || ""} ${
+        user.lastName
+      }`.toLowerCase();
+      const matchesName = fullName.includes(searchTerm.toLowerCase());
+      const matchesRole = selectedRole
+        ? user.userRoles.some((ur) => ur.roleId === selectedRole)
+        : true;
+      return matchesName && matchesRole;
+    });
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
-    setUsers(allUsers.slice(start, end));
-  }, [allUsers, page, pageSize]);
+    setUsers(filteredUsers.slice(start, end));
+  }, [allUsers, searchTerm, selectedRole, page, pageSize]);
 
   const fetchUsers = async () => {
     try {
@@ -42,10 +67,20 @@ export default function UsersPage() {
     }
   };
 
+  const fetchRoles = async () => {
+    try {
+      const data = await roleService.getAll();
+      setRoles(data);
+    } catch (error) {
+      toast.error("Failed to fetch roles");
+    }
+  };
+
   const handleCreate = async (data: CreateUserInput) => {
     try {
       await userService.create(data);
       toast.success("User created successfully");
+
       setIsCreateModalOpen(false);
       fetchUsers();
     } catch (error: any) {
@@ -77,6 +112,27 @@ export default function UsersPage() {
     }
   };
 
+  const filteredUsers = allUsers.filter((user) => {
+    const matchesName =
+      user.firstName.toLowerCase().includes(filters.name.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(filters.name.toLowerCase());
+    const matchesRole = filters.role
+      ? user.userRoles.some((ur) => ur.roleId === filters.role)
+      : true;
+    const matchesStatus = filters.status
+      ? filters.status === "active"
+        ? user.isActive
+        : !user.isActive
+      : true;
+    return matchesName && matchesRole && matchesStatus;
+  });
+
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const paginated = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">Loading...</div>
@@ -87,25 +143,41 @@ export default function UsersPage() {
     <div>
       <div className="flex flex-wrap justify-between items-center mb-6 gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             Users
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </span>
+
           <div className="relative">
             <select
-              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 text-sm text-black font-bold bg-white shadow focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
+              className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-black dark:text-gray-200 font-bold bg-white dark:bg-gray-800 shadow focus:border-blue-400 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-200 focus:outline-none transition duration-150 ease-in-out"
               value={pageSize}
               onChange={(e) => {
                 setPage(1);
                 setPageSize(Number(e.target.value));
               }}
             >
-              {[6, 10, 14].map((size) => (
+              {[5, 11, 15].map((size) => (
                 <option
                   key={size}
                   value={size}
-                  className="bg-white text-black font-bold"
+                  className="bg-white dark:bg-gray-800 text-black dark:text-gray-200 font-bold"
                 >
                   {size} per page
                 </option>
@@ -127,49 +199,112 @@ export default function UsersPage() {
               </svg>
             </span>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Add User
-          </Button>
+
+          {permissions.includes("users.create") && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Add User
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg shadow-md">
+        <div className="flex flex-col">
+          <label
+            htmlFor="nameFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Name
+          </label>
+          <Input
+            id="nameFilter"
+            value={filters.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            placeholder="Search by user name"
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 shadow focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-200 focus:outline-none transition duration-200 ease-in-out"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="roleFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Role
+          </label>
+          <select
+            id="roleFilter"
+            value={filters.role}
+            onChange={(e) => handleFilterChange("role", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 shadow focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-200 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Roles</option>
+            {roles.map((role: any) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col">
+          <label
+            htmlFor="statusFilter"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Status
+          </label>
+          <select
+            id="statusFilter"
+            value={filters.status}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+            className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 shadow focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-200 focus:outline-none transition duration-200 ease-in-out"
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Phone
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Roles
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {(permissions.includes("users.update") ||
+                permissions.includes("users.delete")) && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id}>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {paginated.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {user.firstName} {user.middleName} {user.lastName}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {user.email}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {user.phoneNumber}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -177,7 +312,7 @@ export default function UsersPage() {
                     {user.userRoles?.map((ur) => (
                       <span
                         key={ur.id}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200"
                       >
                         {ur.role.name}
                       </span>
@@ -188,33 +323,38 @@ export default function UsersPage() {
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                       user.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200"
+                        : "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200"
                     }`}
                   >
                     {user.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setIsDeleteModalOpen(true);
-                      }}
-                      className="text-red-600 hover:text-red-900 "
-                    >
-                      <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
-                    </button>
+                    {permissions.includes("users.update") && (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsEditModalOpen(true);
+                        }}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                      >
+                        <PencilIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                      </button>
+                    )}
+
+                    {permissions.includes("users.delete") && (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                      >
+                        <TrashIcon className="h-5 w-5 cursor-pointer hover:scale-120" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -225,7 +365,7 @@ export default function UsersPage() {
       {/* Pagination controls at the bottom of the page */}
       <div className="flex justify-end items-center gap-2 py-4">
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold"
           disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
@@ -236,8 +376,8 @@ export default function UsersPage() {
             key={i + 1}
             className={`px-2 py-1 rounded font-semibold ${
               page === i + 1
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700"
+                ? "bg-blue-600 dark:bg-blue-500 text-white"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
             }`}
             onClick={() => setPage(i + 1)}
           >
@@ -245,7 +385,7 @@ export default function UsersPage() {
           </button>
         ))}
         <button
-          className="px-2 py-1 rounded bg-gray-200 text-gray-700 font-semibold disabled:opacity-50"
+          className="px-2 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold"
           disabled={page === Math.ceil(total / pageSize) || total === 0}
           onClick={() => setPage(page + 1)}
         >
@@ -305,3 +445,5 @@ export default function UsersPage() {
     </div>
   );
 }
+
+export default withPermission(UsersPage, "users.read");
