@@ -186,18 +186,6 @@ export default function LoginPage() {
             </div>
           )}
         </form>
-
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-500">
-            <span className="font-semibold text-indigo-600">Email:</span>{" "}
-            admin@example.com
-            <br />
-            <span className="font-semibold text-indigo-600">
-              Password:
-            </span>{" "}
-            admin123
-          </p>
-        </div>
       </div>
       <style>{`
         @keyframes fade-in {
