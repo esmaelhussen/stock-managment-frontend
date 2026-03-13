@@ -10,7 +10,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { authService } from "@/services/auth.service";
 import { LoginCredentials } from "@/types";
-import { log } from "console";
 
 const schema = yup.object({
   email: yup.string().email("Invalid email").required("Email is required"),
@@ -83,6 +82,15 @@ export default function LoginPage() {
           <p className="text-gray-500 text-base md:text-lg">
             Sign in to your account
           </p>
+
+          {/* Demo credentials box */}
+          <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-700 text-sm text-center">
+            <strong>Demo credentials:</strong>
+            <br />
+            Email: <code>admin@example.com</code>
+            <br />
+            Password: <code>admin123</code>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -163,6 +171,7 @@ export default function LoginPage() {
           >
             Sign In
           </Button>
+
           {loginError && (
             <div className="mt-4 flex justify-center">
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center gap-2 shadow-sm animate-fade-in">
