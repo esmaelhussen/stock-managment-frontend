@@ -33,10 +33,18 @@ const createSchema = yup.object({
     .array()
     .of(yup.string())
     .min(1, "At least one role must be selected"),
-  warehouseId: yup
-    .string()
-    .required("Warehouse is required for warehouse role"),
-  shopId: yup.string().required("Shop is required for shop role"),
+  warehouseId: yup.string().when("roleIds", {
+    is: (roleIds: string[] | undefined) =>
+      Array.isArray(roleIds) && roleIds.length > 0,
+    then: (schema) => schema.optional(),
+    otherwise: (schema) => schema.optional(),
+  }),
+  shopId: yup.string().when("roleIds", {
+    is: (roleIds: string[] | undefined) =>
+      Array.isArray(roleIds) && roleIds.length > 0,
+    then: (schema) => schema.optional(),
+    otherwise: (schema) => schema.optional(),
+  }),
   // warehouseId: yup.string().when("roleIds", {
   //   is: (roleIds: string[]) => roleIds.some((role) => role === "shop"),
   //   then: (schema) => schema.required("Warehouse is required for shop role"),
@@ -52,8 +60,8 @@ const updateSchema = yup.object({
   address: yup.string(),
   isActive: yup.boolean(),
   roleIds: yup.array().of(yup.string()),
-  warehouseId: yup.array().of(yup.string()),
-  shopId: yup.array().of(yup.string()),
+  warehouseId: yup.string(),
+  shopId: yup.string(),
 });
 
 interface UserFormProps {
@@ -118,13 +126,13 @@ export default function UserForm({
   useEffect(() => {
     if (watchedRoleIds && roles.length > 0) {
       const selectedRoleObjects = roles.filter((role) =>
-        watchedRoleIds.includes(role.id)
+        watchedRoleIds.includes(role.id),
       );
       const hasWarehouse = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("warehouse")
+        role.name.toLowerCase().includes("warehouse"),
       );
       const hasShop = selectedRoleObjects.some((role) =>
-        role.name.toLowerCase().includes("shop")
+        role.name.toLowerCase().includes("shop"),
       );
       setHasWarehouseRole(hasWarehouse);
       setHasShopRole(hasShop);
@@ -170,7 +178,7 @@ export default function UserForm({
   };
 
   const filteredRoles = roles.filter((role) =>
-    role.name.toLowerCase().includes(roleSearch.toLowerCase())
+    role.name.toLowerCase().includes(roleSearch.toLowerCase()),
   );
 
   const onFormSubmit = async (data: any) => {
@@ -395,7 +403,12 @@ export default function UserForm({
         >
           Cancel
         </Button>
-        <Button type="submit" variant="primary" loading={loading} className="cursor-pointer">
+        <Button
+          type="submit"
+          variant="primary"
+          loading={loading}
+          className="cursor-pointer"
+        >
           {isEdit ? "Update" : "Create"}
         </Button>
       </div>

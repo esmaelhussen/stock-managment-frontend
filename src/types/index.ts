@@ -131,6 +131,7 @@ export interface CreateUserInput {
   password: string;
   roleIds?: string[];
   warehouseId?: string;
+  shopId?: string;
 }
 
 export interface UpdateUserInput {
@@ -141,6 +142,8 @@ export interface UpdateUserInput {
   address?: string;
   isActive?: boolean;
   roleIds?: string[];
+  warehouseId?: string;
+  shopId?: string;
 }
 
 export interface CreateRoleInput {
