@@ -9,7 +9,7 @@ const API_URL =
 
 if (isProduction && !process.env.NEXT_PUBLIC_API_URL) {
   console.error(
-    "NEXT_PUBLIC_API_URL is missing in production. API calls may fail."
+    "NEXT_PUBLIC_API_URL is missing in production. API calls may fail.",
   );
 }
 
@@ -32,7 +32,7 @@ class ApiClient {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     this.api.interceptors.response.use(
@@ -46,7 +46,7 @@ class ApiClient {
           window.location.href = "/login";
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -58,7 +58,7 @@ class ApiClient {
   async post<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response = await this.api.post<T>(url, data, config);
     return response.data;
@@ -67,7 +67,7 @@ class ApiClient {
   async put<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response = await this.api.put<T>(url, data, config);
     return response.data;
@@ -76,7 +76,7 @@ class ApiClient {
   async patch<T>(
     url: string,
     data?: any,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig,
   ): Promise<T> {
     const response = await this.api.patch<T>(url, data, config);
     return response.data;
