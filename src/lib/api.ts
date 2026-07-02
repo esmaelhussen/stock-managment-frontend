@@ -2,7 +2,16 @@ import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3008/";
+const isProduction = process.env.NODE_ENV === "production";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (isProduction ? "" : "http://localhost:3008/");
+
+if (isProduction && !process.env.NEXT_PUBLIC_API_URL) {
+  console.error(
+    "NEXT_PUBLIC_API_URL is missing in production. API calls may fail."
+  );
+}
 
 class ApiClient {
   private api: AxiosInstance;
